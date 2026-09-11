@@ -1,0 +1,466 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10001 /* LinkRouterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001; };
+		A10002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002; };
+		A10003 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003; };
+		A10019 /* SettingsPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
+		A10025 /* AboutPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10025; };
+
+		A10004 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004; };
+		A10005 /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005; };
+		A10006 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006; };
+		A10007 /* ProfileReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10007; };
+		A10008 /* DefaultBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
+		A10009 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
+		A10010 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
+		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
+		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
+		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
+		A10022 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10022; };
+		A10014 /* SettingsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10014; };
+		A10015 /* BrowsersPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10015; };
+		A10016 /* RulesPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10016; };
+		A10017 /* GeneralPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10017; };
+		A10023 /* BrowserPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10023; };
+		A10024 /* ProfilesPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10024; };
+		A10018 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10018; };
+		A20001 /* RuleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001; };
+		A20002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004; };
+		A20003 /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C00001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = P00001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = T00001;
+			remoteInfo = LinkRouter;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B10001 /* LinkRouterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkRouterApp.swift; sourceTree = "<group>"; };
+		B10002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		B10003 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		B10021 /* SettingsPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPresenter.swift; sourceTree = "<group>"; };
+		B10025 /* AboutPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPanel.swift; sourceTree = "<group>"; };
+
+		B10004 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		B10005 /* RuleEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngine.swift; sourceTree = "<group>"; };
+		B10006 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		B10007 /* ProfileReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileReader.swift; sourceTree = "<group>"; };
+		B10008 /* DefaultBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultBrowser.swift; sourceTree = "<group>"; };
+		B10009 /* Dispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatcher.swift; sourceTree = "<group>"; };
+		B10010 /* BrowserCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalog.swift; sourceTree = "<group>"; };
+		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
+		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
+		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
+		B10022 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		B10014 /* SettingsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRootView.swift; sourceTree = "<group>"; };
+		B10015 /* BrowsersPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsersPane.swift; sourceTree = "<group>"; };
+		B10016 /* RulesPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulesPane.swift; sourceTree = "<group>"; };
+		B10017 /* GeneralPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralPane.swift; sourceTree = "<group>"; };
+		B10023 /* BrowserPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserPicker.swift; sourceTree = "<group>"; };
+		B10024 /* ProfilesPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilesPane.swift; sourceTree = "<group>"; };
+		B10018 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B10019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B10020 /* LinkRouter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LinkRouter.entitlements; sourceTree = "<group>"; };
+		B20001 /* RuleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngineTests.swift; sourceTree = "<group>"; };
+		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F00001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F00002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G00000 = {
+			isa = PBXGroup;
+			children = (
+				G00001 /* LinkRouter */,
+				G00005 /* LinkRouterTests */,
+				G00006 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G00001 /* LinkRouter */ = {
+			isa = PBXGroup;
+			children = (
+				G00002 /* App */,
+				G00003 /* Domain */,
+				G00004 /* UI */,
+				B10018 /* Assets.xcassets */,
+				B10019 /* Info.plist */,
+				B10020 /* LinkRouter.entitlements */,
+			);
+			path = LinkRouter;
+			sourceTree = "<group>";
+		};
+		G00002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				B10001 /* LinkRouterApp.swift */,
+				B10002 /* AppDelegate.swift */,
+				B10003 /* AppState.swift */,
+				B10021 /* SettingsPresenter.swift */,
+				B10025 /* AboutPanel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		G00003 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				B10004 /* Models.swift */,
+				B10005 /* RuleEngine.swift */,
+				B10006 /* Persistence.swift */,
+				B10007 /* ProfileReader.swift */,
+				B10008 /* DefaultBrowser.swift */,
+				B10009 /* Dispatcher.swift */,
+				B10010 /* BrowserCatalog.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		G00004 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				B10011 /* PromptView.swift */,
+				B10012 /* PromptController.swift */,
+				B10013 /* Mark.swift */,
+				B10022 /* Theme.swift */,
+				B10014 /* SettingsRootView.swift */,
+				B10015 /* BrowsersPane.swift */,
+				B10023 /* BrowserPicker.swift */,
+				B10024 /* ProfilesPane.swift */,
+				B10016 /* RulesPane.swift */,
+				B10017 /* GeneralPane.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		G00005 /* LinkRouterTests */ = {
+			isa = PBXGroup;
+			children = (
+				B20001 /* RuleEngineTests.swift */,
+			);
+			path = LinkRouterTests;
+			sourceTree = "<group>";
+		};
+		G00006 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				R00001 /* LinkRouter.app */,
+				R00002 /* LinkRouterTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		T00001 /* LinkRouter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00002 /* Build configuration list for PBXNativeTarget "LinkRouter" */;
+			buildPhases = (
+				S00001 /* Sources */,
+				F00001 /* Frameworks */,
+				R10001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LinkRouter;
+			productName = LinkRouter;
+			productReference = R00001 /* LinkRouter.app */;
+			productType = "com.apple.product-type.application";
+		};
+		T00002 /* LinkRouterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00003 /* Build configuration list for PBXNativeTarget "LinkRouterTests" */;
+			buildPhases = (
+				S00002 /* Sources */,
+				F00002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D00001 /* PBXTargetDependency */,
+			);
+			name = LinkRouterTests;
+			productName = LinkRouterTests;
+			productReference = R00002 /* LinkRouterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		P00001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					T00001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					T00002 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = T00001;
+					};
+				};
+			};
+			buildConfigurationList = L00001 /* Build configuration list for PBXProject "LinkRouter" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G00000;
+			productRefGroup = G00006 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				T00001 /* LinkRouter */,
+				T00002 /* LinkRouterTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		R10001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10018 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		S00001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10001 /* LinkRouterApp.swift in Sources */,
+				A10002 /* AppDelegate.swift in Sources */,
+				A10003 /* AppState.swift in Sources */,
+				A10019 /* SettingsPresenter.swift in Sources */,
+				A10025 /* AboutPanel.swift in Sources */,
+				A10004 /* Models.swift in Sources */,
+				A10005 /* RuleEngine.swift in Sources */,
+				A10006 /* Persistence.swift in Sources */,
+				A10007 /* ProfileReader.swift in Sources */,
+				A10008 /* DefaultBrowser.swift in Sources */,
+				A10009 /* Dispatcher.swift in Sources */,
+				A10010 /* BrowserCatalog.swift in Sources */,
+				A10011 /* PromptView.swift in Sources */,
+				A10012 /* PromptController.swift in Sources */,
+				A10013 /* Mark.swift in Sources */,
+				A10022 /* Theme.swift in Sources */,
+				A10014 /* SettingsRootView.swift in Sources */,
+				A10015 /* BrowsersPane.swift in Sources */,
+				A10023 /* BrowserPicker.swift in Sources */,
+				A10024 /* ProfilesPane.swift in Sources */,
+				A10016 /* RulesPane.swift in Sources */,
+				A10017 /* GeneralPane.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		S00002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A20001 /* RuleEngineTests.swift in Sources */,
+				A20002 /* Models.swift in Sources */,
+				A20003 /* RuleEngine.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D00001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = T00001 /* LinkRouter */;
+			targetProxy = C00001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		E00001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E00002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E00003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = LinkRouter/LinkRouter.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = disable;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LinkRouter/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E00004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = LinkRouter/LinkRouter.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = disable;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LinkRouter/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E00005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E00006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		L00001 /* Build configuration list for PBXProject "LinkRouter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E00001 /* Debug */,
+				E00002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L00002 /* Build configuration list for PBXNativeTarget "LinkRouter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E00003 /* Debug */,
+				E00004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L00003 /* Build configuration list for PBXNativeTarget "LinkRouterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E00005 /* Debug */,
+				E00006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = P00001 /* Project object */;
+}
