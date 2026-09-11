@@ -19,6 +19,17 @@ Or open `LinkRouter.xcodeproj` in Xcode and run.
 
 Copy the built app to `/Applications` before making it the default browser, so Launch Services is not talking to a translocated copy in Downloads.
 
+## Releases
+
+Push a version tag to build a Release zip and attach it to a GitHub Release:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow is ad-hoc signed. Gatekeeper may require a right-click → Open the first time.
+
 ## Setup
 
 1. Launch LinkRouter.
