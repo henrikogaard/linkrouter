@@ -21,14 +21,20 @@ Copy the built app to `/Applications` before making it the default browser, so L
 
 ## Releases
 
-Push a version tag to build a Release zip and attach it to a GitHub Release:
+One-time signing setup (Developer ID + notarization):
+
+```sh
+./scripts/setup-signing.sh
+```
+
+That walks through the Apple pages and writes the GitHub Actions secrets. After that, push a version tag:
 
 ```sh
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The workflow is ad-hoc signed. Gatekeeper may require a right-click → Open the first time.
+CI archives a Developer ID build, notarizes it, staples the ticket, and attaches `LinkRouter-1.0.0.zip` to the GitHub Release.
 
 ## Setup
 

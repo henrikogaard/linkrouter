@@ -16,15 +16,44 @@ concurrency:
 jobs:
   build:
     runs-on: macos-latest
+    env:
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      APPSTORE_API_KEY_ID: ${{ vars.APPSTORE_API_KEY_ID }}
+      APPSTORE_ISSUER_ID: ${{ vars.APPSTORE_ISSUER_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Require signing credentials
+        env:
+          DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${DEVELOPER_ID_P12}" ]] || missing+=(DEVELOPER_ID_P12)
+          [[ -n "${DEVELOPER_ID_P12_PASSWORD}" ]] || missing+=(DEVELOPER_ID_P12_PASSWORD)
+          [[ -n "${APPSTORE_API_PRIVATE_KEY}" ]] || missing+=(APPSTORE_API_PRIVATE_KEY)
+          [[ -n "${APPLE_TEAM_ID}" ]] || missing+=(APPLE_TEAM_ID)
+          [[ -n "${APPSTORE_API_KEY_ID}" ]] || missing+=(APPSTORE_API_KEY_ID)
+          [[ -n "${APPSTORE_ISSUER_ID}" ]] || missing+=(APPSTORE_ISSUER_ID)
+          if (( ${#missing[@]} )); then
+            echo "Missing signing credentials: ${missing[*]}"
+            echo "Run ./scripts/setup-signing.sh locally, then re-run this workflow."
+            exit 1
+          fi
 
       - name: Show toolchain
         run: |
           xcodebuild -version
           swift --version
-          xcodebuild -showsdks
+
+      - name: Import Developer ID certificate
+        uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.DEVELOPER_ID_P12 }}
+          p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
 
       - name: Test
         run: |
@@ -36,7 +65,7 @@ jobs:
             CODE_SIGN_IDENTITY="-" \
             test
 
-      - name: Build Release
+      - name: Archive and export Developer ID build
         run: |
           set -euo pipefail
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
@@ -45,22 +74,73 @@ jobs:
             VERSION="1.0"
           fi
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
-          xcodebuild \
+
+          cat > /tmp/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>developer-id</string>
+            <key>teamID</key>
+            <string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>Developer ID Application</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild archive \
             -project LinkRouter.xcodeproj \
             -scheme LinkRouter \
             -configuration Release \
             -destination 'generic/platform=macOS' \
+            -archivePath build/LinkRouter.xcarchive \
             -derivedDataPath build \
             MARKETING_VERSION="${VERSION}" \
             CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
-            CODE_SIGN_IDENTITY="-" \
-            build
+            DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp"
+
+          xcodebuild -exportArchive \
+            -archivePath build/LinkRouter.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist /tmp/ExportOptions.plist
+
+          test -d build/export/LinkRouter.app
+          codesign --verify --deep --strict --verbose=2 build/export/LinkRouter.app
+
+      - name: Notarize and staple
+        env:
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          APP="build/export/LinkRouter.app"
+          KEY="/tmp/AuthKey.p8"
+          printf '%s\n' "${APPSTORE_API_PRIVATE_KEY}" > "${KEY}"
+          chmod 600 "${KEY}"
+
+          SUBMIT_ZIP="/tmp/LinkRouter-submit.zip"
+          ditto -c -k --keepParent "${APP}" "${SUBMIT_ZIP}"
+
+          xcrun notarytool submit "${SUBMIT_ZIP}" \
+            --key "${KEY}" \
+            --key-id "${APPSTORE_API_KEY_ID}" \
+            --issuer "${APPSTORE_ISSUER_ID}" \
+            --wait
+
+          xcrun stapler staple "${APP}"
+          xcrun stapler validate "${APP}"
+          rm -f "${KEY}" "${SUBMIT_ZIP}"
 
       - name: Package
         run: |
           set -euo pipefail
-          APP="build/Build/Products/Release/LinkRouter.app"
-          test -d "${APP}"
+          APP="build/export/LinkRouter.app"
           mkdir -p dist
           ZIP="dist/LinkRouter-${VERSION}.zip"
           ditto -c -k --keepParent "${APP}" "${ZIP}"
