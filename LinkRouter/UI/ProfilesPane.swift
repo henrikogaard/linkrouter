@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfilesPane: View {
     @EnvironmentObject private var state: AppState
     @State private var editing: RouteProfile?
+    @State private var selection: UUID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -13,8 +14,18 @@ struct ProfilesPane: View {
 
             List {
                 ForEach(state.profiles) { profile in
-                    ProfileRow(profile: profile) {
+                    ProfileRow(profile: profile, isSelected: selection == profile.id) {
+                        selection = profile.id
                         editing = profile
+                    }
+                    .contextMenu {
+                        Button("Edit") {
+                            selection = profile.id
+                            editing = profile
+                        }
+                        Button("Delete", role: .destructive) {
+                            remove(profile)
+                        }
                     }
                     .listRowInsets(EdgeInsets(top: 4, leading: LR.pageInset, bottom: 4, trailing: LR.pageInset))
                     .listRowSeparator(.hidden)
@@ -31,26 +42,39 @@ struct ProfilesPane: View {
                 Button {
                     state.addProfile()
                     editing = state.profiles.last
+                    selection = editing?.id
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
                 Button {
-                    if let editing {
-                        state.removeProfile(editing)
-                        self.editing = nil
+                    if let selected = state.profiles.first(where: { $0.id == selection }) {
+                        remove(selected)
                     }
                 } label: {
                     Label("Remove", systemImage: "minus")
                 }
-                .disabled(editing == nil)
+                .disabled(selection == nil)
                 Spacer()
             }
         }
         .sheet(item: $editing) { profile in
-            ProfileEditorSheet(profile: profile) { updated in
-                state.updateProfile(updated)
-            }
+            ProfileEditorSheet(
+                profile: profile,
+                onSave: { updated in
+                    state.updateProfile(updated)
+                },
+                onDelete: {
+                    remove(profile)
+                }
+            )
             .environmentObject(state)
+        }
+    }
+
+    private func remove(_ profile: RouteProfile) {
+        state.removeProfile(profile)
+        if selection == profile.id {
+            selection = nil
         }
     }
 }
@@ -58,6 +82,7 @@ struct ProfilesPane: View {
 private struct ProfileRow: View {
     @EnvironmentObject private var state: AppState
     var profile: RouteProfile
+    var isSelected: Bool
     var onEdit: () -> Void
 
     var body: some View {
@@ -86,10 +111,10 @@ private struct ProfileRow: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
+            .background(isSelected ? LR.accent.opacity(0.10) : LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                    .strokeBorder(LR.hairline, lineWidth: 1)
+                    .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
             }
         }
         .buttonStyle(.plain)
@@ -122,6 +147,7 @@ struct ProfileEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State var profile: RouteProfile
     var onSave: (RouteProfile) -> Void
+    var onDelete: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -173,6 +199,14 @@ struct ProfileEditorSheet: View {
             }
 
             HStack {
+                if let onDelete {
+                    Button("Delete", role: .destructive) {
+                        onDelete()
+                        dismiss()
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red)
+                }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
