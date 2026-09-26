@@ -16,6 +16,7 @@ final class AppState: ObservableObject {
     @Published var isDefaultBrowser: Bool
     @Published var runningIDs: Set<String>
     @Published var pendingQuit: (url: URL, row: CatalogRow, browser: BrowserRecord)?
+    @Published var recent: [RoutedEntry]
 
     let prompt = PromptController()
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
@@ -28,6 +29,7 @@ final class AppState: ObservableObject {
         let initialRules: [Rule]
         let initialProfiles: [RouteProfile]
         let initialSettings: AppSettings
+        var initialRecent: [RoutedEntry] = []
         var corrupted = false
         switch Persistence.load() {
         case .loaded(let persisted):
@@ -36,6 +38,7 @@ final class AppState: ObservableObject {
             initialRules = persisted.rules
             initialProfiles = persisted.profiles
             initialSettings = persisted.settings
+            initialRecent = persisted.recent
         case .missing:
             let seed = BrowserCatalog.seedFromLaunchServices()
             initialBrowsers = seed.browsers
@@ -57,6 +60,7 @@ final class AppState: ObservableObject {
         rules = initialRules
         profiles = initialProfiles
         settings = initialSettings
+        recent = initialRecent
         pendingQuit = nil
         isDefaultBrowser = DefaultBrowser.isLinkRouterDefault()
         runningIDs = BrowserCatalog.runningIdentifiers(in: initialBrowsers)
@@ -68,7 +72,8 @@ final class AppState: ObservableObject {
                     rows: rows,
                     rules: rules,
                     profiles: profiles,
-                    settings: settings
+                    settings: settings,
+                    recent: recent
                 )
             )
         }
@@ -247,6 +252,13 @@ final class AppState: ObservableObject {
         switch outcome {
         case .opened:
             pendingQuit = nil
+            let entry = RoutedEntry(id: UUID(), url: link.url, rowID: row.id, title: title(for: row), date: .now)
+            recent.removeAll { $0.url == entry.url && $0.rowID == entry.rowID }
+            recent.insert(entry, at: 0)
+            if recent.count > 10 {
+                recent.removeLast(recent.count - 10)
+            }
+            save()
         case .needsHostQuit(_, let name):
             pendingQuit = (link.url, row, browser)
             prompt.dismiss()
@@ -254,6 +266,20 @@ final class AppState: ObservableObject {
         case .failed(let message):
             Log.routing.error("Dispatch failed: \(message)")
         }
+    }
+
+    func reopen(_ entry: RoutedEntry) {
+        let link = IncomingLink(url: entry.url)
+        if let row = rows.first(where: { $0.id == entry.rowID }) {
+            dispatch(link, row: row, isRetry: true)
+        } else {
+            showPrompt(link: link, rows: availableRows)
+        }
+    }
+
+    func clearRecent() {
+        recent.removeAll()
+        save()
     }
 
     private func handleOpenError(_ error: Error, link: IncomingLink, browser: BrowserRecord, isRetry: Bool) {
@@ -550,7 +576,8 @@ final class AppState: ObservableObject {
                     rows: self.rows,
                     rules: self.rules,
                     profiles: self.profiles,
-                    settings: self.settings
+                    settings: self.settings,
+                    recent: self.recent
                 )
             )
         }
@@ -567,7 +594,8 @@ final class AppState: ObservableObject {
                 rows: rows,
                 rules: rules,
                 profiles: profiles,
-                settings: settings
+                settings: settings,
+                recent: recent
             )
         )
     }

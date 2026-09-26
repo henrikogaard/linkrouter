@@ -59,8 +59,30 @@ struct LinkRouterApp: App {
 
 private struct MenuBarMenu: View {
     @Environment(\.openWindow) private var openWindow
+    @ObservedObject private var state = AppState.shared
 
     var body: some View {
+        if !state.isDefaultBrowser {
+            Button("Make LinkRouter the default browser…") {
+                state.requestDefault()
+            }
+            Divider()
+        }
+        Section("Recent") {
+            if state.recent.isEmpty {
+                Text("No links routed yet")
+            } else {
+                ForEach(state.recent.prefix(5)) { entry in
+                    Button(recentLabel(entry)) {
+                        state.reopen(entry)
+                    }
+                }
+                Button("Clear Recent") {
+                    state.clearRecent()
+                }
+            }
+        }
+        Divider()
         Button("Settings") {
             SettingsPresenter.present { id in
                 openWindow(id: id)
@@ -69,6 +91,11 @@ private struct MenuBarMenu: View {
         Button("Quit LinkRouter") {
             NSApp.terminate(nil)
         }
+    }
+
+    private func recentLabel(_ entry: RoutedEntry) -> String {
+        let host = entry.url.host ?? entry.url.absoluteString
+        return "\(String(host.prefix(40))) → \(entry.title)"
     }
 }
 

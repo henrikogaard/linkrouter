@@ -279,25 +279,36 @@ struct AppSettings: Codable, Equatable {
     }
 }
 
+struct RoutedEntry: Codable, Equatable, Identifiable {
+    var id: UUID
+    var url: URL
+    var rowID: UUID
+    var title: String
+    var date: Date
+}
+
 struct PersistedState: Codable {
     var browsers: [BrowserRecord]
     var rows: [CatalogRow]
     var rules: [Rule]
     var profiles: [RouteProfile]
     var settings: AppSettings
+    var recent: [RoutedEntry]
 
     init(
         browsers: [BrowserRecord],
         rows: [CatalogRow],
         rules: [Rule],
         profiles: [RouteProfile],
-        settings: AppSettings
+        settings: AppSettings,
+        recent: [RoutedEntry] = []
     ) {
         self.browsers = browsers
         self.rows = rows
         self.rules = rules
         self.profiles = profiles
         self.settings = settings
+        self.recent = recent
     }
 
     init(from decoder: Decoder) throws {
@@ -307,6 +318,7 @@ struct PersistedState: Codable {
         rules = try container.decode([Rule].self, forKey: .rules)
         profiles = try container.decodeIfPresent([RouteProfile].self, forKey: .profiles) ?? RouteProfile.shipped()
         settings = try container.decode(AppSettings.self, forKey: .settings)
+        recent = try container.decodeIfPresent([RoutedEntry].self, forKey: .recent) ?? []
     }
 }
 
