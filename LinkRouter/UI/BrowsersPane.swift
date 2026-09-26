@@ -276,7 +276,7 @@ private struct BrowserRow: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("Missing")
+                    Text(state.profileExists(row) ? "Missing" : "Missing profile")
                         .font(.system(size: 11))
                         .foregroundStyle(.red)
                 }

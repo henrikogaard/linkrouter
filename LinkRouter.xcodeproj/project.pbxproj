@@ -21,6 +21,7 @@
 		A10009 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
 		A10010 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
 		A10026 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
+		A10027 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -72,6 +73,7 @@
 		B10009 /* Dispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatcher.swift; sourceTree = "<group>"; };
 		B10010 /* BrowserCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalog.swift; sourceTree = "<group>"; };
 		B10026 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		B10027 /* ProfileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileWatcher.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -157,6 +159,7 @@
 				B10009 /* Dispatcher.swift */,
 				B10010 /* BrowserCatalog.swift */,
 				B10026 /* Log.swift */,
+				B10027 /* ProfileWatcher.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -303,6 +306,7 @@
 				A10009 /* Dispatcher.swift in Sources */,
 				A10010 /* BrowserCatalog.swift in Sources */,
 				A10026 /* Log.swift in Sources */,
+				A10027 /* ProfileWatcher.swift in Sources */,
 				A10011 /* PromptView.swift in Sources */,
 				A10012 /* PromptController.swift in Sources */,
 				A10013 /* Mark.swift in Sources */,
