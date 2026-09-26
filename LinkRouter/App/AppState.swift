@@ -21,11 +21,15 @@ final class AppState: ObservableObject {
     private var profileWatcher: ProfileWatcher?
 
     let prompt = PromptController()
+    var dispatcher: Dispatching
+    var onPromptShown: (() -> Void)?
+    var skipsPersistence = false
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
     private var runningObservation: NSKeyValueObservation?
     private var saveWork: DispatchWorkItem?
 
-    private init() {
+    init(dispatcher: Dispatching = SystemDispatcher()) {
+        self.dispatcher = dispatcher
         let initialBrowsers: [BrowserRecord]
         let initialRows: [CatalogRow]
         let initialRules: [Rule]
@@ -299,6 +303,10 @@ final class AppState: ObservableObject {
             }
             return
         }
+        if let onPromptShown {
+            onPromptShown()
+            return
+        }
         let items = rows.map { row in
             PromptItem(
                 id: row.id,
@@ -350,11 +358,12 @@ final class AppState: ObservableObject {
             }
             return
         }
-        let outcome = Dispatcher.open(
+        let outcome = dispatcher.open(
             url: link.url,
             browser: browser,
             row: row,
-            activates: !settings.openInBackground
+            activates: !settings.openInBackground,
+            forceNewInstance: false
         ) { [weak self] error in
             guard let self, let error else { return }
             self.handleOpenError(error, link: link, browser: browser, isRetry: isRetry)
@@ -428,11 +437,12 @@ final class AppState: ObservableObject {
         plain.kind = .app
         plain.chromeDirectory = nil
         plain.firefoxAbsPath = nil
-        _ = Dispatcher.open(
+        _ = dispatcher.open(
             url: pending.url,
             browser: pending.browser,
             row: plain,
-            activates: !settings.openInBackground
+            activates: !settings.openInBackground,
+            forceNewInstance: false
         ) { error in
             if let error {
                 Log.routing.error("Failed to open \(pending.browser.displayName): \(error.localizedDescription)")
@@ -461,7 +471,7 @@ final class AppState: ObservableObject {
 
     func openInNewInstance() {
         guard let pending = pendingQuit else { return }
-        _ = Dispatcher.open(
+        _ = dispatcher.open(
             url: pending.url,
             browser: pending.browser,
             row: pending.row,
@@ -745,6 +755,7 @@ final class AppState: ObservableObject {
     }
 
     func save() {
+        guard !skipsPersistence else { return }
         saveWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
@@ -764,6 +775,7 @@ final class AppState: ObservableObject {
     }
 
     func flushSave() {
+        guard !skipsPersistence else { return }
         saveWork?.cancel()
         saveWork = nil
         Persistence.save(

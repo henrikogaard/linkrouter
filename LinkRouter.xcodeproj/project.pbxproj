@@ -49,6 +49,12 @@
 		A20013 /* DefaultBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
 		A20014 /* URLCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
 		A20015 /* URLCleanerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20006; };
+		A20016 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003; };
+		A20017 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
+		A20018 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
+		A20019 /* SettingsPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
+		A20020 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
+		A20021 /* RoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20007; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +103,7 @@
 		B20004 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 		B20005 /* BrowserCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalogTests.swift; sourceTree = "<group>"; };
 		B20006 /* URLCleanerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleanerTests.swift; sourceTree = "<group>"; };
+		B20007 /* RoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingTests.swift; sourceTree = "<group>"; };
 		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -196,6 +203,7 @@
 				B20004 /* PersistenceTests.swift */,
 				B20005 /* BrowserCatalogTests.swift */,
 				B20006 /* URLCleanerTests.swift */,
+				B20007 /* RoutingTests.swift */,
 			);
 			path = LinkRouterTests;
 			sourceTree = "<group>";
@@ -347,6 +355,12 @@
 				A20005 /* DispatcherTests.swift in Sources */,
 				A20006 /* PersistenceTests.swift in Sources */,
 				A20011 /* BrowserCatalogTests.swift in Sources */,
+				A20016 /* AppState.swift in Sources */,
+				A20017 /* PromptController.swift in Sources */,
+				A20018 /* PromptView.swift in Sources */,
+				A20019 /* SettingsPresenter.swift in Sources */,
+				A20020 /* ProfileWatcher.swift in Sources */,
+				A20021 /* RoutingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
