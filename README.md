@@ -47,22 +47,45 @@ CI archives a Developer ID build, notarizes it, staples the ticket, and attaches
 1. Launch LinkRouter.
 2. Click **Set as default**. Confirm in System Settings → Desktop & Dock → Default web browser if macOS asks.
 3. Reorder browsers so your favourite is first.
-4. Optionally add Chrome or Firefox.app profiles from the Browsers pane.
+4. Optionally add browser profiles from the Browsers pane.
+
+## Browsers
+
+Profile and private-window rows are supported for any installed Chromium-family browser — Chrome, Chrome Canary, Chrome Beta, Brave, Microsoft Edge, Vivaldi, Chromium, and Arc — plus Firefox. Private windows launch with the browser's own flag (Edge uses `--inprivate`, everything else `--incognito`).
+
+Rows that point at a deleted profile or an uninstalled browser show a **Missing profile** / **Missing** badge and drop out of the picker; **Refresh** re-resolves them.
+
+Not supported: Safari and Orion profiles, and Arc Spaces — they can't be targeted from outside the browser.
+
+## Links in
+
+Beyond acting as the default browser, links can reach LinkRouter from:
+
+- **Shortcuts**: the *Open Link with LinkRouter* and *Open Link in a Browser* intents route a URL through the rules or straight to a chosen row.
+- **Services**: select text containing a URL in any app → Services → *Route Link with LinkRouter*.
+- **Clipboard**: the menu bar's *Route Clipboard Link* item sends the first http(s) URL on the pasteboard through the router.
+
+## Picker and history
+
+The picker can auto-dismiss after 15/30/60 s (General → Opening links); an expired picker opens the favourite if one is set. The menu bar can pause routing so every link goes straight to the favourite, and keeps a Recent list. Settings → History shows a searchable list of the last 200 routed links with reopen, copy, and always-open-here actions.
 
 ## Troubleshooting
 
 - **State file**: `~/Library/Application Support/LinkRouter/state.json`. If the file can't be decoded, the original is kept next to it as `state.corrupt-*.json` and the app reseeds from Launch Services.
 - **Logs**: `log stream --predicate 'subsystem == "app.linkrouter"'` (categories `app` and `routing`).
 - **Browser moved or uninstalled**: the row shows **Missing** and its picker toggle is disabled. The **Refresh** button in the Browsers pane re-resolves rows by bundle identifier; remove rows that are gone for good with **Remove**.
+- **Profile deleted in the browser**: the row shows **Missing profile** and leaves the picker until the profile returns or the row is removed.
 
 ## v1
 
 - Intercept `http`/`https` from other apps
 - Row picker at the pointer, keys 1-9, Return, Escape
 - First-match URL and running-count rules
-- Cold-start Chrome profiles / Incognito and Firefox.app profiles / private windows
+- Chromium-family profiles / private windows (Chrome, Canary, Beta, Brave, Edge, Vivaldi, Chromium, Arc) and Firefox.app profiles / private windows
 - Menu bar extra, hide Dock, open at login
+- Pause routing, auto-dismissing picker, 200-entry history
+- Shortcuts intents, Services entry, route-from-clipboard
 
-Not in v1: source-app rules, Safari profiles, browser extensions, Mac App Store build.
+Not in v1: source-app rules, Safari and Orion profiles, Arc Spaces, browser extensions, Mac App Store build.
 
 The research spec lives in `.scratch/graph/20260911-1530-choosy-clone/report.md`.

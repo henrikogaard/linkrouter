@@ -21,6 +21,10 @@
 		A10009 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
 		A10010 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
 		A10026 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
+		A10027 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
+		A10028 /* URLCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
+		A10029 /* HistoryPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029; };
+		A10030 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -45,6 +49,14 @@
 		A20011 /* BrowserCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20005; };
 		A20012 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
 		A20013 /* DefaultBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
+		A20014 /* URLCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
+		A20015 /* URLCleanerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20006; };
+		A20016 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003; };
+		A20017 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
+		A20018 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
+		A20019 /* SettingsPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
+		A20020 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
+		A20021 /* RoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20007; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +84,10 @@
 		B10009 /* Dispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatcher.swift; sourceTree = "<group>"; };
 		B10010 /* BrowserCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalog.swift; sourceTree = "<group>"; };
 		B10026 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		B10027 /* ProfileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileWatcher.swift; sourceTree = "<group>"; };
+		B10028 /* URLCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleaner.swift; sourceTree = "<group>"; };
+		B10029 /* HistoryPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPane.swift; sourceTree = "<group>"; };
+		B10030 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -90,6 +106,8 @@
 		B20003 /* DispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatcherTests.swift; sourceTree = "<group>"; };
 		B20004 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 		B20005 /* BrowserCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalogTests.swift; sourceTree = "<group>"; };
+		B20006 /* URLCleanerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleanerTests.swift; sourceTree = "<group>"; };
+		B20007 /* RoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingTests.swift; sourceTree = "<group>"; };
 		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -142,6 +160,7 @@
 				B10003 /* AppState.swift */,
 				B10021 /* SettingsPresenter.swift */,
 				B10025 /* AboutPanel.swift */,
+				B10030 /* Intents.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -157,6 +176,8 @@
 				B10009 /* Dispatcher.swift */,
 				B10010 /* BrowserCatalog.swift */,
 				B10026 /* Log.swift */,
+				B10027 /* ProfileWatcher.swift */,
+				B10028 /* URLCleaner.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -174,6 +195,7 @@
 				B10024 /* ProfilesPane.swift */,
 				B10016 /* RulesPane.swift */,
 				B10017 /* GeneralPane.swift */,
+				B10029 /* HistoryPane.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -186,6 +208,8 @@
 				B20003 /* DispatcherTests.swift */,
 				B20004 /* PersistenceTests.swift */,
 				B20005 /* BrowserCatalogTests.swift */,
+				B20006 /* URLCleanerTests.swift */,
+				B20007 /* RoutingTests.swift */,
 			);
 			path = LinkRouterTests;
 			sourceTree = "<group>";
@@ -303,6 +327,8 @@
 				A10009 /* Dispatcher.swift in Sources */,
 				A10010 /* BrowserCatalog.swift in Sources */,
 				A10026 /* Log.swift in Sources */,
+				A10027 /* ProfileWatcher.swift in Sources */,
+				A10028 /* URLCleaner.swift in Sources */,
 				A10011 /* PromptView.swift in Sources */,
 				A10012 /* PromptController.swift in Sources */,
 				A10013 /* Mark.swift in Sources */,
@@ -313,6 +339,8 @@
 				A10024 /* ProfilesPane.swift in Sources */,
 				A10016 /* RulesPane.swift in Sources */,
 				A10017 /* GeneralPane.swift in Sources */,
+				A10029 /* HistoryPane.swift in Sources */,
+				A10030 /* Intents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -329,10 +357,18 @@
 				A20010 /* Dispatcher.swift in Sources */,
 				A20012 /* BrowserCatalog.swift in Sources */,
 				A20013 /* DefaultBrowser.swift in Sources */,
+				A20014 /* URLCleaner.swift in Sources */,
+				A20015 /* URLCleanerTests.swift in Sources */,
 				A20004 /* ProfileReaderTests.swift in Sources */,
 				A20005 /* DispatcherTests.swift in Sources */,
 				A20006 /* PersistenceTests.swift in Sources */,
 				A20011 /* BrowserCatalogTests.swift in Sources */,
+				A20016 /* AppState.swift in Sources */,
+				A20017 /* PromptController.swift in Sources */,
+				A20018 /* PromptView.swift in Sources */,
+				A20019 /* SettingsPresenter.swift in Sources */,
+				A20020 /* ProfileWatcher.swift in Sources */,
+				A20021 /* RoutingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -73,13 +73,15 @@ enum LinkKind: String, Codable, CaseIterable, Identifiable {
 
 struct Condition: Codable, Equatable, Identifiable {
     enum Kind: String, Codable, CaseIterable, Identifiable {
-        case url, runningCount, linkType
+        case url, runningCount, linkType, sourceApp, schedule
         var id: String { rawValue }
         var label: String {
             switch self {
             case .url: "Web address"
             case .runningCount: "Running browsers"
             case .linkType: "Link type"
+            case .sourceApp: "Sent from app"
+            case .schedule: "Time of day"
             }
         }
     }
@@ -91,6 +93,9 @@ struct Condition: Codable, Equatable, Identifiable {
     var countComparator: CountComparator
     var count: Int
     var linkKind: LinkKind
+    var startMinute: Int = 540
+    var endMinute: Int = 1020
+    var weekdays: Set<Int> = [2, 3, 4, 5, 6]
 
     static func url(matcher: URLMatcher = .contains, pattern: String = "") -> Condition {
         Condition(
@@ -114,6 +119,22 @@ struct Condition: Codable, Equatable, Identifiable {
             count: n,
             linkKind: .website
         )
+    }
+}
+
+extension Condition {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        kind = try container.decode(Kind.self, forKey: .kind)
+        urlMatcher = try container.decodeIfPresent(URLMatcher.self, forKey: .urlMatcher) ?? .contains
+        pattern = try container.decodeIfPresent(String.self, forKey: .pattern) ?? ""
+        countComparator = try container.decodeIfPresent(CountComparator.self, forKey: .countComparator) ?? .greaterThan
+        count = try container.decodeIfPresent(Int.self, forKey: .count) ?? 0
+        linkKind = try container.decodeIfPresent(LinkKind.self, forKey: .linkKind) ?? .website
+        startMinute = try container.decodeIfPresent(Int.self, forKey: .startMinute) ?? 540
+        endMinute = try container.decodeIfPresent(Int.self, forKey: .endMinute) ?? 1020
+        weekdays = try container.decodeIfPresent(Set<Int>.self, forKey: .weekdays) ?? [2, 3, 4, 5, 6]
     }
 }
 
@@ -240,6 +261,15 @@ struct RouteProfile: Codable, Equatable, Identifiable {
             .filter { !$0.isEmpty }
     }
 
+    func adding(host: String) -> RouteProfile {
+        var copy = self
+        copy.patterns = filledPatterns
+        if !copy.patterns.contains(host) {
+            copy.patterns.append(host)
+        }
+        return copy
+    }
+
     var patternSummary: String {
         let filled = filledPatterns
         if filled.isEmpty { return "No URL patterns yet" }
@@ -263,9 +293,13 @@ struct AppSettings: Codable, Equatable {
     var forcePromptOnModifier: Bool = true
     var openInBackground: Bool = false
     var appearance: AppearanceMode = .system
+    var unwrapRedirects = true
+    var stripTrackingParams = true
+    var promptTimeout: Int = 0
 
     enum CodingKeys: String, CodingKey {
         case showMenuBar, forcePromptOnModifier, openInBackground, appearance
+        case unwrapRedirects, stripTrackingParams, promptTimeout
     }
 
     init() {}
@@ -276,7 +310,18 @@ struct AppSettings: Codable, Equatable {
         forcePromptOnModifier = try container.decodeIfPresent(Bool.self, forKey: .forcePromptOnModifier) ?? true
         openInBackground = try container.decodeIfPresent(Bool.self, forKey: .openInBackground) ?? false
         appearance = try container.decodeIfPresent(AppearanceMode.self, forKey: .appearance) ?? .system
+        unwrapRedirects = try container.decodeIfPresent(Bool.self, forKey: .unwrapRedirects) ?? true
+        stripTrackingParams = try container.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
+        promptTimeout = try container.decodeIfPresent(Int.self, forKey: .promptTimeout) ?? 0
     }
+}
+
+struct RoutedEntry: Codable, Equatable, Identifiable {
+    var id: UUID
+    var url: URL
+    var rowID: UUID
+    var title: String
+    var date: Date
 }
 
 struct PersistedState: Codable {
@@ -285,19 +330,22 @@ struct PersistedState: Codable {
     var rules: [Rule]
     var profiles: [RouteProfile]
     var settings: AppSettings
+    var recent: [RoutedEntry]
 
     init(
         browsers: [BrowserRecord],
         rows: [CatalogRow],
         rules: [Rule],
         profiles: [RouteProfile],
-        settings: AppSettings
+        settings: AppSettings,
+        recent: [RoutedEntry] = []
     ) {
         self.browsers = browsers
         self.rows = rows
         self.rules = rules
         self.profiles = profiles
         self.settings = settings
+        self.recent = recent
     }
 
     init(from decoder: Decoder) throws {
@@ -307,11 +355,14 @@ struct PersistedState: Codable {
         rules = try container.decode([Rule].self, forKey: .rules)
         profiles = try container.decodeIfPresent([RouteProfile].self, forKey: .profiles) ?? RouteProfile.shipped()
         settings = try container.decode(AppSettings.self, forKey: .settings)
+        recent = try container.decodeIfPresent([RoutedEntry].self, forKey: .recent) ?? []
     }
 }
 
 struct IncomingLink: Equatable {
     var url: URL
+    var sourceBundleID: String? = nil
+    var sourceName: String? = nil
     var absoluteString: String { url.absoluteString }
     var host: String { url.host ?? url.absoluteString }
     var isSecure: Bool { url.scheme?.lowercased() == "https" }

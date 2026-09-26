@@ -48,4 +48,14 @@ final class ProfileReaderTests: XCTestCase {
         XCTAssertEqual(profiles[0], ChromeProfile(directory: "Default", name: "Person 1"))
         XCTAssertEqual(profiles[1], ChromeProfile(directory: "Profile 2", name: "Profile 2"))
     }
+
+    func testChromiumFamilyLookups() {
+        XCTAssertEqual(ProfileReader.family(for: "com.google.Chrome")?.userDataDir, "Google/Chrome")
+        XCTAssertEqual(ProfileReader.family(for: "com.brave.Browser")?.shortName, "Brave")
+        XCTAssertEqual(ProfileReader.family(for: "com.microsoft.edgemac")?.privateFlag, "--inprivate")
+        XCTAssertEqual(ProfileReader.family(for: "com.microsoft.edgemac")?.privateWord, "InPrivate")
+        XCTAssertEqual(ProfileReader.family(for: "com.google.Chrome")?.privateWord, "Incognito")
+        XCTAssertNil(ProfileReader.family(for: "com.apple.Safari"))
+        XCTAssertNil(ProfileReader.family(for: "org.mozilla.firefox"))
+    }
 }
