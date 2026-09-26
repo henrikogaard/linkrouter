@@ -36,9 +36,15 @@ struct LinkRouterApp: App {
         MenuBarExtra(isInserted: menuBarBinding) {
             MenuBarMenu()
         } label: {
-            Image("MenuBarIcon")
-                .renderingMode(.template)
-                .accessibilityLabel("LinkRouter")
+            if state.isPaused {
+                Image(systemName: "pause.circle")
+                    .renderingMode(.template)
+                    .accessibilityLabel("LinkRouter (paused)")
+            } else {
+                Image("MenuBarIcon")
+                    .renderingMode(.template)
+                    .accessibilityLabel("LinkRouter")
+            }
         }
         .menuBarExtraStyle(.menu)
     }
@@ -68,6 +74,20 @@ private struct MenuBarMenu: View {
             }
             Divider()
         }
+        if state.isPaused {
+            Text(pausedLabel)
+                .foregroundStyle(.secondary)
+            Button("Resume Routing") {
+                state.resume()
+            }
+        } else {
+            Menu("Pause Routing") {
+                Button("For 15 minutes") { state.pause(for: 15 * 60) }
+                Button("For 1 hour") { state.pause(for: 60 * 60) }
+                Button("Until resumed") { state.pause(for: nil) }
+            }
+        }
+        Divider()
         Section("Recent") {
             if state.recent.isEmpty {
                 Text("No links routed yet")
@@ -94,6 +114,14 @@ private struct MenuBarMenu: View {
         Button("Quit LinkRouter") {
             NSApp.terminate(nil)
         }
+    }
+
+    private var pausedLabel: String {
+        guard let until = state.pausedUntil else { return "Routing paused" }
+        if until == .distantFuture {
+            return "Routing paused (until resumed)"
+        }
+        return "Routing paused (until \(until.formatted(date: .omitted, time: .shortened)))"
     }
 
     private func recentLabel(_ entry: RoutedEntry) -> String {
