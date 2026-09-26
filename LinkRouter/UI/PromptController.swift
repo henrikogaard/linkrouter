@@ -11,6 +11,8 @@ final class PromptController {
     private var panel: KeyPanel?
     private var hosting: NSHostingView<PromptView>?
 
+    var isVisible: Bool { panel != nil }
+
     func show(items: [PromptItem], link: IncomingLink, onPick: @escaping (UUID?) -> Void) {
         dismiss()
         guard !items.isEmpty else { return }
