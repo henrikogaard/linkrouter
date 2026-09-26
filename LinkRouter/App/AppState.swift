@@ -28,6 +28,7 @@ final class AppState: ObservableObject {
         let initialRules: [Rule]
         let initialProfiles: [RouteProfile]
         let initialSettings: AppSettings
+        var corrupted = false
         switch Persistence.load() {
         case .loaded(let persisted):
             initialBrowsers = persisted.browsers
@@ -35,7 +36,15 @@ final class AppState: ObservableObject {
             initialRules = persisted.rules
             initialProfiles = persisted.profiles
             initialSettings = persisted.settings
-        case .missing, .corrupt:
+        case .missing:
+            let seed = BrowserCatalog.seedFromLaunchServices()
+            initialBrowsers = seed.browsers
+            initialRows = seed.rows
+            initialRules = Rule.shipped()
+            initialProfiles = RouteProfile.shipped()
+            initialSettings = AppSettings()
+        case .corrupt:
+            corrupted = true
             let seed = BrowserCatalog.seedFromLaunchServices()
             initialBrowsers = seed.browsers
             initialRows = seed.rows
@@ -52,6 +61,17 @@ final class AppState: ObservableObject {
         isDefaultBrowser = DefaultBrowser.isLinkRouterDefault()
         runningIDs = BrowserCatalog.runningIdentifiers(in: initialBrowsers)
         observeRunning()
+        if corrupted {
+            Persistence.save(
+                PersistedState(
+                    browsers: browsers,
+                    rows: rows,
+                    rules: rules,
+                    profiles: profiles,
+                    settings: settings
+                )
+            )
+        }
     }
 
     var enabledRows: [CatalogRow] { rows.filter(\.enabled) }
@@ -86,7 +106,9 @@ final class AppState: ObservableObject {
     }
 
     func isAvailable(_ row: CatalogRow) -> Bool {
-        resolvedBrowser(for: row) != nil
+        guard let record = browser(for: row) else { return false }
+        if FileManager.default.fileExists(atPath: record.path) { return true }
+        return NSWorkspace.shared.urlForApplication(withBundleIdentifier: record.bundleIdentifier) != nil
     }
 
     func title(for row: CatalogRow) -> String {

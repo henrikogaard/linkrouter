@@ -12,10 +12,16 @@ This is an independent app. It is not affiliated with Choosy.
 ## Build
 
 ```sh
-xcodebuild -project LinkRouter.xcodeproj -scheme LinkRouter -destination 'platform=macOS' -derivedDataPath build CODE_SIGN_IDENTITY="-" CODE_SIGNING_ALLOWED=NO test
+xcodebuild -scheme LinkRouter -configuration Debug
 ```
 
 Or open `LinkRouter.xcodeproj` in Xcode and run.
+
+## Test
+
+```sh
+xcodebuild -project LinkRouter.xcodeproj -scheme LinkRouter -destination 'platform=macOS' -derivedDataPath build CODE_SIGN_IDENTITY="-" CODE_SIGNING_ALLOWED=NO test
+```
 
 Copy the built app to `/Applications` before making it the default browser, so Launch Services is not talking to a translocated copy in Downloads.
 
