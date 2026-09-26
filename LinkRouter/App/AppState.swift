@@ -208,7 +208,15 @@ final class AppState: ObservableObject {
     func handleIncoming(_ url: URL, source: (bundleID: String, name: String)? = nil) {
         guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return }
         pendingQuit = nil
-        let link = IncomingLink(url: url, sourceBundleID: source?.bundleID, sourceName: source?.name)
+        let cleaned = URLCleaner.clean(
+            url,
+            unwrap: settings.unwrapRedirects,
+            strip: settings.stripTrackingParams
+        )
+        if cleaned != url {
+            Log.routing.info("Cleaned \(url.absoluteString) -> \(cleaned.absoluteString)")
+        }
+        let link = IncomingLink(url: cleaned, sourceBundleID: source?.bundleID, sourceName: source?.name)
         let flags = NSEvent.modifierFlags
         let force = settings.forcePromptOnModifier && !flags.intersection([.shift, .control, .option, .command]).isEmpty
         let result = RuleEngine.evaluate(
