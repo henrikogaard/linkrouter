@@ -29,6 +29,9 @@ struct RulesPane: View {
                             state.duplicateRule(rule)
                         }
                         if !rule.isFallback {
+                            Toggle("Enabled", isOn: enabledBinding(rule))
+                        }
+                        if !rule.isFallback {
                             Button("Delete", role: .destructive) {
                                 remove(rule)
                             }
@@ -118,6 +121,17 @@ struct RulesPane: View {
     private enum TestOutcome {
         case plain(String)
         case rule(String, UUID)
+    }
+
+    private func enabledBinding(_ rule: Rule) -> Binding<Bool> {
+        Binding(
+            get: { rule.enabled },
+            set: { value in
+                var next = rule
+                next.enabled = value
+                state.updateRule(next)
+            }
+        )
     }
 
     private var testOutcome: TestOutcome? {

@@ -205,6 +205,34 @@ final class AppState: ObservableObject {
         return runningIDs.contains(id)
     }
 
+    @Published var pausedUntil: Date?
+    private var resumeTask: Task<Void, Never>?
+
+    var isPaused: Bool {
+        guard let pausedUntil else { return false }
+        return pausedUntil == .distantFuture || pausedUntil > Date()
+    }
+
+    func pause(for duration: TimeInterval?) {
+        resumeTask?.cancel()
+        if let duration {
+            pausedUntil = Date().addingTimeInterval(duration)
+            resumeTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self?.resume() }
+            }
+        } else {
+            pausedUntil = .distantFuture
+        }
+    }
+
+    func resume() {
+        resumeTask?.cancel()
+        resumeTask = nil
+        pausedUntil = nil
+    }
+
     func handleIncoming(_ url: URL, source: (bundleID: String, name: String)? = nil) {
         guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return }
         pendingQuit = nil
@@ -217,6 +245,10 @@ final class AppState: ObservableObject {
             Log.routing.info("Cleaned \(url.absoluteString) -> \(cleaned.absoluteString)")
         }
         let link = IncomingLink(url: cleaned, sourceBundleID: source?.bundleID, sourceName: source?.name)
+        if isPaused, let row = favourite ?? bestRunning() {
+            dispatch(link, row: row)
+            return
+        }
         let flags = NSEvent.modifierFlags
         let force = settings.forcePromptOnModifier && !flags.intersection([.shift, .control, .option, .command]).isEmpty
         let result = RuleEngine.evaluate(
