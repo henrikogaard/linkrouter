@@ -13,24 +13,39 @@ final class PromptController {
 
     var isVisible: Bool { panel != nil }
 
-    func show(items: [PromptItem], link: IncomingLink, onPick: @escaping (UUID?) -> Void) {
+    func show(
+        items: [PromptItem],
+        link: IncomingLink,
+        onPick: @escaping (UUID?, Bool) -> Void,
+        onAlways: @escaping (UUID) -> Void
+    ) {
         dismiss()
         guard !items.isEmpty else { return }
 
-        let width = CGFloat(max(items.count, 1)) * 76 + 24
-        let height: CGFloat = 148
+        let width = CGFloat(max(items.count, 1) + 1) * 76 + 24
+        let height: CGFloat = items.count > 6 ? 162 : 148
         var origin = originForPointer(size: NSSize(width: width, height: height), itemCount: items.count)
 
         let view = PromptView(
             items: items,
             link: link,
-            onPick: { [weak self] id in
+            onPick: { [weak self] id, keepOpen in
+                if !keepOpen { self?.dismiss() }
+                onPick(id, keepOpen)
+            },
+            onAlways: { [weak self] id in
                 self?.dismiss()
-                onPick(id)
+                onAlways(id)
+            },
+            onCopy: { [weak self] in
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(link.url.absoluteString, forType: .string)
+                self?.dismiss()
+                onPick(nil, false)
             },
             onCancel: { [weak self] in
                 self?.dismiss()
-                onPick(nil)
+                onPick(nil, false)
             }
         )
 

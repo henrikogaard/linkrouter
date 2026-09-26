@@ -218,13 +218,27 @@ final class AppState: ObservableObject {
                 icon: BrowserCatalog.icon(for: browser(for: row)?.path ?? "")
             )
         }
-        prompt.show(items: items, link: link) { [weak self] picked in
-            guard let self else { return }
-            if let picked, let row = self.rows.first(where: { $0.id == picked }) {
-                self.dispatch(link, row: row, isRetry: true)
+        prompt.show(
+            items: items,
+            link: link,
+            onPick: { [weak self] picked, keepOpen in
+                guard let self else { return }
+                if let picked, let row = self.rows.first(where: { $0.id == picked }) {
+                    self.dispatch(link, row: row, isRetry: true)
+                }
+                if !keepOpen {
+                    self.showNextQueuedPrompt()
+                }
+            },
+            onAlways: { [weak self] rowID in
+                guard let self else { return }
+                self.alwaysOpen(host: link.host, in: rowID)
+                if let row = self.rows.first(where: { $0.id == rowID }) {
+                    self.dispatch(link, row: row, isRetry: true)
+                }
+                self.showNextQueuedPrompt()
             }
-            self.showNextQueuedPrompt()
-        }
+        )
     }
 
     private func showNextQueuedPrompt() {
@@ -561,6 +575,62 @@ final class AppState: ObservableObject {
         if let fallback { working.append(fallback) }
         rules = working
         save()
+    }
+
+    func duplicateRule(_ rule: Rule) {
+        guard let index = rules.firstIndex(where: { $0.id == rule.id }) else { return }
+        var copy = rule
+        copy.id = UUID()
+        copy.title = rule.title + " copy"
+        copy.isFallback = false
+        copy.conditions = rule.conditions.map { condition in
+            var next = condition
+            next.id = UUID()
+            return next
+        }
+        let fallbackIndex = rules.firstIndex(where: \.isFallback) ?? rules.count
+        rules.insert(copy, at: min(index + 1, fallbackIndex))
+        save()
+    }
+
+    func alwaysOpen(host: String, in rowID: UUID) {
+        guard let row = rows.first(where: { $0.id == rowID }) else { return }
+        if let index = profiles.firstIndex(where: { $0.enabled && $0.browserRowID == rowID }) {
+            profiles[index] = profiles[index].adding(host: host)
+        } else {
+            profiles.append(
+                RouteProfile(
+                    id: UUID(),
+                    name: title(for: row),
+                    enabled: true,
+                    browserRowID: rowID,
+                    patterns: [host]
+                )
+            )
+        }
+        save()
+    }
+
+    func describe(_ result: EngineResult) -> String {
+        switch result {
+        case .favourite:
+            return favourite.map { "Opens \(title(for: $0))" } ?? "No favourite set"
+        case .bestRunning:
+            return bestRunning().map { "Opens \(title(for: $0))" } ?? "No running browser"
+        case .open(let ids):
+            return "Opens \(rowTitles(ids))"
+        case .promptAll:
+            return "Prompt for all browsers"
+        case .promptRunning:
+            return "Prompt for running browsers"
+        case .prompt(let ids):
+            return "Prompt for \(rowTitles(ids))"
+        }
+    }
+
+    private func rowTitles(_ ids: [UUID]) -> String {
+        let titles = ids.compactMap { id in rows.first { $0.id == id } }.map { title(for: $0) }
+        return titles.isEmpty ? "no browsers" : titles.joined(separator: ", ")
     }
 
     func setLoginItem(_ enabled: Bool) {
