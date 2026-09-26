@@ -15,6 +15,7 @@ struct PromptView: View {
     var onAlways: (UUID) -> Void
     var onCopy: () -> Void
     var onCancel: () -> Void
+    @ObservedObject var countdown: PromptCountdown
 
     @State private var selected: UUID?
     @State private var hovered: UUID?
@@ -84,7 +85,14 @@ struct PromptView: View {
                     .help("Copy link")
             }
             .padding(.horizontal, 12)
-            .padding(.bottom, 14)
+            if let remaining = countdown.remaining, remaining <= 10 {
+                Text("Closes in \(remaining) s")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.tertiary)
+            } else {
+                Spacer().frame(height: 1)
+            }
+            Spacer().frame(height: 9)
         }
         .background {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
