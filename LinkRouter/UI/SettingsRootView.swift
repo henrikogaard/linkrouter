@@ -5,11 +5,11 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .browsers: "Browsers"
-        case .profiles: "Profiles"
-        case .rules: "Rules"
-        case .history: "History"
-        case .general: "General"
+        case .browsers: String(localized: "Browsers")
+        case .profiles: String(localized: "Profiles")
+        case .rules: String(localized: "Rules")
+        case .history: String(localized: "History")
+        case .general: String(localized: "General")
         }
     }
     var symbol: String {

@@ -59,6 +59,8 @@
 		A20020 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
 		A20021 /* RoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20007; };
 		A90000 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = P90001 /* Sparkle */; };
+		A90002 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90002; };
+		A90003 /* AppShortcuts.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90003; };
 		A90001 /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90001; };
 /* End PBXBuildFile section */
 
@@ -113,6 +115,8 @@
 		B20006 /* URLCleanerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleanerTests.swift; sourceTree = "<group>"; };
 		B20007 /* RoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingTests.swift; sourceTree = "<group>"; };
 		B90001 /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
+		B90002 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		B90003 /* AppShortcuts.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = AppShortcuts.xcstrings; sourceTree = "<group>"; };
 		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -152,6 +156,8 @@
 				G00003 /* Domain */,
 				G00004 /* UI */,
 				B10018 /* Assets.xcassets */,
+				B90002 /* Localizable.xcstrings */,
+				B90003 /* AppShortcuts.xcstrings */,
 				B10019 /* Info.plist */,
 				B10020 /* LinkRouter.entitlements */,
 			);
@@ -297,6 +303,7 @@
 			knownRegions = (
 				en,
 				Base,
+				nb,
 			);
 			mainGroup = G00000;
 			packageReferences = (
@@ -318,6 +325,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10018 /* Assets.xcassets in Resources */,
+				A90002 /* Localizable.xcstrings in Resources */,
+				A90003 /* AppShortcuts.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -471,6 +480,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;
@@ -499,6 +509,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;

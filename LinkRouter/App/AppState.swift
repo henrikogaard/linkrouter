@@ -455,8 +455,8 @@ final class AppState: ObservableObject {
 
     private func presentNoBrowserAlert() {
         let alert = NSAlert()
-        alert.messageText = "No browser available"
-        alert.informativeText = "Add a browser in LinkRouter → Browsers."
+        alert.messageText = String(localized: "No browser available")
+        alert.informativeText = String(localized: "Add a browser in LinkRouter → Browsers.")
         alert.addButton(withTitle: "Open Settings")
         alert.addButton(withTitle: "Cancel")
         NSApp.activate(ignoringOtherApps: true)
@@ -467,7 +467,7 @@ final class AppState: ObservableObject {
 
     private func presentOpenFailedAlert(browserName: String, error: Error) {
         let alert = NSAlert()
-        alert.messageText = "Couldn't open \(browserName)"
+        alert.messageText = String(localized: "Couldn't open \(browserName)")
         alert.informativeText = error.localizedDescription
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
@@ -496,8 +496,8 @@ final class AppState: ObservableObject {
 
     func presentQuitAlert(browserName: String, url: URL, row: CatalogRow, browser: BrowserRecord) {
         let alert = NSAlert()
-        alert.messageText = "\(browserName) is already running"
-        alert.informativeText = "\(browserName) applies a profile only when it starts cold. Open a separate \(browserName) instance for this profile, or open the link in the running \(browserName) without a profile."
+        alert.messageText = String(localized: "\(browserName) is already running")
+        alert.informativeText = String(localized: "\(browserName) applies a profile only when it starts cold. Open a separate \(browserName) instance for this profile, or open the link in the running \(browserName) without a profile.")
         alert.addButton(withTitle: "Open in new instance")
         alert.addButton(withTitle: "Open without profile")
         alert.addButton(withTitle: "Cancel")
@@ -758,17 +758,17 @@ final class AppState: ObservableObject {
     func describe(_ result: EngineResult) -> String {
         switch result {
         case .favourite:
-            return favourite.map { "Opens \(title(for: $0))" } ?? "No favourite set"
+            return favourite.map { String(localized: "Opens \(title(for: $0))") } ?? String(localized: "No favourite set")
         case .bestRunning:
-            return bestRunning().map { "Opens \(title(for: $0))" } ?? "No running browser"
+            return bestRunning().map { String(localized: "Opens \(title(for: $0))") } ?? String(localized: "No running browser")
         case .open(let ids):
-            return "Opens \(rowTitles(ids))"
+            return String(localized: "Opens \(rowTitles(ids))")
         case .promptAll:
-            return "Prompt for all browsers"
+            return String(localized: "Prompt for all browsers")
         case .promptRunning:
-            return "Prompt for running browsers"
+            return String(localized: "Prompt for running browsers")
         case .prompt(let ids):
-            return "Prompt for \(rowTitles(ids))"
+            return String(localized: "Prompt for \(rowTitles(ids))")
         }
     }
 

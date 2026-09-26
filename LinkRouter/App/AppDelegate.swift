@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let loadIssue = AppState.shared.loadIssue {
             let alert = NSAlert()
             alert.messageText = loadIssue
-            alert.informativeText = "Starting with default settings. The original file was kept next to state.json in Application Support."
+            alert.informativeText = String(localized: "Starting with default settings. The original file was kept next to state.json in Application Support.")
             alert.addButton(withTitle: "OK")
             alert.runModal()
         }

@@ -302,9 +302,9 @@ private struct BrowserRow: View {
 
     private var label: String {
         if !state.isAvailable(row) {
-            return state.title(for: row) + ", missing"
+            return state.title(for: row) + String(localized: ", missing")
         }
-        return state.title(for: row) + (state.isRunning(row) ? ", running" : ", not running")
+        return state.title(for: row) + (state.isRunning(row) ? String(localized: ", running") : String(localized: ", not running"))
     }
 
     private var enabledBinding: Binding<Bool> {
