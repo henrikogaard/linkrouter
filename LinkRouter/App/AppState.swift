@@ -382,8 +382,8 @@ final class AppState: ObservableObject {
             let entry = RoutedEntry(id: UUID(), url: link.url, rowID: row.id, title: title(for: row), date: .now)
             recent.removeAll { $0.url == entry.url && $0.rowID == entry.rowID }
             recent.insert(entry, at: 0)
-            if recent.count > 10 {
-                recent.removeLast(recent.count - 10)
+            if recent.count > 200 {
+                recent.removeLast(recent.count - 200)
             }
             save()
         case .needsHostQuit(_, let name):
