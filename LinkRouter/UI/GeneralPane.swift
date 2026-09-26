@@ -55,6 +55,23 @@ struct GeneralPane: View {
                         .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
                 }
 
+                settingsGroup("Link cleaning") {
+                    Toggle("Unwrap redirect links", isOn: $state.settings.unwrapRedirects)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.unwrapRedirects) { _, _ in state.save() }
+                    Text("Follows known redirectors (Google /url, Outlook SafeLinks, Facebook l.php) to the real URL before routing.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    Toggle("Strip tracking parameters", isOn: $state.settings.stripTrackingParams)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.stripTrackingParams) { _, _ in state.save() }
+                    Text("Removes utm_* and common click IDs (fbclid, gclid, …) before routing.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
                 settingsGroup("Menu bar") {
                     Toggle("Show menu bar icon", isOn: $state.settings.showMenuBar)
                         .toggleStyle(.switch)

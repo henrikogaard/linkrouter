@@ -273,9 +273,12 @@ struct AppSettings: Codable, Equatable {
     var forcePromptOnModifier: Bool = true
     var openInBackground: Bool = false
     var appearance: AppearanceMode = .system
+    var unwrapRedirects = true
+    var stripTrackingParams = true
 
     enum CodingKeys: String, CodingKey {
         case showMenuBar, forcePromptOnModifier, openInBackground, appearance
+        case unwrapRedirects, stripTrackingParams
     }
 
     init() {}
@@ -286,6 +289,8 @@ struct AppSettings: Codable, Equatable {
         forcePromptOnModifier = try container.decodeIfPresent(Bool.self, forKey: .forcePromptOnModifier) ?? true
         openInBackground = try container.decodeIfPresent(Bool.self, forKey: .openInBackground) ?? false
         appearance = try container.decodeIfPresent(AppearanceMode.self, forKey: .appearance) ?? .system
+        unwrapRedirects = try container.decodeIfPresent(Bool.self, forKey: .unwrapRedirects) ?? true
+        stripTrackingParams = try container.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
     }
 }
 
