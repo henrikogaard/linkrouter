@@ -117,7 +117,8 @@ struct PromptView: View {
                 move(1)
                 return .handled
             }
-            if press.key == .delete {
+            if press.key == .delete || press.key == .deleteForward
+                || press.characters == "\u{7F}" || press.characters == "\u{8}" {
                 if !filter.isEmpty {
                     filter.removeLast()
                     return .handled
