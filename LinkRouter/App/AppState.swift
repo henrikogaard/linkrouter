@@ -334,7 +334,7 @@ final class AppState: ObservableObject {
     func presentQuitAlert(browserName: String, url: URL, row: CatalogRow, browser: BrowserRecord) {
         let alert = NSAlert()
         alert.messageText = "\(browserName) is already running"
-        alert.informativeText = "Firefox applies a profile only when it starts cold. Open a separate Firefox instance for this profile, or open the link in the running Firefox without a profile."
+        alert.informativeText = "\(browserName) applies a profile only when it starts cold. Open a separate \(browserName) instance for this profile, or open the link in the running \(browserName) without a profile."
         alert.addButton(withTitle: "Open in new instance")
         alert.addButton(withTitle: "Open without profile")
         alert.addButton(withTitle: "Cancel")
