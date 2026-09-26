@@ -172,7 +172,7 @@ jobs:
             dist/LinkRouter-${{ env.VERSION }}.zip
             dist/SHA256SUMS
             dist/appcast.xml
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
