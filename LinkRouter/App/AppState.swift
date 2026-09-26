@@ -65,6 +65,10 @@ final class AppState: ObservableObject {
         isDefaultBrowser = DefaultBrowser.isLinkRouterDefault()
         runningIDs = BrowserCatalog.runningIdentifiers(in: initialBrowsers)
         observeRunning()
+        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            guard let self, !self.isDefaultBrowser else { return }
+            self.refreshDefaultStatus()
+        }
         if corrupted {
             Persistence.save(
                 PersistedState(
@@ -369,11 +373,21 @@ final class AppState: ObservableObject {
         isDefaultBrowser = DefaultBrowser.isLinkRouterDefault()
     }
 
+    private var defaultPollTask: Task<Void, Never>?
+
     func requestDefault() {
         DefaultBrowser.requestDefault()
-        for delay in [1.2, 3.0, 6.0] {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.refreshDefaultStatus()
+        defaultPollTask?.cancel()
+        defaultPollTask = Task { [weak self] in
+            for _ in 0..<60 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    self?.refreshDefaultStatus()
+                }
+                if self?.isDefaultBrowser == true {
+                    return
+                }
             }
         }
     }

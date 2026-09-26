@@ -82,6 +82,9 @@ private struct MenuBarMenu: View {
                 }
             }
         }
+        .onAppear {
+            state.refreshDefaultStatus()
+        }
         Divider()
         Button("Settings") {
             SettingsPresenter.present { id in
