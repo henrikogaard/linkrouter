@@ -93,6 +93,8 @@ enum RuleEngine {
             case .localHTML:
                 return link.isFileURL
             }
+        case .sourceApp:
+            return urlMatches(link.sourceBundleID ?? "", matcher: condition.urlMatcher, pattern: condition.pattern)
         }
     }
 

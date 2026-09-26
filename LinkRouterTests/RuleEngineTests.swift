@@ -191,6 +191,26 @@ final class RuleEngineTests: XCTestCase {
         XCTAssertEqual(profile.patterns, ["github.com", "example.com"])
     }
 
+    func testSourceAppCondition() {
+        let condition = Condition(
+            id: UUID(),
+            kind: .sourceApp,
+            urlMatcher: .is,
+            pattern: "com.tinyspeck.slackmacgap",
+            countComparator: .greaterThan,
+            count: 0,
+            linkKind: .website
+        )
+        let fromSlack = IncomingLink(
+            url: URL(string: "https://example.com")!,
+            sourceBundleID: "com.tinyspeck.slackmacgap",
+            sourceName: "Slack"
+        )
+        let noSource = link("https://example.com")
+        XCTAssertTrue(RuleEngine.conditionMatches(condition, link: fromSlack, runningCount: 0))
+        XCTAssertFalse(RuleEngine.conditionMatches(condition, link: noSource, runningCount: 0))
+    }
+
     func testDisabledProfileIsSkipped() {
         let profile = RouteProfile(
             id: UUID(),

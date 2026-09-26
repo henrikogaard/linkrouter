@@ -41,6 +41,12 @@ struct PromptView: View {
                 }
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .lineLimit(1)
+                if let sourceName = link.sourceName {
+                    Text("from \(sourceName)")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
             }
             .padding(.top, 12)
             .help(link.absoluteString)

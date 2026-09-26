@@ -73,13 +73,14 @@ enum LinkKind: String, Codable, CaseIterable, Identifiable {
 
 struct Condition: Codable, Equatable, Identifiable {
     enum Kind: String, Codable, CaseIterable, Identifiable {
-        case url, runningCount, linkType
+        case url, runningCount, linkType, sourceApp
         var id: String { rawValue }
         var label: String {
             switch self {
             case .url: "Web address"
             case .runningCount: "Running browsers"
             case .linkType: "Link type"
+            case .sourceApp: "Sent from app"
             }
         }
     }
@@ -333,6 +334,8 @@ struct PersistedState: Codable {
 
 struct IncomingLink: Equatable {
     var url: URL
+    var sourceBundleID: String? = nil
+    var sourceName: String? = nil
     var absoluteString: String { url.absoluteString }
     var host: String { url.host ?? url.absoluteString }
     var isSecure: Bool { url.scheme?.lowercased() == "https" }
