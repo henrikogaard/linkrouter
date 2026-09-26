@@ -121,6 +121,25 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(backups.count, 1)
     }
 
+    func testExportImportRoundTrip() throws {
+        let state = sampleState()
+        let data = try Persistence.exportData(state)
+        let imported = try Persistence.importState(from: data)
+        XCTAssertEqual(imported.rules, state.rules)
+        XCTAssertEqual(imported.profiles, state.profiles)
+        XCTAssertEqual(imported.settings, state.settings)
+        XCTAssertEqual(imported.browsers, state.browsers)
+        XCTAssertEqual(imported.rows, state.rows)
+        XCTAssertEqual(imported.recent, [])
+    }
+
+    func testImportRejectsNewerVersion() throws {
+        var state = sampleState()
+        state.schemaVersion = PersistedState.currentSchemaVersion + 1
+        let data = try JSONEncoder().encode(state)
+        XCTAssertThrowsError(try Persistence.importState(from: data))
+    }
+
     func testLegacyConditionDecodesWithDefaults() throws {
         let json = """
             {"id":"A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D","kind":"url","urlMatcher":"contains","pattern":"github.com","countComparator":"greaterThan","count":0,"linkKind":"website"}
