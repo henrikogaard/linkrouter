@@ -205,10 +205,10 @@ final class AppState: ObservableObject {
         return runningIDs.contains(id)
     }
 
-    func handleIncoming(_ url: URL) {
+    func handleIncoming(_ url: URL, source: (bundleID: String, name: String)? = nil) {
         guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return }
         pendingQuit = nil
-        let link = IncomingLink(url: url)
+        let link = IncomingLink(url: url, sourceBundleID: source?.bundleID, sourceName: source?.name)
         let flags = NSEvent.modifierFlags
         let force = settings.forcePromptOnModifier && !flags.intersection([.shift, .control, .option, .command]).isEmpty
         let result = RuleEngine.evaluate(

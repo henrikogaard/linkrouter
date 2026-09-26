@@ -26,9 +26,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        let source = sender()
         for url in urls {
-            AppState.shared.handleIncoming(url)
+            AppState.shared.handleIncoming(url, source: source)
         }
+    }
+
+    private func sender() -> (bundleID: String, name: String)? {
+        let ownID = Bundle.main.bundleIdentifier
+        if let event = NSAppleEventManager.shared().currentAppleEvent,
+           let descriptor = event.attributeDescriptor(forKeyword: AEKeyword(keyAddressAttr)),
+           let pid = descriptor.coerce(toDescriptorType: typeKernelProcessID),
+           let app = NSRunningApplication(processIdentifier: pid_t(pid.int32Value)),
+           app.bundleIdentifier != ownID {
+            return (app.bundleIdentifier ?? "", app.localizedName ?? "")
+        }
+        if let front = NSWorkspace.shared.frontmostApplication,
+           front.bundleIdentifier != ownID {
+            return (front.bundleIdentifier ?? "", front.localizedName ?? "")
+        }
+        return nil
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

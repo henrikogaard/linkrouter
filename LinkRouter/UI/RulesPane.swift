@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct RulesPane: View {
@@ -381,6 +382,27 @@ struct RuleEditorSheet: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+            case .sourceApp:
+                Picker("Matcher", selection: condition.urlMatcher) {
+                    ForEach([URLMatcher.is, .isNot, .contains]) { matcher in
+                        Text(matcher.label).tag(matcher)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 110)
+                Picker("App", selection: condition.pattern) {
+                    Text("Choose…").tag("")
+                    ForEach(runningApps, id: \.bundleIdentifier) { app in
+                        Text("\(app.localizedName ?? "?") — \(app.bundleIdentifier ?? "")")
+                            .tag(app.bundleIdentifier ?? "")
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 210)
+                TextField("com.example.app", text: condition.pattern)
+                    .textFieldStyle(.roundedBorder)
             }
 
             Button {
@@ -394,6 +416,12 @@ struct RuleEditorSheet: View {
         }
         .padding(10)
         .background(LR.rowFill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private var runningApps: [NSRunningApplication] {
+        NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
     }
 
     private func save() {
