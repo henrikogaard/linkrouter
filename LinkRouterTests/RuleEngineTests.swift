@@ -10,6 +10,21 @@ final class RuleEngineTests: XCTestCase {
         XCTAssertFalse(RuleEngine.urlMatches("https://example.com", matcher: .contains, pattern: "github.com"))
     }
 
+    func testCaseInsensitiveMatching() {
+        XCTAssertTrue(RuleEngine.urlMatches("https://GitHub.com/x", matcher: .is, pattern: "https://github.com/x"))
+        XCTAssertTrue(RuleEngine.urlMatches("https://GITHUB.com/x", matcher: .contains, pattern: "github.com"))
+        XCTAssertFalse(RuleEngine.urlMatches("https://github.com", matcher: .isNot, pattern: "https://GITHUB.com"))
+        XCTAssertTrue(RuleEngine.likeMatches("https://A.B/x", pattern: "https://*.b/*"))
+        XCTAssertFalse(RuleEngine.regexMatches("https://OK.test", pattern: "ok\\.test"))
+    }
+
+    func testEmptyPatternDoesNotMatch() {
+        XCTAssertFalse(RuleEngine.urlMatches("https://github.com", matcher: .contains, pattern: ""))
+        XCTAssertFalse(RuleEngine.urlMatches("https://github.com", matcher: .beginsWith, pattern: ""))
+        XCTAssertFalse(RuleEngine.urlMatches("https://github.com", matcher: .endsWith, pattern: ""))
+        XCTAssertFalse(RuleEngine.likeMatches("https://github.com", pattern: ""))
+    }
+
     func testLikeGlobEscapesMetacharacters() {
         XCTAssertTrue(RuleEngine.likeMatches("https://a.b/x", pattern: "https://*.b/*"))
         XCTAssertFalse(RuleEngine.likeMatches("https://a.b/x", pattern: "https://*.c/*"))

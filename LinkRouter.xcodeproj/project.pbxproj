@@ -20,6 +20,7 @@
 		A10008 /* DefaultBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
 		A10009 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
 		A10010 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
+		A10026 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -34,6 +35,13 @@
 		A20001 /* RuleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001; };
 		A20002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004; };
 		A20003 /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005; };
+		A20004 /* ProfileReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002; };
+		A20005 /* DispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20003; };
+		A20006 /* PersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20004; };
+		A20007 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
+		A20008 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006; };
+		A20009 /* ProfileReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10007; };
+		A20010 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +68,7 @@
 		B10008 /* DefaultBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultBrowser.swift; sourceTree = "<group>"; };
 		B10009 /* Dispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatcher.swift; sourceTree = "<group>"; };
 		B10010 /* BrowserCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalog.swift; sourceTree = "<group>"; };
+		B10026 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -74,6 +83,9 @@
 		B10019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B10020 /* LinkRouter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LinkRouter.entitlements; sourceTree = "<group>"; };
 		B20001 /* RuleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngineTests.swift; sourceTree = "<group>"; };
+		B20002 /* ProfileReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileReaderTests.swift; sourceTree = "<group>"; };
+		B20003 /* DispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatcherTests.swift; sourceTree = "<group>"; };
+		B20004 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -140,6 +152,7 @@
 				B10008 /* DefaultBrowser.swift */,
 				B10009 /* Dispatcher.swift */,
 				B10010 /* BrowserCatalog.swift */,
+				B10026 /* Log.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -165,6 +178,9 @@
 			isa = PBXGroup;
 			children = (
 				B20001 /* RuleEngineTests.swift */,
+				B20002 /* ProfileReaderTests.swift */,
+				B20003 /* DispatcherTests.swift */,
+				B20004 /* PersistenceTests.swift */,
 			);
 			path = LinkRouterTests;
 			sourceTree = "<group>";
@@ -281,6 +297,7 @@
 				A10008 /* DefaultBrowser.swift in Sources */,
 				A10009 /* Dispatcher.swift in Sources */,
 				A10010 /* BrowserCatalog.swift in Sources */,
+				A10026 /* Log.swift in Sources */,
 				A10011 /* PromptView.swift in Sources */,
 				A10012 /* PromptController.swift in Sources */,
 				A10013 /* Mark.swift in Sources */,
@@ -301,6 +318,13 @@
 				A20001 /* RuleEngineTests.swift in Sources */,
 				A20002 /* Models.swift in Sources */,
 				A20003 /* RuleEngine.swift in Sources */,
+				A20007 /* Log.swift in Sources */,
+				A20008 /* Persistence.swift in Sources */,
+				A20009 /* ProfileReader.swift in Sources */,
+				A20010 /* Dispatcher.swift in Sources */,
+				A20004 /* ProfileReaderTests.swift in Sources */,
+				A20005 /* DispatcherTests.swift in Sources */,
+				A20006 /* PersistenceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
