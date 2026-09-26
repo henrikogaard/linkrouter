@@ -403,6 +403,37 @@ struct RuleEditorSheet: View {
                 .frame(width: 210)
                 TextField("com.example.app", text: condition.pattern)
                     .textFieldStyle(.roundedBorder)
+            case .schedule:
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        DatePicker("From", selection: minuteBinding(condition, \.startMinute), displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                        DatePicker("Until", selection: minuteBinding(condition, \.endMinute), displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                    }
+                    HStack(spacing: 4) {
+                        ForEach(weekdayChips, id: \.day) { chip in
+                            let on = condition.wrappedValue.weekdays.contains(chip.day)
+                            Text(chip.label)
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 4)
+                                .background(on ? LR.accent.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(on ? LR.accent.opacity(0.45) : LR.hairline)
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    if on {
+                                        condition.wrappedValue.weekdays.remove(chip.day)
+                                    } else {
+                                        condition.wrappedValue.weekdays.insert(chip.day)
+                                    }
+                                }
+                        }
+                    }
+                }
             }
 
             Button {
@@ -422,6 +453,28 @@ struct RuleEditorSheet: View {
         NSWorkspace.shared.runningApplications
             .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
             .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+    }
+
+    private var weekdayChips: [(day: Int, label: String)] {
+        [(2, "Mon"), (3, "Tue"), (4, "Wed"), (5, "Thu"), (6, "Fri"), (7, "Sat"), (1, "Sun")]
+    }
+
+    private func minuteBinding(_ condition: Binding<Condition>, _ keyPath: WritableKeyPath<Condition, Int>) -> Binding<Date> {
+        Binding(
+            get: {
+                Calendar.current.date(
+                    from: DateComponents(
+                        hour: condition.wrappedValue[keyPath: keyPath] / 60,
+                        minute: condition.wrappedValue[keyPath: keyPath] % 60
+                    )
+                ) ?? .now
+            },
+            set: { date in
+                condition.wrappedValue[keyPath: keyPath] =
+                    Calendar.current.component(.hour, from: date) * 60
+                    + Calendar.current.component(.minute, from: date)
+            }
+        )
     }
 
     private func save() {

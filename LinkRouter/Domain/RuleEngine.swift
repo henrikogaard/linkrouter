@@ -19,14 +19,18 @@ enum RuleEngine {
         profiles: [RouteProfile] = [],
         rules: [Rule],
         runningCount: Int,
-        modifierForcePrompt: Bool
+        modifierForcePrompt: Bool,
+        now: Date = Date(),
+        calendar: Calendar = .current
     ) -> EngineResult {
         explain(
             link: link,
             profiles: profiles,
             rules: rules,
             runningCount: runningCount,
-            modifierForcePrompt: modifierForcePrompt
+            modifierForcePrompt: modifierForcePrompt,
+            now: now,
+            calendar: calendar
         ).result
     }
 
@@ -35,7 +39,9 @@ enum RuleEngine {
         profiles: [RouteProfile] = [],
         rules: [Rule],
         runningCount: Int,
-        modifierForcePrompt: Bool
+        modifierForcePrompt: Bool,
+        now: Date = Date(),
+        calendar: Calendar = .current
     ) -> Explanation {
         if modifierForcePrompt {
             return Explanation(source: .modifier, result: .promptAll)
@@ -49,7 +55,7 @@ enum RuleEngine {
         let fallback = enabled.last(where: \.isFallback) ?? enabled.last
 
         for rule in enabled where !rule.isFallback {
-            if matches(rule, link: link, runningCount: runningCount) {
+            if matches(rule, link: link, runningCount: runningCount, now: now, calendar: calendar) {
                 return Explanation(
                     source: .rule(rule.id),
                     result: result(for: rule.behaviour, fallback: fallback)
@@ -57,7 +63,7 @@ enum RuleEngine {
             }
         }
 
-        if let fallback, matches(fallback, link: link, runningCount: runningCount) || fallback.conditions.isEmpty {
+        if let fallback, matches(fallback, link: link, runningCount: runningCount, now: now, calendar: calendar) || fallback.conditions.isEmpty {
             return Explanation(
                 source: .fallback(fallback.id),
                 result: result(for: fallback.behaviour, fallback: nil)
@@ -67,11 +73,19 @@ enum RuleEngine {
         return Explanation(source: .none, result: .promptAll)
     }
 
-    static func matches(_ rule: Rule, link: IncomingLink, runningCount: Int) -> Bool {
+    static func matches(
+        _ rule: Rule,
+        link: IncomingLink,
+        runningCount: Int,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Bool {
         if rule.conditions.isEmpty {
             return rule.isFallback
         }
-        let bits = rule.conditions.map { conditionMatches($0, link: link, runningCount: runningCount) }
+        let bits = rule.conditions.map {
+            conditionMatches($0, link: link, runningCount: runningCount, now: now, calendar: calendar)
+        }
         switch rule.combinator {
         case .any: return bits.contains(true)
         case .all: return bits.allSatisfy { $0 }
@@ -79,7 +93,13 @@ enum RuleEngine {
         }
     }
 
-    static func conditionMatches(_ condition: Condition, link: IncomingLink, runningCount: Int) -> Bool {
+    static func conditionMatches(
+        _ condition: Condition,
+        link: IncomingLink,
+        runningCount: Int,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Bool {
         switch condition.kind {
         case .url:
             return urlMatches(link.absoluteString, matcher: condition.urlMatcher, pattern: condition.pattern)
@@ -95,6 +115,13 @@ enum RuleEngine {
             }
         case .sourceApp:
             return urlMatches(link.sourceBundleID ?? "", matcher: condition.urlMatcher, pattern: condition.pattern)
+        case .schedule:
+            guard condition.weekdays.contains(calendar.component(.weekday, from: now)) else { return false }
+            let minute = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+            if condition.startMinute <= condition.endMinute {
+                return minute >= condition.startMinute && minute < condition.endMinute
+            }
+            return minute >= condition.startMinute || minute < condition.endMinute
         }
     }
 
