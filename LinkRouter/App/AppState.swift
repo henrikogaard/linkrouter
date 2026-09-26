@@ -17,6 +17,8 @@ final class AppState: ObservableObject {
     @Published var runningIDs: Set<String>
     @Published var pendingQuit: (url: URL, row: CatalogRow, browser: BrowserRecord)?
     @Published var recent: [RoutedEntry]
+    @Published var profileSnapshot: [String: [ChromeProfile]] = [:]
+    private var profileWatcher: ProfileWatcher?
 
     let prompt = PromptController()
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
@@ -65,6 +67,11 @@ final class AppState: ObservableObject {
         isDefaultBrowser = DefaultBrowser.isLinkRouterDefault()
         runningIDs = BrowserCatalog.runningIdentifiers(in: initialBrowsers)
         observeRunning()
+        refreshProfileSnapshot()
+        profileWatcher = ProfileWatcher { [weak self] in
+            self?.refreshProfileSnapshot()
+        }
+        startProfileWatch()
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, !self.isDefaultBrowser else { return }
@@ -118,9 +125,49 @@ final class AppState: ObservableObject {
     }
 
     func isAvailable(_ row: CatalogRow) -> Bool {
-        guard let record = browser(for: row) else { return false }
+        guard profileExists(row), let record = browser(for: row) else { return false }
         if FileManager.default.fileExists(atPath: record.path) { return true }
         return NSWorkspace.shared.urlForApplication(withBundleIdentifier: record.bundleIdentifier) != nil
+    }
+
+    func profileExists(_ row: CatalogRow) -> Bool {
+        switch row.kind {
+        case .app:
+            return true
+        case .chromeProfile, .chromePrivate:
+            guard let directory = row.chromeDirectory else { return true }
+            guard let record = browser(for: row),
+                  let family = ProfileReader.family(for: record.bundleIdentifier)
+            else { return false }
+            if profileSnapshot[record.bundleIdentifier]?.contains(where: { $0.directory == directory }) == true {
+                return true
+            }
+            return FileManager.default.fileExists(
+                atPath: ProfileReader.userDataURL(for: family).appendingPathComponent(directory).path
+            )
+        case .firefoxProfile, .firefoxPrivate:
+            guard let path = row.firefoxAbsPath else { return true }
+            return FileManager.default.fileExists(atPath: path)
+        }
+    }
+
+    func refreshProfileSnapshot() {
+        var snapshot: [String: [ChromeProfile]] = [:]
+        for host in chromiumHosts() {
+            if let family = ProfileReader.family(for: host.bundleIdentifier) {
+                snapshot[host.bundleIdentifier] = ProfileReader.chromeProfiles(family: family)
+            }
+        }
+        profileSnapshot = snapshot
+    }
+
+    private func startProfileWatch() {
+        var directories = ProfileReader.chromiumFamilies.map { ProfileReader.userDataURL(for: $0) }
+        directories.append(
+            FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/Firefox")
+        )
+        profileWatcher?.start(directories: directories)
     }
 
     func title(for row: CatalogRow) -> String {
@@ -415,6 +462,8 @@ final class AppState: ObservableObject {
         for row in rows {
             _ = resolvedBrowser(for: row)
         }
+        refreshProfileSnapshot()
+        startProfileWatch()
         BrowserCatalog.appendDiscovered(browsers: &browsers, rows: &rows)
         let selfPaths = [Bundle.main.bundleURL.standardizedFileURL.path, "LinkRouter.app"]
         let removed = browsers.filter { record in
