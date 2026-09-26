@@ -296,10 +296,11 @@ struct AppSettings: Codable, Equatable {
     var unwrapRedirects = true
     var stripTrackingParams = true
     var promptTimeout: Int = 0
+    var onboardingDone = false
 
     enum CodingKeys: String, CodingKey {
         case showMenuBar, forcePromptOnModifier, openInBackground, appearance
-        case unwrapRedirects, stripTrackingParams, promptTimeout
+        case unwrapRedirects, stripTrackingParams, promptTimeout, onboardingDone
     }
 
     init() {}
@@ -313,6 +314,7 @@ struct AppSettings: Codable, Equatable {
         unwrapRedirects = try container.decodeIfPresent(Bool.self, forKey: .unwrapRedirects) ?? true
         stripTrackingParams = try container.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
         promptTimeout = try container.decodeIfPresent(Int.self, forKey: .promptTimeout) ?? 0
+        onboardingDone = try container.decodeIfPresent(Bool.self, forKey: .onboardingDone) ?? false
     }
 }
 

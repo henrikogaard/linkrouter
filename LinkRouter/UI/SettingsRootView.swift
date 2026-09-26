@@ -48,10 +48,26 @@ struct SettingsRootView: View {
         .background(LR.pageFill)
         .tint(Color.primary)
         .preferredColorScheme(state.settings.appearance.colorScheme)
+        .sheet(isPresented: welcomeBinding) {
+            WelcomeView(pane: $pane)
+                .environmentObject(state)
+        }
         .onAppear {
             state.refreshDefaultStatus()
             state.refreshDiscovered()
         }
+    }
+
+    private var welcomeBinding: Binding<Bool> {
+        Binding(
+            get: { !state.settings.onboardingDone },
+            set: { shown in
+                if !shown, !state.settings.onboardingDone {
+                    state.settings.onboardingDone = true
+                    state.save()
+                }
+            }
+        )
     }
 
     private var sidebar: some View {
