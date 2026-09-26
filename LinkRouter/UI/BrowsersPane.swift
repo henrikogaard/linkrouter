@@ -101,14 +101,17 @@ struct BrowsersPane: View {
 
     @ViewBuilder
     private var profileMenu: some View {
-        if let chrome = state.chromeHost() {
-            let profiles = ProfileReader.chromeProfiles()
-            if profiles.isEmpty {
-                Text("No Chrome profiles found")
-            } else {
-                ForEach(profiles, id: \.directory) { profile in
-                    Button(profile.name) {
-                        state.addChromeProfile(profile, browserID: chrome.id, isPrivate: false)
+        let hosts = state.chromiumHosts()
+        ForEach(hosts) { host in
+            if let family = ProfileReader.family(for: host.bundleIdentifier) {
+                let profiles = ProfileReader.chromeProfiles(family: family)
+                if profiles.isEmpty {
+                    Text("No \(family.shortName) profiles found")
+                } else {
+                    ForEach(profiles, id: \.directory) { profile in
+                        Button(hosts.count > 1 ? "\(family.shortName) · \(profile.name)" : profile.name) {
+                            state.addChromeProfile(profile, browserID: host.id, isPrivate: false)
+                        }
                     }
                 }
             }
@@ -125,20 +128,22 @@ struct BrowsersPane: View {
                 }
             }
         }
-        if state.chromeHost() == nil && state.firefoxHost() == nil {
-            Text("Add Chrome or Firefox.app first")
+        if hosts.isEmpty && state.firefoxHost() == nil {
+            Text("Add a Chromium-based browser (Chrome, Brave, Edge, Vivaldi, Arc) or Firefox first. Safari and Orion profiles, and Arc Spaces, can't be targeted from outside the browser.")
         }
     }
 
     @ViewBuilder
     private var privateMenu: some View {
-        if let chrome = state.chromeHost() {
-            Button("Chrome Incognito") {
-                state.addChromePrivate(browserID: chrome.id)
-            }
-            ForEach(ProfileReader.chromeProfiles(), id: \.directory) { profile in
-                Button("Chrome · \(profile.name) · Incognito") {
-                    state.addChromeProfile(profile, browserID: chrome.id, isPrivate: true)
+        ForEach(state.chromiumHosts()) { host in
+            if let family = ProfileReader.family(for: host.bundleIdentifier) {
+                Button("\(family.shortName) \(family.privateWord)") {
+                    state.addChromePrivate(browserID: host.id)
+                }
+                ForEach(ProfileReader.chromeProfiles(family: family), id: \.directory) { profile in
+                    Button("\(family.shortName) · \(profile.name) · \(family.privateWord)") {
+                        state.addChromeProfile(profile, browserID: host.id, isPrivate: true)
+                    }
                 }
             }
         }

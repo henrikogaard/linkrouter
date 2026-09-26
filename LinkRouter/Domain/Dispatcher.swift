@@ -99,7 +99,7 @@ enum Dispatcher {
             if let directory = row.chromeDirectory {
                 args.append("--profile-directory=\(directory)")
             }
-            args.append("--incognito")
+            args.append(ProfileReader.family(for: browser.bundleIdentifier)?.privateFlag ?? "--incognito")
             args.append(url.absoluteString)
             return args
         case .firefoxProfile:
