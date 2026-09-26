@@ -17,6 +17,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        AppState.shared.refreshDefaultStatus()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        AppState.shared.flushSave()
+    }
+
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             AppState.shared.handleIncoming(url)

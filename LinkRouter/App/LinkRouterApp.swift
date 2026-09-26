@@ -33,7 +33,7 @@ struct LinkRouterApp: App {
         .windowResizability(.contentSize)
         .defaultSize(width: 260, height: 220)
 
-        MenuBarExtra {
+        MenuBarExtra(isInserted: menuBarBinding) {
             MenuBarMenu()
         } label: {
             Image("MenuBarIcon")
@@ -41,6 +41,19 @@ struct LinkRouterApp: App {
                 .accessibilityLabel("LinkRouter")
         }
         .menuBarExtraStyle(.menu)
+    }
+
+    private var menuBarBinding: Binding<Bool> {
+        Binding(
+            get: { state.settings.showMenuBar },
+            set: { value in
+                guard value != state.settings.showMenuBar else { return }
+                DispatchQueue.main.async {
+                    state.settings.showMenuBar = value
+                    state.save()
+                }
+            }
+        )
     }
 }
 
