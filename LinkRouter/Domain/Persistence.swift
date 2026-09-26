@@ -1,5 +1,15 @@
 import Foundation
 
+enum Migrations {
+    static func migrate(_ state: PersistedState) -> PersistedState {
+        var state = state
+        if state.schemaVersion < PersistedState.currentSchemaVersion {
+            state.schemaVersion = PersistedState.currentSchemaVersion
+        }
+        return state
+    }
+}
+
 enum Persistence {
     static var directoryOverride: URL?
 
@@ -23,20 +33,37 @@ enum Persistence {
         case loaded(PersistedState)
         case missing
         case corrupt
+        case newer(Int)
+    }
+
+    private struct VersionProbe: Decodable {
+        var schemaVersion: Int?
     }
 
     static func load() -> LoadResult {
         guard let data = try? Data(contentsOf: stateURL) else { return .missing }
+        if let probe = try? JSONDecoder().decode(VersionProbe.self, from: data),
+           let version = probe.schemaVersion,
+           version > PersistedState.currentSchemaVersion {
+            let backup = stampededBackup(prefix: "state.newer-")
+            try? data.write(to: backup)
+            Log.app.error("State file schema \(version) is newer than supported \(PersistedState.currentSchemaVersion). Kept copy at \(backup.path)")
+            return .newer(version)
+        }
         do {
-            return .loaded(try JSONDecoder().decode(PersistedState.self, from: data))
+            return .loaded(Migrations.migrate(try JSONDecoder().decode(PersistedState.self, from: data)))
         } catch {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyyMMdd-HHmmss"
-            let backup = directory.appendingPathComponent("state.corrupt-\(formatter.string(from: Date())).json")
+            let backup = stampededBackup(prefix: "state.corrupt-")
             try? data.write(to: backup)
             Log.app.error("Failed to decode state: \(error.localizedDescription). Kept copy at \(backup.path)")
             return .corrupt
         }
+    }
+
+    private static func stampededBackup(prefix: String) -> URL {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return directory.appendingPathComponent("\(prefix)\(formatter.string(from: Date())).json")
     }
 
     static func save(_ state: PersistedState) {
