@@ -72,6 +72,17 @@ final class DispatcherTests: XCTestCase {
         )
     }
 
+    func testEdgePrivateUsesInPrivateFlag() {
+        let edge = BrowserRecord(
+            id: UUID(),
+            path: "/Applications/Microsoft Edge.app",
+            bundleIdentifier: "com.microsoft.edgemac",
+            displayName: "Microsoft Edge"
+        )
+        let args = Dispatcher.argv(url: url, browser: edge, row: row(kind: .chromePrivate), running: false)
+        XCTAssertEqual(args, ["--inprivate", "https://example.com/x"])
+    }
+
     func testRunningAppReturnsNil() {
         XCTAssertNil(Dispatcher.argv(url: url, browser: browser, row: row(kind: .app), running: true))
     }

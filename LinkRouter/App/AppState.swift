@@ -146,7 +146,9 @@ final class AppState: ObservableObject {
         case .app: return nil
         case .chromeProfile: return row.chromeDirectory
         case .firefoxProfile: return row.firefoxAbsPath
-        case .chromePrivate: return "Incognito"
+        case .chromePrivate:
+            let family = browser(for: row).flatMap { ProfileReader.family(for: $0.bundleIdentifier) }
+            return family?.privateWord ?? "Incognito"
         case .firefoxPrivate: return "Private window"
         }
     }
@@ -507,8 +509,8 @@ final class AppState: ObservableObject {
         save()
     }
 
-    func chromeHost() -> BrowserRecord? {
-        browsers.first { $0.bundleIdentifier == ProfileReader.chromeBundleID }
+    func chromiumHosts() -> [BrowserRecord] {
+        browsers.filter { ProfileReader.family(for: $0.bundleIdentifier) != nil }
     }
 
     func firefoxHost() -> BrowserRecord? {
