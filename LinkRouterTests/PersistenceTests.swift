@@ -20,12 +20,14 @@ final class PersistenceTests: XCTestCase {
     private func sampleState() -> PersistedState {
         let browser = BrowserRecord(id: UUID(), path: "/Applications/Chrome.app", bundleIdentifier: "com.google.Chrome", displayName: "Chrome")
         let row = CatalogRow(id: UUID(), browserID: browser.id, kind: .app)
+        let entry = RoutedEntry(id: UUID(), url: URL(string: "https://example.com/x")!, rowID: row.id, title: "Chrome", date: Date())
         return PersistedState(
             browsers: [browser],
             rows: [row],
             rules: Rule.shipped(),
             profiles: RouteProfile.shipped(),
-            settings: AppSettings()
+            settings: AppSettings(),
+            recent: [entry]
         )
     }
 
@@ -41,6 +43,7 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(loaded.rules, state.rules)
         XCTAssertEqual(loaded.profiles, state.profiles)
         XCTAssertEqual(loaded.settings, state.settings)
+        XCTAssertEqual(loaded.recent, state.recent)
     }
 
     func testLegacyStateDecodesWithDefaults() {
@@ -63,6 +66,7 @@ final class PersistenceTests: XCTestCase {
         XCTAssertTrue(loaded.settings.showMenuBar)
         XCTAssertEqual(loaded.browsers, [browser])
         XCTAssertEqual(loaded.rows, [row])
+        XCTAssertEqual(loaded.recent, [])
     }
 
     func testCorruptStateIsCopiedAside() {
