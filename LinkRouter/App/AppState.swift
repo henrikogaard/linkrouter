@@ -21,6 +21,8 @@ final class AppState: ObservableObject {
     private var profileWatcher: ProfileWatcher?
 
     let prompt = PromptController()
+    let launchStart = Date()
+    private var firstPromptLogged = false
     var dispatcher: Dispatching
     var onPromptShown: (() -> Void)?
     var skipsPersistence = false
@@ -71,11 +73,14 @@ final class AppState: ObservableObject {
         isDefaultBrowser = DefaultBrowser.isLinkRouterDefault()
         runningIDs = BrowserCatalog.runningIdentifiers(in: initialBrowsers)
         observeRunning()
-        refreshProfileSnapshot()
-        profileWatcher = ProfileWatcher { [weak self] in
-            self?.refreshProfileSnapshot()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.refreshProfileSnapshot()
+            self.profileWatcher = ProfileWatcher { [weak self] in
+                self?.refreshProfileSnapshot()
+            }
+            self.startProfileWatch()
         }
-        startProfileWatch()
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, !self.isDefaultBrowser else { return }
@@ -344,6 +349,10 @@ final class AppState: ObservableObject {
                 self.showNextQueuedPrompt()
             }
         )
+        if !firstPromptLogged {
+            firstPromptLogged = true
+            Log.app.info("Launch to first prompt: \(String(format: "%.2f", Date().timeIntervalSince(self.launchStart)))s")
+        }
     }
 
     private func showNextQueuedPrompt() {
