@@ -17,6 +17,12 @@ xcodebuild -scheme LinkRouter -configuration Debug
 
 Or open `LinkRouter.xcodeproj` in Xcode and run.
 
+## Test
+
+```sh
+xcodebuild -project LinkRouter.xcodeproj -scheme LinkRouter -destination 'platform=macOS' -derivedDataPath build CODE_SIGN_IDENTITY="-" CODE_SIGNING_ALLOWED=NO test
+```
+
 Copy the built app to `/Applications` before making it the default browser, so Launch Services is not talking to a translocated copy in Downloads.
 
 ## Releases
@@ -42,6 +48,12 @@ CI archives a Developer ID build, notarizes it, staples the ticket, and attaches
 2. Click **Set as default**. Confirm in System Settings → Desktop & Dock → Default web browser if macOS asks.
 3. Reorder browsers so your favourite is first.
 4. Optionally add Chrome or Firefox.app profiles from the Browsers pane.
+
+## Troubleshooting
+
+- **State file**: `~/Library/Application Support/LinkRouter/state.json`. If the file can't be decoded, the original is kept next to it as `state.corrupt-*.json` and the app reseeds from Launch Services.
+- **Logs**: `log stream --predicate 'subsystem == "app.linkrouter"'` (categories `app` and `routing`).
+- **Browser moved or uninstalled**: the row shows **Missing** and its picker toggle is disabled. The **Refresh** button in the Browsers pane re-resolves rows by bundle identifier; remove rows that are gone for good with **Remove**.
 
 ## v1
 

@@ -85,18 +85,23 @@ enum RuleEngine {
     }
 
     static func urlMatches(_ value: String, matcher: URLMatcher, pattern: String) -> Bool {
+        let needle = pattern.lowercased()
         switch matcher {
-        case .is: return value == pattern
-        case .isNot: return value != pattern
-        case .contains: return value.contains(pattern)
-        case .beginsWith: return value.hasPrefix(pattern)
-        case .endsWith: return value.hasSuffix(pattern)
+        case .is: return value.lowercased() == needle
+        case .isNot: return value.lowercased() != needle
+        case .contains:
+            return !needle.isEmpty && value.lowercased().contains(needle)
+        case .beginsWith:
+            return !needle.isEmpty && value.lowercased().hasPrefix(needle)
+        case .endsWith:
+            return !needle.isEmpty && value.lowercased().hasSuffix(needle)
         case .like: return likeMatches(value, pattern: pattern)
         case .regex: return regexMatches(value, pattern: pattern)
         }
     }
 
     static func likeMatches(_ value: String, pattern: String) -> Bool {
+        guard !pattern.isEmpty else { return false }
         var escaped = ""
         for character in pattern {
             switch character {
@@ -108,10 +113,14 @@ enum RuleEngine {
                 escaped += NSRegularExpression.escapedPattern(for: String(character))
             }
         }
-        return regexMatches(value, pattern: "^(?:\(escaped))$")
+        return regexMatches(value, pattern: "^(?:\(escaped))$", options: [.caseInsensitive])
     }
 
-    static func regexMatches(_ value: String, pattern: String) -> Bool {
+    static func regexMatches(
+        _ value: String,
+        pattern: String,
+        options: NSRegularExpression.Options = []
+    ) -> Bool {
         let wrapped: String
         if pattern.hasPrefix("^") || pattern.hasSuffix("$") {
             wrapped = pattern
@@ -119,7 +128,7 @@ enum RuleEngine {
             wrapped = "^(?:\(pattern))$"
         }
         do {
-            let regex = try NSRegularExpression(pattern: wrapped)
+            let regex = try NSRegularExpression(pattern: wrapped, options: options)
             let range = NSRange(value.startIndex..<value.endIndex, in: value)
             return regex.firstMatch(in: value, options: [], range: range) != nil
         } catch {
