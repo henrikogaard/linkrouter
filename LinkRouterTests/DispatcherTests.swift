@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 
 final class DispatcherTests: XCTestCase {
@@ -47,7 +48,31 @@ final class DispatcherTests: XCTestCase {
         XCTAssertNil(Dispatcher.argv(url: url, browser: browser, row: row(kind: .app), running: false))
     }
 
-    func testRunningReturnsNil() {
-        XCTAssertNil(Dispatcher.argv(url: url, browser: browser, row: row(kind: .chromeProfile, chromeDirectory: "P"), running: true))
+    func testRunningChromeProfileStillYieldsArgs() {
+        let args = Dispatcher.argv(url: url, browser: browser, row: row(kind: .chromeProfile, chromeDirectory: "Profile 1"), running: true)
+        XCTAssertEqual(args, ["--profile-directory=Profile 1", "https://example.com/x"])
+    }
+
+    func testRunningFirefoxProfileGetsNewInstance() {
+        let args = Dispatcher.argv(url: url, browser: browser, row: row(kind: .firefoxProfile, firefoxAbsPath: "/x/Profiles/abc"), running: true)
+        XCTAssertEqual(args, ["--new-instance", "--profile", "/x/Profiles/abc", "https://example.com/x"])
+    }
+
+    func testExecutableURLResolvesBundle() {
+        guard let safariURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else { return }
+        let safari = BrowserRecord(
+            id: UUID(),
+            path: safariURL.path,
+            bundleIdentifier: "com.apple.Safari",
+            displayName: "Safari"
+        )
+        XCTAssertEqual(
+            Dispatcher.executableURL(for: safari)?.path,
+            safariURL.appendingPathComponent("Contents/MacOS/Safari").path
+        )
+    }
+
+    func testRunningAppReturnsNil() {
+        XCTAssertNil(Dispatcher.argv(url: url, browser: browser, row: row(kind: .app), running: true))
     }
 }

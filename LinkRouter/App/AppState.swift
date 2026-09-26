@@ -308,16 +308,35 @@ final class AppState: ObservableObject {
     func presentQuitAlert(browserName: String, url: URL, row: CatalogRow, browser: BrowserRecord) {
         let alert = NSAlert()
         alert.messageText = "\(browserName) is already running"
-        alert.informativeText = "Profile and private windows only apply when \(browserName) starts cold. Quit \(browserName) and try again, or open this link without a profile."
+        alert.informativeText = "Firefox applies a profile only when it starts cold. Open a separate Firefox instance for this profile, or open the link in the running Firefox without a profile."
+        alert.addButton(withTitle: "Open in new instance")
         alert.addButton(withTitle: "Open without profile")
         alert.addButton(withTitle: "Cancel")
         NSApp.activate(ignoringOtherApps: true)
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
+            openInNewInstance()
+        } else if response == .alertSecondButtonReturn {
             openWithoutProfile()
         } else {
             pendingQuit = nil
         }
+    }
+
+    func openInNewInstance() {
+        guard let pending = pendingQuit else { return }
+        _ = Dispatcher.open(
+            url: pending.url,
+            browser: pending.browser,
+            row: pending.row,
+            activates: !settings.openInBackground,
+            forceNewInstance: true
+        ) { error in
+            if let error {
+                Log.routing.error("Failed to open \(pending.browser.displayName): \(error.localizedDescription)")
+            }
+        }
+        pendingQuit = nil
     }
 
     func refreshDefaultStatus() {
