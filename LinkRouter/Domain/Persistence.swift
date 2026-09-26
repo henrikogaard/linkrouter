@@ -1,7 +1,13 @@
 import Foundation
 
 enum Persistence {
+    static var directoryOverride: URL?
+
     static var directory: URL {
+        if let directoryOverride {
+            try? FileManager.default.createDirectory(at: directoryOverride, withIntermediateDirectories: true)
+            return directoryOverride
+        }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
         let dir = base.appendingPathComponent("LinkRouter", isDirectory: true)
@@ -13,9 +19,24 @@ enum Persistence {
         directory.appendingPathComponent("state.json")
     }
 
-    static func load() -> PersistedState? {
-        guard let data = try? Data(contentsOf: stateURL) else { return nil }
-        return try? JSONDecoder().decode(PersistedState.self, from: data)
+    enum LoadResult {
+        case loaded(PersistedState)
+        case missing
+        case corrupt
+    }
+
+    static func load() -> LoadResult {
+        guard let data = try? Data(contentsOf: stateURL) else { return .missing }
+        do {
+            return .loaded(try JSONDecoder().decode(PersistedState.self, from: data))
+        } catch {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyyMMdd-HHmmss"
+            let backup = directory.appendingPathComponent("state.corrupt-\(formatter.string(from: Date())).json")
+            try? data.write(to: backup)
+            Log.app.error("Failed to decode state: \(error.localizedDescription). Kept copy at \(backup.path)")
+            return .corrupt
+        }
     }
 
     static func save(_ state: PersistedState) {
@@ -25,7 +46,7 @@ enum Persistence {
             let data = try encoder.encode(state)
             try data.write(to: stateURL, options: .atomic)
         } catch {
-            NSLog("LinkRouter: failed to save state: \(error.localizedDescription)")
+            Log.app.error("Failed to save state: \(error.localizedDescription)")
         }
     }
 }
