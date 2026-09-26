@@ -91,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         userData: String?,
         error: AutoreleasingUnsafeMutablePointer<NSString>
     ) {
+        Log.app.info("Service invoked with types: \(pboard.types?.map(\.rawValue) ?? [])")
         guard let string = pboard.string(forType: .string),
               let url = ClipboardLink.firstURL(in: string) else { return }
         let front = NSWorkspace.shared.frontmostApplication
