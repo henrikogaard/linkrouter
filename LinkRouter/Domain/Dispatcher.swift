@@ -10,13 +10,39 @@ enum Dispatcher {
         browser: BrowserRecord,
         row: CatalogRow,
         activates: Bool,
+        forceNewInstance: Bool = false,
         completion: @escaping (Error?) -> Void = { _ in }
     ) -> DispatchOutcome {
         let running = isRunning(bundleIdentifier: browser.bundleIdentifier)
         let needsProfile = row.isProfileVariant
+        let needsQuit: Bool
+        switch row.kind {
+        case .firefoxProfile:
+            needsQuit = true
+        case .firefoxPrivate:
+            needsQuit = row.firefoxAbsPath != nil
+        default:
+            needsQuit = false
+        }
 
-        if needsProfile && running {
+        if needsProfile && running && needsQuit && !forceNewInstance {
             return .needsHostQuit(rowID: row.id, browserName: browser.displayName)
+        }
+
+        if needsProfile && running && (row.kind == .chromeProfile || row.kind == .chromePrivate),
+           let arguments = argv(url: url, browser: browser, row: row, running: running) {
+            do {
+                try exec(browser: browser, arguments: arguments)
+                if activates {
+                    NSRunningApplication.runningApplications(withBundleIdentifier: browser.bundleIdentifier).first?.activate()
+                }
+                completion(nil)
+            } catch {
+                DispatchQueue.main.async {
+                    completion(error)
+                }
+            }
+            return .opened
         }
 
         let configuration = NSWorkspace.OpenConfiguration()
@@ -41,8 +67,27 @@ enum Dispatcher {
         return .opened
     }
 
+    static func executableURL(for browser: BrowserRecord) -> URL? {
+        Bundle(url: browser.bundleURL)?.executableURL
+    }
+
+    static func exec(browser: BrowserRecord, arguments: [String]) throws {
+        guard let executable = executableURL(for: browser) else {
+            throw NSError(
+                domain: "app.linkrouter",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Can't find the \(browser.displayName) executable"]
+            )
+        }
+        let process = Process()
+        process.executableURL = executable
+        process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+    }
+
     static func argv(url: URL, browser: BrowserRecord, row: CatalogRow, running: Bool) -> [String]? {
-        if running { return nil }
         switch row.kind {
         case .app:
             return nil
@@ -59,10 +104,18 @@ enum Dispatcher {
             return args
         case .firefoxProfile:
             guard let path = row.firefoxAbsPath else { return nil }
-            return ["--profile", path, url.absoluteString]
+            var args: [String] = []
+            if running {
+                args.append("--new-instance")
+            }
+            args.append(contentsOf: ["--profile", path, url.absoluteString])
+            return args
         case .firefoxPrivate:
             var args: [String] = []
             if let path = row.firefoxAbsPath {
+                if running {
+                    args.append("--new-instance")
+                }
                 args.append(contentsOf: ["--profile", path])
             }
             args.append(contentsOf: ["--private-window", url.absoluteString])
