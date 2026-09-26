@@ -211,6 +211,44 @@ final class RuleEngineTests: XCTestCase {
         XCTAssertFalse(RuleEngine.conditionMatches(condition, link: noSource, runningCount: 0))
     }
 
+    func testScheduleCondition() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        func at(_ day: Int, _ hour: Int, _ minute: Int) -> Date {
+            calendar.date(from: DateComponents(year: 2024, month: 1, day: day, hour: hour, minute: minute))!
+        }
+        func schedule(_ start: Int, _ end: Int, _ days: Set<Int>) -> Condition {
+            Condition(
+                id: UUID(),
+                kind: .schedule,
+                urlMatcher: .contains,
+                pattern: "",
+                countComparator: .greaterThan,
+                count: 0,
+                linkKind: .website,
+                startMinute: start,
+                endMinute: end,
+                weekdays: days
+            )
+        }
+        let link = link("https://example.com")
+        let workHours = schedule(540, 1020, [2, 3, 4, 5, 6])
+
+        // 2024-01-01 is a Monday
+        XCTAssertTrue(RuleEngine.conditionMatches(workHours, link: link, runningCount: 0, now: at(1, 10, 0), calendar: calendar))
+        XCTAssertFalse(RuleEngine.conditionMatches(workHours, link: link, runningCount: 0, now: at(1, 22, 0), calendar: calendar))
+        XCTAssertFalse(RuleEngine.conditionMatches(workHours, link: link, runningCount: 0, now: at(1, 17, 0), calendar: calendar))
+
+        let overnight = schedule(1320, 360, [1, 2, 3, 4, 5, 6, 7])
+        XCTAssertTrue(RuleEngine.conditionMatches(overnight, link: link, runningCount: 0, now: at(1, 23, 0), calendar: calendar))
+        XCTAssertTrue(RuleEngine.conditionMatches(overnight, link: link, runningCount: 0, now: at(1, 2, 0), calendar: calendar))
+        XCTAssertFalse(RuleEngine.conditionMatches(overnight, link: link, runningCount: 0, now: at(1, 12, 0), calendar: calendar))
+
+        let mondayOnly = schedule(540, 1020, [2])
+        XCTAssertTrue(RuleEngine.conditionMatches(mondayOnly, link: link, runningCount: 0, now: at(1, 10, 0), calendar: calendar))
+        XCTAssertFalse(RuleEngine.conditionMatches(mondayOnly, link: link, runningCount: 0, now: at(2, 10, 0), calendar: calendar))
+    }
+
     func testDisabledProfileIsSkipped() {
         let profile = RouteProfile(
             id: UUID(),

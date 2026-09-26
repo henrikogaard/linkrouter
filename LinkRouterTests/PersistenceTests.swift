@@ -87,4 +87,14 @@ final class PersistenceTests: XCTestCase {
             return
         }
     }
+
+    func testLegacyConditionDecodesWithDefaults() throws {
+        let json = """
+            {"id":"A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D","kind":"url","urlMatcher":"contains","pattern":"github.com","countComparator":"greaterThan","count":0,"linkKind":"website"}
+            """.data(using: .utf8)!
+        let condition = try JSONDecoder().decode(Condition.self, from: json)
+        XCTAssertEqual(condition.startMinute, 540)
+        XCTAssertEqual(condition.endMinute, 1020)
+        XCTAssertEqual(condition.weekdays, [2, 3, 4, 5, 6])
+    }
 }
