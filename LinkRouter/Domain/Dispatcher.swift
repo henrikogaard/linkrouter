@@ -1,5 +1,36 @@
 import AppKit
 
+protocol Dispatching {
+    func open(
+        url: URL,
+        browser: BrowserRecord,
+        row: CatalogRow,
+        activates: Bool,
+        forceNewInstance: Bool,
+        completion: @escaping (Error?) -> Void
+    ) -> DispatchOutcome
+}
+
+struct SystemDispatcher: Dispatching {
+    func open(
+        url: URL,
+        browser: BrowserRecord,
+        row: CatalogRow,
+        activates: Bool,
+        forceNewInstance: Bool,
+        completion: @escaping (Error?) -> Void
+    ) -> DispatchOutcome {
+        Dispatcher.open(
+            url: url,
+            browser: browser,
+            row: row,
+            activates: activates,
+            forceNewInstance: forceNewInstance,
+            completion: completion
+        )
+    }
+}
+
 enum Dispatcher {
     static func isRunning(bundleIdentifier: String) -> Bool {
         !NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty
