@@ -17,8 +17,12 @@ enum ProfileReader {
     static func chromeProfiles() -> [ChromeProfile] {
         let url = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/Google/Chrome/Local State")
-        guard let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        guard let data = try? Data(contentsOf: url) else { return [] }
+        return parseChromeProfiles(localState: data)
+    }
+
+    static func parseChromeProfiles(localState data: Data) -> [ChromeProfile] {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let cache = json["profile"] as? [String: Any],
               let info = cache["info_cache"] as? [String: Any]
         else { return [] }
@@ -40,7 +44,10 @@ enum ProfileReader {
             .appendingPathComponent("Library/Application Support/Firefox")
         let iniURL = support.appendingPathComponent("profiles.ini")
         guard let text = try? String(contentsOf: iniURL, encoding: .utf8) else { return [] }
+        return parseFirefoxProfiles(ini: text, support: support)
+    }
 
+    static func parseFirefoxProfiles(ini text: String, support: URL) -> [FirefoxProfile] {
         var profiles: [FirefoxProfile] = []
         var current: [String: String] = [:]
         var inProfile = false

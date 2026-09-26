@@ -3,6 +3,7 @@ import SwiftUI
 struct RulesPane: View {
     @EnvironmentObject private var state: AppState
     @State private var editing: Rule?
+    @State private var selection: UUID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -13,8 +14,20 @@ struct RulesPane: View {
 
             List {
                 ForEach(state.rules) { rule in
-                    RuleRow(rule: rule) {
+                    RuleRow(rule: rule, isSelected: selection == rule.id) {
+                        selection = rule.id
                         editing = rule
+                    }
+                    .contextMenu {
+                        Button("Edit") {
+                            selection = rule.id
+                            editing = rule
+                        }
+                        if !rule.isFallback {
+                            Button("Delete", role: .destructive) {
+                                remove(rule)
+                            }
+                        }
                     }
                     .listRowInsets(EdgeInsets(top: 4, leading: LR.pageInset, bottom: 4, trailing: LR.pageInset))
                     .listRowSeparator(.hidden)
@@ -37,26 +50,43 @@ struct RulesPane: View {
                 Button {
                     state.addRule()
                     editing = state.rules.last(where: { !$0.isFallback })
+                    selection = editing?.id
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
                 Button {
-                    if let editing, !editing.isFallback {
-                        state.removeRule(editing)
-                        self.editing = nil
+                    if let selectedRule, !selectedRule.isFallback {
+                        remove(selectedRule)
                     }
                 } label: {
                     Label("Remove", systemImage: "minus")
                 }
-                .disabled(editing == nil || editing?.isFallback == true)
+                .disabled(selectedRule == nil || selectedRule?.isFallback == true)
                 Spacer()
             }
         }
         .sheet(item: $editing) { rule in
-            RuleEditorSheet(rule: rule) { updated in
-                state.updateRule(updated)
-            }
+            RuleEditorSheet(
+                rule: rule,
+                onSave: { updated in
+                    state.updateRule(updated)
+                },
+                onDelete: rule.isFallback ? nil : {
+                    remove(rule)
+                }
+            )
             .environmentObject(state)
+        }
+    }
+
+    private var selectedRule: Rule? {
+        state.rules.first { $0.id == selection }
+    }
+
+    private func remove(_ rule: Rule) {
+        state.removeRule(rule)
+        if selection == rule.id {
+            selection = nil
         }
     }
 }
@@ -64,6 +94,7 @@ struct RulesPane: View {
 private struct RuleRow: View {
     @EnvironmentObject private var state: AppState
     var rule: Rule
+    var isSelected: Bool
     var onEdit: () -> Void
 
     var body: some View {
@@ -92,13 +123,17 @@ private struct RuleRow: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
+            .background(fill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                    .strokeBorder(LR.hairline, lineWidth: 1)
+                    .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private var fill: Color {
+        isSelected ? LR.accent.opacity(0.10) : LR.rowFill
     }
 
     private var enabledBinding: Binding<Bool> {
@@ -118,7 +153,8 @@ struct RuleEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State var rule: Rule
     var onSave: (Rule) -> Void
-    @State private var regexError: String?
+    var onDelete: (() -> Void)?
+    @State private var validationError: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -189,8 +225,8 @@ struct RuleEditorSheet: View {
                 }
             }
 
-            if let regexError {
-                Text(regexError)
+            if let validationError {
+                Text(validationError)
                     .font(.system(size: 12))
                     .foregroundStyle(.red)
             }
@@ -198,6 +234,14 @@ struct RuleEditorSheet: View {
             Spacer(minLength: 0)
 
             HStack {
+                if let onDelete {
+                    Button("Delete", role: .destructive) {
+                        onDelete()
+                        dismiss()
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red)
+                }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -272,15 +316,27 @@ struct RuleEditorSheet: View {
     }
 
     private func save() {
-        if rule.conditions.contains(where: { $0.kind == .url && $0.urlMatcher == .regex }) {
-            for condition in rule.conditions where condition.kind == .url && condition.urlMatcher == .regex {
+        for condition in rule.conditions where condition.kind == .url {
+            if condition.pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                validationError = "Enter a web address pattern."
+                return
+            }
+            if condition.urlMatcher == .regex {
                 do {
                     _ = try NSRegularExpression(pattern: condition.pattern)
                 } catch {
-                    regexError = "Invalid regex: \(error.localizedDescription)"
+                    validationError = "Invalid regex: \(error.localizedDescription)"
                     return
                 }
             }
+        }
+        if rule.behaviour.kind.needsRows && rule.behaviour.rowIDs.isEmpty {
+            validationError = "Choose at least one browser."
+            return
+        }
+        rule.title = rule.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if rule.title.isEmpty {
+            rule.title = "Untitled rule"
         }
         onSave(rule)
         dismiss()

@@ -9,7 +9,8 @@ enum Dispatcher {
         url: URL,
         browser: BrowserRecord,
         row: CatalogRow,
-        activates: Bool
+        activates: Bool,
+        completion: @escaping (Error?) -> Void = { _ in }
     ) -> DispatchOutcome {
         let running = isRunning(bundleIdentifier: browser.bundleIdentifier)
         let needsProfile = row.isProfileVariant
@@ -25,16 +26,16 @@ enum Dispatcher {
             configuration.arguments = arguments
             configuration.createsNewApplicationInstance = true
             NSWorkspace.shared.openApplication(at: browser.bundleURL, configuration: configuration) { _, error in
-                if let error {
-                    NSLog("LinkRouter: launch failed: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    completion(error)
                 }
             }
             return .opened
         }
 
         NSWorkspace.shared.open([url], withApplicationAt: browser.bundleURL, configuration: configuration) { _, error in
-            if let error {
-                NSLog("LinkRouter: open failed: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                completion(error)
             }
         }
         return .opened
