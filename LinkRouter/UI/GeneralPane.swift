@@ -111,6 +111,16 @@ struct GeneralPane: View {
                         .foregroundStyle(.secondary)
                 }
 
+                settingsGroup("Backup") {
+                    HStack {
+                        Button("Export Settings…") { exportSettings() }
+                        Button("Import Settings…") { importSettings() }
+                    }
+                    Text("Exports browsers, rules, profiles, and settings. Link history stays out of the file.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
                 settingsGroup("About") {
                     HStack {
                         Text("Version")
@@ -157,6 +167,44 @@ struct GeneralPane: View {
                 state.save()
             }
         )
+    }
+
+    private func exportSettings() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "LinkRouter-settings.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try state.exportSettings().write(to: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Couldn't export settings"
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+
+    private func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let confirm = NSAlert()
+        confirm.messageText = "Replace your current browsers, rules and profiles?"
+        confirm.informativeText = "Link history is kept. This can't be undone."
+        confirm.addButton(withTitle: "Replace")
+        confirm.addButton(withTitle: "Cancel")
+        guard confirm.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try state.importSettings(from: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Couldn't import settings"
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
     }
 
     private var version: String {

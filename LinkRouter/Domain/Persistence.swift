@@ -66,6 +66,26 @@ enum Persistence {
         return directory.appendingPathComponent("\(prefix)\(formatter.string(from: Date())).json")
     }
 
+    enum ImportError: Error {
+        case newer
+    }
+
+    static func exportData(_ state: PersistedState) throws -> Data {
+        var copy = state
+        copy.recent = []
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return try encoder.encode(copy)
+    }
+
+    static func importState(from data: Data) throws -> PersistedState {
+        let state = try JSONDecoder().decode(PersistedState.self, from: data)
+        guard state.schemaVersion <= PersistedState.currentSchemaVersion else {
+            throw ImportError.newer
+        }
+        return Migrations.migrate(state)
+    }
+
     static func save(_ state: PersistedState) {
         do {
             let encoder = JSONEncoder()

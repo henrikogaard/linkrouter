@@ -795,6 +795,36 @@ final class AppState: ObservableObject {
         SettingsPresenter.present()
     }
 
+    func exportSettings() throws -> Data {
+        try Persistence.exportData(
+            PersistedState(
+                browsers: browsers,
+                rows: rows,
+                rules: rules,
+                profiles: profiles,
+                settings: settings,
+                recent: recent
+            )
+        )
+    }
+
+    func importSettings(from url: URL) throws {
+        let imported = try Persistence.importState(from: Data(contentsOf: url))
+        browsers = imported.browsers
+        rows = imported.rows
+        rules = imported.rules
+        profiles = imported.profiles
+        settings = imported.settings
+        for index in browsers.indices {
+            guard !FileManager.default.fileExists(atPath: browsers[index].path),
+                  let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browsers[index].bundleIdentifier)
+            else { continue }
+            browsers[index].path = url.path
+        }
+        refreshProfileSnapshot()
+        save()
+    }
+
     func save() {
         guard !skipsPersistence else { return }
         saveWork?.cancel()
