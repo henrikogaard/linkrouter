@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         AppState.shared.settings.appearance.apply()
         AppState.shared.refreshDefaultStatus()
+        NSApp.servicesProvider = self
         lastForeignApp = NSWorkspace.shared.frontmostApplication
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
@@ -83,6 +84,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func fourCC(_ code: OSType) -> String {
         let bytes = (0..<4).map { UInt8((code >> (24 - $0 * 8)) & 0xFF) }
         return String(bytes: bytes, encoding: .ascii) ?? String(format: "%08x", code)
+    }
+
+    @objc func routeLink(
+        _ pboard: NSPasteboard,
+        userData: String?,
+        error: AutoreleasingUnsafeMutablePointer<NSString>
+    ) {
+        guard let string = pboard.string(forType: .string),
+              let url = ClipboardLink.firstURL(in: string) else { return }
+        let front = NSWorkspace.shared.frontmostApplication
+        let source: (bundleID: String, name: String)? = {
+            guard let front, front.bundleIdentifier != Bundle.main.bundleIdentifier else { return nil }
+            return (front.bundleIdentifier ?? "", front.localizedName ?? "")
+        }()
+        DispatchQueue.main.async {
+            AppState.shared.handleIncoming(url, source: source)
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
