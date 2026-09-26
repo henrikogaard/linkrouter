@@ -42,6 +42,9 @@
 		A20008 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006; };
 		A20009 /* ProfileReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10007; };
 		A20010 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
+		A20011 /* BrowserCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20005; };
+		A20012 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
+		A20013 /* DefaultBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +89,7 @@
 		B20002 /* ProfileReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileReaderTests.swift; sourceTree = "<group>"; };
 		B20003 /* DispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatcherTests.swift; sourceTree = "<group>"; };
 		B20004 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
+		B20005 /* BrowserCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalogTests.swift; sourceTree = "<group>"; };
 		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -181,6 +185,7 @@
 				B20002 /* ProfileReaderTests.swift */,
 				B20003 /* DispatcherTests.swift */,
 				B20004 /* PersistenceTests.swift */,
+				B20005 /* BrowserCatalogTests.swift */,
 			);
 			path = LinkRouterTests;
 			sourceTree = "<group>";
@@ -322,9 +327,12 @@
 				A20008 /* Persistence.swift in Sources */,
 				A20009 /* ProfileReader.swift in Sources */,
 				A20010 /* Dispatcher.swift in Sources */,
+				A20012 /* BrowserCatalog.swift in Sources */,
+				A20013 /* DefaultBrowser.swift in Sources */,
 				A20004 /* ProfileReaderTests.swift in Sources */,
 				A20005 /* DispatcherTests.swift in Sources */,
 				A20006 /* PersistenceTests.swift in Sources */,
+				A20011 /* BrowserCatalogTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

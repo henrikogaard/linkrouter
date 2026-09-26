@@ -334,6 +334,9 @@ final class AppState: ObservableObject {
     }
 
     func refreshDiscovered() {
+        for row in rows {
+            _ = resolvedBrowser(for: row)
+        }
         BrowserCatalog.appendDiscovered(browsers: &browsers, rows: &rows)
         let selfPaths = [Bundle.main.bundleURL.standardizedFileURL.path, "LinkRouter.app"]
         let removed = browsers.filter { record in
@@ -345,9 +348,6 @@ final class AppState: ObservableObject {
             rows.removeAll { ids.contains($0.browserID) }
         }
         runningIDs = BrowserCatalog.runningIdentifiers(in: browsers)
-        for row in rows {
-            _ = resolvedBrowser(for: row)
-        }
         save()
     }
 
