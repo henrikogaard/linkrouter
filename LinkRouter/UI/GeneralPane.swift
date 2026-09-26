@@ -53,6 +53,40 @@ struct GeneralPane: View {
                         .toggleStyle(.switch)
                         .tint(LR.accent)
                         .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
+                    HStack {
+                        Text("Auto-dismiss picker")
+                        Spacer()
+                        Picker("Auto-dismiss picker", selection: $state.settings.promptTimeout) {
+                            Text("None").tag(0)
+                            Text("15 s").tag(15)
+                            Text("30 s").tag(30)
+                            Text("60 s").tag(60)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 90)
+                        .onChange(of: state.settings.promptTimeout) { _, _ in state.save() }
+                    }
+                    Text("Opens the favourite when it expires, if one is set.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
+                settingsGroup("Link cleaning") {
+                    Toggle("Unwrap redirect links", isOn: $state.settings.unwrapRedirects)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.unwrapRedirects) { _, _ in state.save() }
+                    Text("Follows known redirectors (Google /url, Outlook SafeLinks, Facebook l.php) to the real URL before routing.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    Toggle("Strip tracking parameters", isOn: $state.settings.stripTrackingParams)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.stripTrackingParams) { _, _ in state.save() }
+                    Text("Removes utm_* and common click IDs (fbclid, gclid, …) before routing.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
 
                 settingsGroup("Menu bar") {

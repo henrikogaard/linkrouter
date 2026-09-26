@@ -20,12 +20,14 @@ final class PersistenceTests: XCTestCase {
     private func sampleState() -> PersistedState {
         let browser = BrowserRecord(id: UUID(), path: "/Applications/Chrome.app", bundleIdentifier: "com.google.Chrome", displayName: "Chrome")
         let row = CatalogRow(id: UUID(), browserID: browser.id, kind: .app)
+        let entry = RoutedEntry(id: UUID(), url: URL(string: "https://example.com/x")!, rowID: row.id, title: "Chrome", date: Date())
         return PersistedState(
             browsers: [browser],
             rows: [row],
             rules: Rule.shipped(),
             profiles: RouteProfile.shipped(),
-            settings: AppSettings()
+            settings: AppSettings(),
+            recent: [entry]
         )
     }
 
@@ -41,6 +43,7 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(loaded.rules, state.rules)
         XCTAssertEqual(loaded.profiles, state.profiles)
         XCTAssertEqual(loaded.settings, state.settings)
+        XCTAssertEqual(loaded.recent, state.recent)
     }
 
     func testLegacyStateDecodesWithDefaults() {
@@ -63,6 +66,7 @@ final class PersistenceTests: XCTestCase {
         XCTAssertTrue(loaded.settings.showMenuBar)
         XCTAssertEqual(loaded.browsers, [browser])
         XCTAssertEqual(loaded.rows, [row])
+        XCTAssertEqual(loaded.recent, [])
     }
 
     func testCorruptStateIsCopiedAside() {
@@ -82,5 +86,15 @@ final class PersistenceTests: XCTestCase {
             XCTFail("expected missing")
             return
         }
+    }
+
+    func testLegacyConditionDecodesWithDefaults() throws {
+        let json = """
+            {"id":"A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D","kind":"url","urlMatcher":"contains","pattern":"github.com","countComparator":"greaterThan","count":0,"linkKind":"website"}
+            """.data(using: .utf8)!
+        let condition = try JSONDecoder().decode(Condition.self, from: json)
+        XCTAssertEqual(condition.startMinute, 540)
+        XCTAssertEqual(condition.endMinute, 1020)
+        XCTAssertEqual(condition.weekdays, [2, 3, 4, 5, 6])
     }
 }

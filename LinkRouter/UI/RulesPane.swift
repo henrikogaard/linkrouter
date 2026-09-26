@@ -1,9 +1,11 @@
+import AppKit
 import SwiftUI
 
 struct RulesPane: View {
     @EnvironmentObject private var state: AppState
     @State private var editing: Rule?
     @State private var selection: UUID?
+    @State private var testLink = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -13,8 +15,8 @@ struct RulesPane: View {
             )
 
             List {
-                ForEach(state.rules) { rule in
-                    RuleRow(rule: rule, isSelected: selection == rule.id) {
+                ForEach(Array(state.rules.enumerated()), id: \.element.id) { index, rule in
+                    RuleRow(rule: rule, index: index, isSelected: selection == rule.id) {
                         selection = rule.id
                         editing = rule
                     }
@@ -22,6 +24,12 @@ struct RulesPane: View {
                         Button("Edit") {
                             selection = rule.id
                             editing = rule
+                        }
+                        Button("Duplicate") {
+                            state.duplicateRule(rule)
+                        }
+                        if !rule.isFallback {
+                            Toggle("Enabled", isOn: enabledBinding(rule))
                         }
                         if !rule.isFallback {
                             Button("Delete", role: .destructive) {
@@ -43,6 +51,30 @@ struct RulesPane: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+
+            VStack(alignment: .leading, spacing: 6) {
+                TextField("Test a link, e.g. https://github.com/foo", text: $testLink)
+                    .textFieldStyle(.roundedBorder)
+                switch testOutcome {
+                case .none:
+                    EmptyView()
+                case .plain(let text):
+                    Text(text)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                case .rule(let text, let id):
+                    Button {
+                        selection = id
+                    } label: {
+                        Text(text)
+                            .font(.system(size: 12))
+                            .foregroundStyle(LR.accent)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, LR.pageInset)
+            .padding(.vertical, 8)
         }
         .background(LR.pageFill)
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -73,6 +105,9 @@ struct RulesPane: View {
                 },
                 onDelete: rule.isFallback ? nil : {
                     remove(rule)
+                },
+                onDuplicate: {
+                    state.duplicateRule(rule)
                 }
             )
             .environmentObject(state)
@@ -81,6 +116,54 @@ struct RulesPane: View {
 
     private var selectedRule: Rule? {
         state.rules.first { $0.id == selection }
+    }
+
+    private enum TestOutcome {
+        case plain(String)
+        case rule(String, UUID)
+    }
+
+    private func enabledBinding(_ rule: Rule) -> Binding<Bool> {
+        Binding(
+            get: { rule.enabled },
+            set: { value in
+                var next = rule
+                next.enabled = value
+                state.updateRule(next)
+            }
+        )
+    }
+
+    private var testOutcome: TestOutcome? {
+        let trimmed = testLink.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let candidate = trimmed.contains("://") ? trimmed : "https://\(trimmed)"
+        guard let url = URL(string: candidate), url.host != nil else {
+            return .plain("Invalid URL")
+        }
+        let explanation = RuleEngine.explain(
+            link: IncomingLink(url: url),
+            profiles: state.profiles,
+            rules: state.rules,
+            runningCount: state.runningCount,
+            modifierForcePrompt: false
+        )
+        let destination = state.describe(explanation.result)
+        switch explanation.source {
+        case .modifier:
+            return .plain("Modifier held → \(destination)")
+        case .profile(let id):
+            let name = state.profiles.first { $0.id == id }?.name ?? "profile"
+            return .plain("Matched profile \(name) → \(destination)")
+        case .rule(let id):
+            let name = state.rules.first { $0.id == id }?.title ?? "rule"
+            return .rule("Matched rule \(name) → \(destination)", id)
+        case .fallback(let id):
+            let name = state.rules.first { $0.id == id }?.title ?? "fallback"
+            return .rule("Fallback \(name) → \(destination)", id)
+        case .none:
+            return .plain("No match → \(destination)")
+        }
     }
 
     private func remove(_ rule: Rule) {
@@ -94,12 +177,17 @@ struct RulesPane: View {
 private struct RuleRow: View {
     @EnvironmentObject private var state: AppState
     var rule: Rule
+    var index: Int
     var isSelected: Bool
     var onEdit: () -> Void
 
     var body: some View {
         Button(action: onEdit) {
             HStack(spacing: 14) {
+                Text("\(index + 1)")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 20)
                 Image(systemName: rule.isFallback ? "lock.fill" : "line.3.horizontal")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.tertiary)
@@ -154,6 +242,7 @@ struct RuleEditorSheet: View {
     @State var rule: Rule
     var onSave: (Rule) -> Void
     var onDelete: (() -> Void)?
+    var onDuplicate: (() -> Void)?
     @State private var validationError: String?
 
     var body: some View {
@@ -242,6 +331,13 @@ struct RuleEditorSheet: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(.red)
                 }
+                if let onDuplicate {
+                    Button("Duplicate") {
+                        onDuplicate()
+                        dismiss()
+                    }
+                    .buttonStyle(.plain)
+                }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -300,6 +396,58 @@ struct RuleEditorSheet: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+            case .sourceApp:
+                Picker("Matcher", selection: condition.urlMatcher) {
+                    ForEach([URLMatcher.is, .isNot, .contains]) { matcher in
+                        Text(matcher.label).tag(matcher)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 110)
+                Picker("App", selection: condition.pattern) {
+                    Text("Choose…").tag("")
+                    ForEach(runningApps, id: \.bundleIdentifier) { app in
+                        Text("\(app.localizedName ?? "?") — \(app.bundleIdentifier ?? "")")
+                            .tag(app.bundleIdentifier ?? "")
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 210)
+                TextField("com.example.app", text: condition.pattern)
+                    .textFieldStyle(.roundedBorder)
+            case .schedule:
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        DatePicker("From", selection: minuteBinding(condition, \.startMinute), displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                        DatePicker("Until", selection: minuteBinding(condition, \.endMinute), displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                    }
+                    HStack(spacing: 4) {
+                        ForEach(weekdayChips, id: \.day) { chip in
+                            let on = condition.wrappedValue.weekdays.contains(chip.day)
+                            Text(chip.label)
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 4)
+                                .background(on ? LR.accent.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(on ? LR.accent.opacity(0.45) : LR.hairline)
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    if on {
+                                        condition.wrappedValue.weekdays.remove(chip.day)
+                                    } else {
+                                        condition.wrappedValue.weekdays.insert(chip.day)
+                                    }
+                                }
+                        }
+                    }
+                }
             }
 
             Button {
@@ -313,6 +461,34 @@ struct RuleEditorSheet: View {
         }
         .padding(10)
         .background(LR.rowFill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private var runningApps: [NSRunningApplication] {
+        NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+    }
+
+    private var weekdayChips: [(day: Int, label: String)] {
+        [(2, "Mon"), (3, "Tue"), (4, "Wed"), (5, "Thu"), (6, "Fri"), (7, "Sat"), (1, "Sun")]
+    }
+
+    private func minuteBinding(_ condition: Binding<Condition>, _ keyPath: WritableKeyPath<Condition, Int>) -> Binding<Date> {
+        Binding(
+            get: {
+                Calendar.current.date(
+                    from: DateComponents(
+                        hour: condition.wrappedValue[keyPath: keyPath] / 60,
+                        minute: condition.wrappedValue[keyPath: keyPath] % 60
+                    )
+                ) ?? .now
+            },
+            set: { date in
+                condition.wrappedValue[keyPath: keyPath] =
+                    Calendar.current.component(.hour, from: date) * 60
+                    + Calendar.current.component(.minute, from: date)
+            }
+        )
     }
 
     private func save() {

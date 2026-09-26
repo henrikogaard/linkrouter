@@ -1,42 +1,91 @@
 import Foundation
 
+enum MatchSource: Equatable {
+    case modifier
+    case profile(UUID)
+    case rule(UUID)
+    case fallback(UUID)
+    case none
+}
+
+struct Explanation: Equatable {
+    var source: MatchSource
+    var result: EngineResult
+}
+
 enum RuleEngine {
     static func evaluate(
         link: IncomingLink,
         profiles: [RouteProfile] = [],
         rules: [Rule],
         runningCount: Int,
-        modifierForcePrompt: Bool
+        modifierForcePrompt: Bool,
+        now: Date = Date(),
+        calendar: Calendar = .current
     ) -> EngineResult {
+        explain(
+            link: link,
+            profiles: profiles,
+            rules: rules,
+            runningCount: runningCount,
+            modifierForcePrompt: modifierForcePrompt,
+            now: now,
+            calendar: calendar
+        ).result
+    }
+
+    static func explain(
+        link: IncomingLink,
+        profiles: [RouteProfile] = [],
+        rules: [Rule],
+        runningCount: Int,
+        modifierForcePrompt: Bool,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Explanation {
         if modifierForcePrompt {
-            return .promptAll
+            return Explanation(source: .modifier, result: .promptAll)
         }
 
-        if let rowID = matchProfile(profiles, link: link) {
-            return .open([rowID])
+        if let profile = matchProfile(profiles, link: link), let rowID = profile.browserRowID {
+            return Explanation(source: .profile(profile.id), result: .open([rowID]))
         }
 
         let enabled = rules.filter(\.enabled)
         let fallback = enabled.last(where: \.isFallback) ?? enabled.last
 
         for rule in enabled where !rule.isFallback {
-            if matches(rule, link: link, runningCount: runningCount) {
-                return result(for: rule.behaviour, fallback: fallback)
+            if matches(rule, link: link, runningCount: runningCount, now: now, calendar: calendar) {
+                return Explanation(
+                    source: .rule(rule.id),
+                    result: result(for: rule.behaviour, fallback: fallback)
+                )
             }
         }
 
-        if let fallback, matches(fallback, link: link, runningCount: runningCount) || fallback.conditions.isEmpty {
-            return result(for: fallback.behaviour, fallback: nil)
+        if let fallback, matches(fallback, link: link, runningCount: runningCount, now: now, calendar: calendar) || fallback.conditions.isEmpty {
+            return Explanation(
+                source: .fallback(fallback.id),
+                result: result(for: fallback.behaviour, fallback: nil)
+            )
         }
 
-        return .promptAll
+        return Explanation(source: .none, result: .promptAll)
     }
 
-    static func matches(_ rule: Rule, link: IncomingLink, runningCount: Int) -> Bool {
+    static func matches(
+        _ rule: Rule,
+        link: IncomingLink,
+        runningCount: Int,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Bool {
         if rule.conditions.isEmpty {
             return rule.isFallback
         }
-        let bits = rule.conditions.map { conditionMatches($0, link: link, runningCount: runningCount) }
+        let bits = rule.conditions.map {
+            conditionMatches($0, link: link, runningCount: runningCount, now: now, calendar: calendar)
+        }
         switch rule.combinator {
         case .any: return bits.contains(true)
         case .all: return bits.allSatisfy { $0 }
@@ -44,7 +93,13 @@ enum RuleEngine {
         }
     }
 
-    static func conditionMatches(_ condition: Condition, link: IncomingLink, runningCount: Int) -> Bool {
+    static func conditionMatches(
+        _ condition: Condition,
+        link: IncomingLink,
+        runningCount: Int,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Bool {
         switch condition.kind {
         case .url:
             return urlMatches(link.absoluteString, matcher: condition.urlMatcher, pattern: condition.pattern)
@@ -58,14 +113,23 @@ enum RuleEngine {
             case .localHTML:
                 return link.isFileURL
             }
+        case .sourceApp:
+            return urlMatches(link.sourceBundleID ?? "", matcher: condition.urlMatcher, pattern: condition.pattern)
+        case .schedule:
+            guard condition.weekdays.contains(calendar.component(.weekday, from: now)) else { return false }
+            let minute = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+            if condition.startMinute <= condition.endMinute {
+                return minute >= condition.startMinute && minute < condition.endMinute
+            }
+            return minute >= condition.startMinute || minute < condition.endMinute
         }
     }
 
-    static func matchProfile(_ profiles: [RouteProfile], link: IncomingLink) -> UUID? {
+    static func matchProfile(_ profiles: [RouteProfile], link: IncomingLink) -> RouteProfile? {
         for profile in profiles where profile.enabled {
-            guard let rowID = profile.browserRowID else { continue }
+            guard profile.browserRowID != nil else { continue }
             if profile.filledPatterns.contains(where: { hostPattern($0, matches: link) }) {
-                return rowID
+                return profile
             }
         }
         return nil
