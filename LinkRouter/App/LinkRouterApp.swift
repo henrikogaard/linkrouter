@@ -87,9 +87,12 @@ private struct MenuBarMenu: View {
                 Button("Until resumed") { state.pause(for: nil) }
             }
         }
-        if let clipboardURL = ClipboardLink.firstURL(in: NSPasteboard.general.string(forType: .string)) {
+        if state.clipboardURL != nil {
             Button("Route Clipboard Link") {
-                state.handleIncoming(clipboardURL)
+                state.refreshClipboard()
+                if let url = ClipboardLink.firstURL(in: NSPasteboard.general.string(forType: .string)) {
+                    state.handleIncoming(url)
+                }
             }
         } else {
             Text("No link on clipboard")

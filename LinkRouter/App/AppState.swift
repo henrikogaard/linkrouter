@@ -26,6 +26,8 @@ final class AppState: ObservableObject {
     var dispatcher: Dispatching
     var onPromptShown: (() -> Void)?
     var skipsPersistence = false
+    @Published var clipboardURL: URL?
+    private var pasteboardChangeCount = -1
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
     private var runningObservation: NSKeyValueObservation?
     private var saveWork: DispatchWorkItem?
@@ -85,6 +87,11 @@ final class AppState: ObservableObject {
             MainActor.assumeIsolated {
                 guard let self, !self.isDefaultBrowser else { return }
                 self.refreshDefaultStatus()
+            }
+        }
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.refreshClipboard()
             }
         }
         if corrupted {
@@ -353,6 +360,13 @@ final class AppState: ObservableObject {
             firstPromptLogged = true
             Log.app.info("Launch to first prompt: \(String(format: "%.2f", Date().timeIntervalSince(self.launchStart)))s")
         }
+    }
+
+    func refreshClipboard() {
+        let count = NSPasteboard.general.changeCount
+        guard count != pasteboardChangeCount else { return }
+        pasteboardChangeCount = count
+        clipboardURL = ClipboardLink.firstURL(in: NSPasteboard.general.string(forType: .string))
     }
 
     private func showNextQueuedPrompt() {
