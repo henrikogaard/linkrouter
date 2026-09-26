@@ -126,6 +126,71 @@ final class RuleEngineTests: XCTestCase {
         XCTAssertEqual(result, .open([rowID]))
     }
 
+    func testExplainReportsSources() {
+        let rowID = UUID()
+        let profile = RouteProfile(
+            id: UUID(),
+            name: "Work",
+            enabled: true,
+            browserRowID: rowID,
+            patterns: ["github.com"]
+        )
+        var github = Rule.shipped()[0]
+        github.conditions = [.url(matcher: .contains, pattern: "github.com")]
+        github.behaviour = Behaviour(kind: .promptAll, rowIDs: [])
+        github.isFallback = false
+        let fallback = Rule.shipped()[1]
+        let rules = [github, fallback]
+
+        let profileHit = RuleEngine.explain(
+            link: link("https://github.com/x"),
+            profiles: [profile],
+            rules: rules,
+            runningCount: 0,
+            modifierForcePrompt: false
+        )
+        XCTAssertEqual(profileHit.source, .profile(profile.id))
+        XCTAssertEqual(profileHit.result, .open([rowID]))
+
+        let ruleHit = RuleEngine.explain(
+            link: link("https://github.com/x"),
+            profiles: [],
+            rules: rules,
+            runningCount: 0,
+            modifierForcePrompt: false
+        )
+        XCTAssertEqual(ruleHit.source, .rule(github.id))
+
+        let fallbackHit = RuleEngine.explain(
+            link: link("https://example.com"),
+            profiles: [],
+            rules: rules,
+            runningCount: 0,
+            modifierForcePrompt: false
+        )
+        XCTAssertEqual(fallbackHit.source, .fallback(fallback.id))
+
+        let modifierHit = RuleEngine.explain(
+            link: link("https://github.com/x"),
+            profiles: [profile],
+            rules: rules,
+            runningCount: 0,
+            modifierForcePrompt: true
+        )
+        XCTAssertEqual(modifierHit.source, .modifier)
+        XCTAssertEqual(modifierHit.result, .promptAll)
+    }
+
+    func testProfileAddingHostDedupes() {
+        var profile = RouteProfile(id: UUID(), name: "Work", enabled: true, browserRowID: UUID(), patterns: [""])
+        profile = profile.adding(host: "github.com")
+        XCTAssertEqual(profile.patterns, ["github.com"])
+        profile = profile.adding(host: "github.com")
+        XCTAssertEqual(profile.patterns, ["github.com"])
+        profile = profile.adding(host: "example.com")
+        XCTAssertEqual(profile.patterns, ["github.com", "example.com"])
+    }
+
     func testDisabledProfileIsSkipped() {
         let profile = RouteProfile(
             id: UUID(),

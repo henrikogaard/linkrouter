@@ -1,5 +1,18 @@
 import Foundation
 
+enum MatchSource: Equatable {
+    case modifier
+    case profile(UUID)
+    case rule(UUID)
+    case fallback(UUID)
+    case none
+}
+
+struct Explanation: Equatable {
+    var source: MatchSource
+    var result: EngineResult
+}
+
 enum RuleEngine {
     static func evaluate(
         link: IncomingLink,
@@ -8,12 +21,28 @@ enum RuleEngine {
         runningCount: Int,
         modifierForcePrompt: Bool
     ) -> EngineResult {
+        explain(
+            link: link,
+            profiles: profiles,
+            rules: rules,
+            runningCount: runningCount,
+            modifierForcePrompt: modifierForcePrompt
+        ).result
+    }
+
+    static func explain(
+        link: IncomingLink,
+        profiles: [RouteProfile] = [],
+        rules: [Rule],
+        runningCount: Int,
+        modifierForcePrompt: Bool
+    ) -> Explanation {
         if modifierForcePrompt {
-            return .promptAll
+            return Explanation(source: .modifier, result: .promptAll)
         }
 
-        if let rowID = matchProfile(profiles, link: link) {
-            return .open([rowID])
+        if let profile = matchProfile(profiles, link: link), let rowID = profile.browserRowID {
+            return Explanation(source: .profile(profile.id), result: .open([rowID]))
         }
 
         let enabled = rules.filter(\.enabled)
@@ -21,15 +50,21 @@ enum RuleEngine {
 
         for rule in enabled where !rule.isFallback {
             if matches(rule, link: link, runningCount: runningCount) {
-                return result(for: rule.behaviour, fallback: fallback)
+                return Explanation(
+                    source: .rule(rule.id),
+                    result: result(for: rule.behaviour, fallback: fallback)
+                )
             }
         }
 
         if let fallback, matches(fallback, link: link, runningCount: runningCount) || fallback.conditions.isEmpty {
-            return result(for: fallback.behaviour, fallback: nil)
+            return Explanation(
+                source: .fallback(fallback.id),
+                result: result(for: fallback.behaviour, fallback: nil)
+            )
         }
 
-        return .promptAll
+        return Explanation(source: .none, result: .promptAll)
     }
 
     static func matches(_ rule: Rule, link: IncomingLink, runningCount: Int) -> Bool {
@@ -61,11 +96,11 @@ enum RuleEngine {
         }
     }
 
-    static func matchProfile(_ profiles: [RouteProfile], link: IncomingLink) -> UUID? {
+    static func matchProfile(_ profiles: [RouteProfile], link: IncomingLink) -> RouteProfile? {
         for profile in profiles where profile.enabled {
-            guard let rowID = profile.browserRowID else { continue }
+            guard profile.browserRowID != nil else { continue }
             if profile.filledPatterns.contains(where: { hostPattern($0, matches: link) }) {
-                return rowID
+                return profile
             }
         }
         return nil
