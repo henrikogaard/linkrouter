@@ -27,6 +27,7 @@ final class AppState: ObservableObject {
     var onPromptShown: (() -> Void)?
     var skipsPersistence = false
     @Published var clipboardURL: URL?
+    var loadIssue: String?
     private var pasteboardChangeCount = -1
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
     private var runningObservation: NSKeyValueObservation?
@@ -58,6 +59,15 @@ final class AppState: ObservableObject {
             initialSettings = AppSettings()
         case .corrupt:
             corrupted = true
+            let seed = BrowserCatalog.seedFromLaunchServices()
+            initialBrowsers = seed.browsers
+            initialRows = seed.rows
+            initialRules = Rule.shipped()
+            initialProfiles = RouteProfile.shipped()
+            initialSettings = AppSettings()
+        case .newer:
+            corrupted = true
+            loadIssue = "This settings file was written by a newer LinkRouter"
             let seed = BrowserCatalog.seedFromLaunchServices()
             initialBrowsers = seed.browsers
             initialRows = seed.rows

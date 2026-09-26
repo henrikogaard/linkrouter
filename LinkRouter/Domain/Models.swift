@@ -325,6 +325,9 @@ struct RoutedEntry: Codable, Equatable, Identifiable {
 }
 
 struct PersistedState: Codable {
+    static let currentSchemaVersion = 2
+
+    var schemaVersion = currentSchemaVersion
     var browsers: [BrowserRecord]
     var rows: [CatalogRow]
     var rules: [Rule]
@@ -354,6 +357,7 @@ struct PersistedState: Codable {
         rows = try container.decode([CatalogRow].self, forKey: .rows)
         rules = try container.decode([Rule].self, forKey: .rules)
         profiles = try container.decodeIfPresent([RouteProfile].self, forKey: .profiles) ?? RouteProfile.shipped()
+        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
         settings = try container.decode(AppSettings.self, forKey: .settings)
         recent = try container.decodeIfPresent([RoutedEntry].self, forKey: .recent) ?? []
     }
