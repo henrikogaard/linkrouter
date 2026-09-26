@@ -5,11 +5,11 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .browsers: "Browsers"
-        case .profiles: "Profiles"
-        case .rules: "Rules"
-        case .history: "History"
-        case .general: "General"
+        case .browsers: String(localized: "Browsers")
+        case .profiles: String(localized: "Profiles")
+        case .rules: String(localized: "Rules")
+        case .history: String(localized: "History")
+        case .general: String(localized: "General")
         }
     }
     var symbol: String {
@@ -48,10 +48,26 @@ struct SettingsRootView: View {
         .background(LR.pageFill)
         .tint(Color.primary)
         .preferredColorScheme(state.settings.appearance.colorScheme)
+        .sheet(isPresented: welcomeBinding) {
+            WelcomeView(pane: $pane)
+                .environmentObject(state)
+        }
         .onAppear {
             state.refreshDefaultStatus()
             state.refreshDiscovered()
         }
+    }
+
+    private var welcomeBinding: Binding<Bool> {
+        Binding(
+            get: { !state.settings.onboardingDone },
+            set: { shown in
+                if !shown, !state.settings.onboardingDone {
+                    state.settings.onboardingDone = true
+                    state.save()
+                }
+            }
+        )
     }
 
     private var sidebar: some View {

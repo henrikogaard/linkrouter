@@ -5,9 +5,9 @@ enum AppearanceMode: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .system: "System"
-        case .light: "Light"
-        case .dark: "Dark"
+        case .system: String(localized: "System")
+        case .light: String(localized: "Light")
+        case .dark: String(localized: "Dark")
         }
     }
 }
@@ -17,16 +17,16 @@ enum Combinator: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .any: "any of the following are true"
-        case .all: "all of the following are true"
-        case .none: "none of the following are true"
+        case .any: String(localized: "any of the following are true")
+        case .all: String(localized: "all of the following are true")
+        case .none: String(localized: "none of the following are true")
         }
     }
     var shortLabel: String {
         switch self {
-        case .any: "Any"
-        case .all: "All"
-        case .none: "None"
+        case .any: String(localized: "Any")
+        case .all: String(localized: "All")
+        case .none: String(localized: "None")
         }
     }
 }
@@ -36,13 +36,13 @@ enum URLMatcher: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .is: "is"
-        case .isNot: "is not"
-        case .contains: "contains"
-        case .beginsWith: "begins with"
-        case .endsWith: "ends with"
-        case .like: "is like"
-        case .regex: "matches regex"
+        case .is: String(localized: "is")
+        case .isNot: String(localized: "is not")
+        case .contains: String(localized: "contains")
+        case .beginsWith: String(localized: "begins with")
+        case .endsWith: String(localized: "ends with")
+        case .like: String(localized: "is like")
+        case .regex: String(localized: "matches regex")
         }
     }
 }
@@ -52,10 +52,10 @@ enum CountComparator: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .is: "is"
-        case .isNot: "is not"
-        case .lessThan: "is less than"
-        case .greaterThan: "is greater than"
+        case .is: String(localized: "is")
+        case .isNot: String(localized: "is not")
+        case .lessThan: String(localized: "is less than")
+        case .greaterThan: String(localized: "is greater than")
         }
     }
 }
@@ -65,8 +65,8 @@ enum LinkKind: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .website: "website link"
-        case .localHTML: "local HTML file"
+        case .website: String(localized: "website link")
+        case .localHTML: String(localized: "local HTML file")
         }
     }
 }
@@ -77,11 +77,11 @@ struct Condition: Codable, Equatable, Identifiable {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .url: "Web address"
-            case .runningCount: "Running browsers"
-            case .linkType: "Link type"
-            case .sourceApp: "Sent from app"
-            case .schedule: "Time of day"
+            case .url: String(localized: "Web address")
+            case .runningCount: String(localized: "Running browsers")
+            case .linkType: String(localized: "Link type")
+            case .sourceApp: String(localized: "Sent from app")
+            case .schedule: String(localized: "Time of day")
             }
         }
     }
@@ -151,14 +151,14 @@ struct Behaviour: Codable, Equatable {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .useFavourite: "Use favourite browser"
-            case .useBestRunning: "Use best running browser"
-            case .promptAll: "Prompt for all browsers"
-            case .promptRunning: "Prompt for running browsers"
-            case .promptBrowsers: "Prompt for these browsers"
-            case .openBrowser: "Always use this browser"
-            case .openBrowsersInOrder: "Use these browsers in order"
-            case .useDefaultBehaviour: "Use default behaviour"
+            case .useFavourite: String(localized: "Use favourite browser")
+            case .useBestRunning: String(localized: "Use best running browser")
+            case .promptAll: String(localized: "Prompt for all browsers")
+            case .promptRunning: String(localized: "Prompt for running browsers")
+            case .promptBrowsers: String(localized: "Prompt for these browsers")
+            case .openBrowser: String(localized: "Always use this browser")
+            case .openBrowsersInOrder: String(localized: "Use these browsers in order")
+            case .useDefaultBehaviour: String(localized: "Use default behaviour")
             }
         }
         var needsRows: Bool {
@@ -296,10 +296,11 @@ struct AppSettings: Codable, Equatable {
     var unwrapRedirects = true
     var stripTrackingParams = true
     var promptTimeout: Int = 0
+    var onboardingDone = false
 
     enum CodingKeys: String, CodingKey {
         case showMenuBar, forcePromptOnModifier, openInBackground, appearance
-        case unwrapRedirects, stripTrackingParams, promptTimeout
+        case unwrapRedirects, stripTrackingParams, promptTimeout, onboardingDone
     }
 
     init() {}
@@ -313,6 +314,7 @@ struct AppSettings: Codable, Equatable {
         unwrapRedirects = try container.decodeIfPresent(Bool.self, forKey: .unwrapRedirects) ?? true
         stripTrackingParams = try container.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
         promptTimeout = try container.decodeIfPresent(Int.self, forKey: .promptTimeout) ?? 0
+        onboardingDone = try container.decodeIfPresent(Bool.self, forKey: .onboardingDone) ?? false
     }
 }
 
@@ -325,6 +327,9 @@ struct RoutedEntry: Codable, Equatable, Identifiable {
 }
 
 struct PersistedState: Codable {
+    static let currentSchemaVersion = 2
+
+    var schemaVersion = currentSchemaVersion
     var browsers: [BrowserRecord]
     var rows: [CatalogRow]
     var rules: [Rule]
@@ -354,6 +359,7 @@ struct PersistedState: Codable {
         rows = try container.decode([CatalogRow].self, forKey: .rows)
         rules = try container.decode([Rule].self, forKey: .rules)
         profiles = try container.decodeIfPresent([RouteProfile].self, forKey: .profiles) ?? RouteProfile.shipped()
+        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
         settings = try container.decode(AppSettings.self, forKey: .settings)
         recent = try container.decodeIfPresent([RoutedEntry].self, forKey: .recent) ?? []
     }

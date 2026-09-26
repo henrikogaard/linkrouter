@@ -1,0 +1,48 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: xcodebuild -version
+
+      - name: Build Release
+        run: |
+          xcodebuild \
+            -project LinkRouter.xcodeproj \
+            -scheme LinkRouter \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_ALLOWED=YES \
+            build
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          SHA7="${GITHUB_SHA:0:7}"
+          echo "ZIP_NAME=LinkRouter-nightly-${SHA7}.zip" >> "$GITHUB_ENV"
+          ditto -c -k --keepParent \
+            "build/Build/Products/Release/LinkRouter.app" \
+            "LinkRouter-nightly-${SHA7}.zip"
+          ls -lh "LinkRouter-nightly-${SHA7}.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LinkRouter-nightly-${{ github.sha }}
+          path: LinkRouter-nightly-*.zip
+          retention-days: 14
+          if-no-files-found: error
