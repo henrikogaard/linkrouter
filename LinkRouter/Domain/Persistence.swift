@@ -48,7 +48,7 @@ enum Persistence {
         if let probe = try? JSONDecoder().decode(VersionProbe.self, from: data),
            let version = probe.schemaVersion,
            version > PersistedState.currentSchemaVersion {
-            let backup = stampededBackup(prefix: "state.newer-")
+            let backup = stampedBackup(prefix: "state.newer-")
             try? data.write(to: backup)
             Log.app.error("State file schema \(version) is newer than supported \(PersistedState.currentSchemaVersion). Kept copy at \(backup.path)")
             return .newer(version)
@@ -56,14 +56,14 @@ enum Persistence {
         do {
             return .loaded(Migrations.migrate(try JSONDecoder().decode(PersistedState.self, from: data)))
         } catch {
-            let backup = stampededBackup(prefix: "state.corrupt-")
+            let backup = stampedBackup(prefix: "state.corrupt-")
             try? data.write(to: backup)
             Log.app.error("Failed to decode state: \(error.localizedDescription). Kept copy at \(backup.path)")
             return .corrupt
         }
     }
 
-    private static func stampededBackup(prefix: String) -> URL {
+    private static func stampedBackup(prefix: String) -> URL {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd-HHmmss"
         return directory.appendingPathComponent("\(prefix)\(formatter.string(from: Date())).json")
