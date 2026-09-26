@@ -11,8 +11,21 @@ enum BrowserCatalog {
         return (identifier, name)
     }
 
+    @MainActor private static var iconCache: [String: NSImage] = [:]
+
+    @MainActor
     static func icon(for path: String) -> NSImage {
-        NSWorkspace.shared.icon(forFile: path)
+        if let cached = iconCache[path] { return cached }
+        let image = NSWorkspace.shared.icon(forFile: path)
+        iconCache[path] = image
+        return image
+    }
+
+    @MainActor
+    static func invalidateIcons(for paths: String...) {
+        for path in paths {
+            iconCache.removeValue(forKey: path)
+        }
     }
 
     static func seedFromLaunchServices() -> (browsers: [BrowserRecord], rows: [CatalogRow]) {

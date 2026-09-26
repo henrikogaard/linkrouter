@@ -240,6 +240,15 @@ struct RouteProfile: Codable, Equatable, Identifiable {
             .filter { !$0.isEmpty }
     }
 
+    func adding(host: String) -> RouteProfile {
+        var copy = self
+        copy.patterns = filledPatterns
+        if !copy.patterns.contains(host) {
+            copy.patterns.append(host)
+        }
+        return copy
+    }
+
     var patternSummary: String {
         let filled = filledPatterns
         if filled.isEmpty { return "No URL patterns yet" }

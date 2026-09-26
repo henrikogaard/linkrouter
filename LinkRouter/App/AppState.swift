@@ -66,8 +66,10 @@ final class AppState: ObservableObject {
         runningIDs = BrowserCatalog.runningIdentifiers(in: initialBrowsers)
         observeRunning()
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            guard let self, !self.isDefaultBrowser else { return }
-            self.refreshDefaultStatus()
+            MainActor.assumeIsolated {
+                guard let self, !self.isDefaultBrowser else { return }
+                self.refreshDefaultStatus()
+            }
         }
         if corrupted {
             Persistence.save(
@@ -110,6 +112,7 @@ final class AppState: ObservableObject {
             updated.displayName = meta.displayName
         }
         browsers[index] = updated
+        BrowserCatalog.invalidateIcons(for: record.path, url.path)
         save()
         return updated
     }
