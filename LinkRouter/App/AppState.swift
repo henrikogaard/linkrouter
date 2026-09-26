@@ -27,6 +27,8 @@ final class AppState: ObservableObject {
     var onPromptShown: (() -> Void)?
     var skipsPersistence = false
     @Published var clipboardURL: URL?
+    var loadIssue: String?
+    private(set) var isFirstLaunch = false
     private var pasteboardChangeCount = -1
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
     private var runningObservation: NSKeyValueObservation?
@@ -50,6 +52,7 @@ final class AppState: ObservableObject {
             initialSettings = persisted.settings
             initialRecent = persisted.recent
         case .missing:
+            isFirstLaunch = true
             let seed = BrowserCatalog.seedFromLaunchServices()
             initialBrowsers = seed.browsers
             initialRows = seed.rows
@@ -58,6 +61,15 @@ final class AppState: ObservableObject {
             initialSettings = AppSettings()
         case .corrupt:
             corrupted = true
+            let seed = BrowserCatalog.seedFromLaunchServices()
+            initialBrowsers = seed.browsers
+            initialRows = seed.rows
+            initialRules = Rule.shipped()
+            initialProfiles = RouteProfile.shipped()
+            initialSettings = AppSettings()
+        case .newer:
+            corrupted = true
+            loadIssue = "This settings file was written by a newer LinkRouter"
             let seed = BrowserCatalog.seedFromLaunchServices()
             initialBrowsers = seed.browsers
             initialRows = seed.rows
@@ -443,8 +455,8 @@ final class AppState: ObservableObject {
 
     private func presentNoBrowserAlert() {
         let alert = NSAlert()
-        alert.messageText = "No browser available"
-        alert.informativeText = "Add a browser in LinkRouter → Browsers."
+        alert.messageText = String(localized: "No browser available")
+        alert.informativeText = String(localized: "Add a browser in LinkRouter → Browsers.")
         alert.addButton(withTitle: "Open Settings")
         alert.addButton(withTitle: "Cancel")
         NSApp.activate(ignoringOtherApps: true)
@@ -455,7 +467,7 @@ final class AppState: ObservableObject {
 
     private func presentOpenFailedAlert(browserName: String, error: Error) {
         let alert = NSAlert()
-        alert.messageText = "Couldn't open \(browserName)"
+        alert.messageText = String(localized: "Couldn't open \(browserName)")
         alert.informativeText = error.localizedDescription
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
@@ -484,8 +496,8 @@ final class AppState: ObservableObject {
 
     func presentQuitAlert(browserName: String, url: URL, row: CatalogRow, browser: BrowserRecord) {
         let alert = NSAlert()
-        alert.messageText = "\(browserName) is already running"
-        alert.informativeText = "\(browserName) applies a profile only when it starts cold. Open a separate \(browserName) instance for this profile, or open the link in the running \(browserName) without a profile."
+        alert.messageText = String(localized: "\(browserName) is already running")
+        alert.informativeText = String(localized: "\(browserName) applies a profile only when it starts cold. Open a separate \(browserName) instance for this profile, or open the link in the running \(browserName) without a profile.")
         alert.addButton(withTitle: "Open in new instance")
         alert.addButton(withTitle: "Open without profile")
         alert.addButton(withTitle: "Cancel")
@@ -746,17 +758,17 @@ final class AppState: ObservableObject {
     func describe(_ result: EngineResult) -> String {
         switch result {
         case .favourite:
-            return favourite.map { "Opens \(title(for: $0))" } ?? "No favourite set"
+            return favourite.map { String(localized: "Opens \(title(for: $0))") } ?? String(localized: "No favourite set")
         case .bestRunning:
-            return bestRunning().map { "Opens \(title(for: $0))" } ?? "No running browser"
+            return bestRunning().map { String(localized: "Opens \(title(for: $0))") } ?? String(localized: "No running browser")
         case .open(let ids):
-            return "Opens \(rowTitles(ids))"
+            return String(localized: "Opens \(rowTitles(ids))")
         case .promptAll:
-            return "Prompt for all browsers"
+            return String(localized: "Prompt for all browsers")
         case .promptRunning:
-            return "Prompt for running browsers"
+            return String(localized: "Prompt for running browsers")
         case .prompt(let ids):
-            return "Prompt for \(rowTitles(ids))"
+            return String(localized: "Prompt for \(rowTitles(ids))")
         }
     }
 
@@ -783,6 +795,36 @@ final class AppState: ObservableObject {
 
     func openSettings() {
         SettingsPresenter.present()
+    }
+
+    func exportSettings() throws -> Data {
+        try Persistence.exportData(
+            PersistedState(
+                browsers: browsers,
+                rows: rows,
+                rules: rules,
+                profiles: profiles,
+                settings: settings,
+                recent: recent
+            )
+        )
+    }
+
+    func importSettings(from url: URL) throws {
+        let imported = try Persistence.importState(from: Data(contentsOf: url))
+        browsers = imported.browsers
+        rows = imported.rows
+        rules = imported.rules
+        profiles = imported.profiles
+        settings = imported.settings
+        for index in browsers.indices {
+            guard !FileManager.default.fileExists(atPath: browsers[index].path),
+                  let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browsers[index].bundleIdentifier)
+            else { continue }
+            browsers[index].path = url.path
+        }
+        refreshProfileSnapshot()
+        save()
     }
 
     func save() {

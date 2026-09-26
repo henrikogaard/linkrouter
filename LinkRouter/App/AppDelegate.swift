@@ -9,6 +9,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppState.shared.settings.appearance.apply()
         AppState.shared.refreshDefaultStatus()
         NSApp.servicesProvider = self
+        if let loadIssue = AppState.shared.loadIssue {
+            let alert = NSAlert()
+            alert.messageText = loadIssue
+            alert.informativeText = String(localized: "Starting with default settings. The original file was kept next to state.json in Application Support.")
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+        if AppState.shared.isFirstLaunch {
+            SettingsPresenter.present()
+        }
         lastForeignApp = NSWorkspace.shared.frontmostApplication
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,

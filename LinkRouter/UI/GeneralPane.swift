@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GeneralPane: View {
     @EnvironmentObject private var state: AppState
+    @ObservedObject private var updater = Updater.shared
     @State private var loginOn = false
 
     var body: some View {
@@ -111,11 +112,40 @@ struct GeneralPane: View {
                         .foregroundStyle(.secondary)
                 }
 
-                settingsGroup("About") {
+                settingsGroup("Updates") {
                     HStack {
                         Text("Version")
                         Spacer()
                         Text(version)
+                            .foregroundStyle(.secondary)
+                    }
+                    if updater.canCheck {
+                        Button("Check for Updates…") { updater.check() }
+                        Toggle("Check automatically", isOn: autoUpdateBinding)
+                            .toggleStyle(.switch)
+                            .tint(LR.accent)
+                    } else {
+                        Text("Updates aren't configured for this build")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                settingsGroup("Backup") {
+                    HStack {
+                        Button("Export Settings…") { exportSettings() }
+                        Button("Import Settings…") { importSettings() }
+                    }
+                    Text("Exports browsers, rules, profiles, and settings. Link history stays out of the file.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
+                settingsGroup("About") {
+                    HStack {
+                        Text("Bundle")
+                        Spacer()
+                        Text(Bundle.main.bundleIdentifier ?? "app.linkrouter.LinkRouter")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -148,6 +178,13 @@ struct GeneralPane: View {
         .padding(.horizontal, LR.pageInset)
     }
 
+    private var autoUpdateBinding: Binding<Bool> {
+        Binding(
+            get: { updater.automaticallyChecksForUpdates },
+            set: { value in updater.automaticallyChecksForUpdates = value }
+        )
+    }
+
     private var appearanceBinding: Binding<AppearanceMode> {
         Binding(
             get: { state.settings.appearance },
@@ -157,6 +194,44 @@ struct GeneralPane: View {
                 state.save()
             }
         )
+    }
+
+    private func exportSettings() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "LinkRouter-settings.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try state.exportSettings().write(to: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = String(localized: "Couldn't export settings")
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+
+    private func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let confirm = NSAlert()
+        confirm.messageText = String(localized: "Replace your current browsers, rules and profiles?")
+        confirm.informativeText = String(localized: "Link history is kept. This can't be undone.")
+        confirm.addButton(withTitle: "Replace")
+        confirm.addButton(withTitle: "Cancel")
+        guard confirm.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try state.importSettings(from: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = String(localized: "Couldn't import settings")
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
     }
 
     private var version: String {

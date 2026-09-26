@@ -117,6 +117,17 @@ private struct MenuBarMenu: View {
             state.refreshDefaultStatus()
         }
         Divider()
+        Button("Setup Guide…") {
+            state.settings.onboardingDone = false
+            SettingsPresenter.present { id in
+                openWindow(id: id)
+            }
+        }
+        if Updater.shared.canCheck {
+            Button("Check for Updates…") {
+                Updater.shared.check()
+            }
+        }
         Button("Settings") {
             SettingsPresenter.present { id in
                 openWindow(id: id)

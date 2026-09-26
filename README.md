@@ -42,6 +42,18 @@ git push origin v1.0.0
 
 CI archives a Developer ID build, notarizes it, staples the ticket, and attaches `LinkRouter-1.0.0.zip` to the GitHub Release.
 
+## Updates
+
+LinkRouter uses Sparkle for in-app updates. They're off until an EdDSA key pair exists:
+
+1. Download a Sparkle release and run `./bin/generate_keys` to create a key pair (`--account` defaults; it stores the private key in your Keychain and prints the public key).
+2. Put the **public** key in the `SPARKLE_PUBLIC_ED_KEY` build setting — either in the project, an xcconfig, or pass `SPARKLE_PUBLIC_ED_KEY=<key>` to xcodebuild in `release.yml`. It's substituted into `SUPublicEDKey` in Info.plist.
+3. Add the **private** key as the `SPARKLE_PRIVATE_ED_KEY` GitHub Actions secret. When set, the release workflow downloads Sparkle 2.6.4, runs `generate_appcast` over `dist/`, and attaches `appcast.xml` to the release; the app's `SUFeedURL` points at `releases/latest/download/appcast.xml`. Without the secret the step is skipped and the app reports that updates aren't configured for the build.
+
+## Nightlies
+
+The nightly workflow builds the tip of `main` every night at 03:00 UTC (and on demand) and uploads a `LinkRouter-nightly-<sha>.zip` artifact kept for 14 days. Nightly builds are **unsigned** — macOS will warn; right-click the app → **Open** to run it. Tagged releases are signed with Developer ID and notarized, so prefer those.
+
 ## Setup
 
 1. Launch LinkRouter.

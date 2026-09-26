@@ -225,7 +225,7 @@ private struct PromptCell: View {
 
     private var label: String {
         var parts = [item.title]
-        if item.running { parts.append("running") } else { parts.append("not running") }
+        if item.running { parts.append(String(localized: "running")) } else { parts.append(String(localized: "not running")) }
         return parts.joined(separator: ", ")
     }
 }
