@@ -820,3 +820,18 @@ final class AppState: ObservableObject {
         }
     }
 }
+
+enum ClipboardLink {
+    static func firstURL(in string: String?) -> URL? {
+        guard let string,
+              let match = try? NSRegularExpression(pattern: #"https?://[^\s"'<>\)\]]+"#)
+              .firstMatch(in: string, range: NSRange(string.startIndex..., in: string)),
+              let range = Range(match.range, in: string)
+        else { return nil }
+        var candidate = String(string[range])
+        while let last = candidate.last, ".,;:'\"!?)>".contains(last) {
+            candidate.removeLast()
+        }
+        return URL(string: candidate)
+    }
+}
