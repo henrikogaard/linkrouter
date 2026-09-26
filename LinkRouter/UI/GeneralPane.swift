@@ -205,7 +205,7 @@ struct GeneralPane: View {
             try state.exportSettings().write(to: url)
         } catch {
             let alert = NSAlert()
-            alert.messageText = "Couldn't export settings"
+            alert.messageText = String(localized: "Couldn't export settings")
             alert.informativeText = error.localizedDescription
             alert.addButton(withTitle: "OK")
             alert.runModal()
@@ -218,8 +218,8 @@ struct GeneralPane: View {
         panel.allowsMultipleSelection = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let confirm = NSAlert()
-        confirm.messageText = "Replace your current browsers, rules and profiles?"
-        confirm.informativeText = "Link history is kept. This can't be undone."
+        confirm.messageText = String(localized: "Replace your current browsers, rules and profiles?")
+        confirm.informativeText = String(localized: "Link history is kept. This can't be undone.")
         confirm.addButton(withTitle: "Replace")
         confirm.addButton(withTitle: "Cancel")
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
@@ -227,7 +227,7 @@ struct GeneralPane: View {
             try state.importSettings(from: url)
         } catch {
             let alert = NSAlert()
-            alert.messageText = "Couldn't import settings"
+            alert.messageText = String(localized: "Couldn't import settings")
             alert.informativeText = error.localizedDescription
             alert.addButton(withTitle: "OK")
             alert.runModal()
