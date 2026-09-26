@@ -24,6 +24,7 @@
 		A10027 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
 		A10028 /* URLCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
 		A10029 /* HistoryPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029; };
+		A10030 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -86,6 +87,7 @@
 		B10027 /* ProfileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileWatcher.swift; sourceTree = "<group>"; };
 		B10028 /* URLCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleaner.swift; sourceTree = "<group>"; };
 		B10029 /* HistoryPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPane.swift; sourceTree = "<group>"; };
+		B10030 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 				B10003 /* AppState.swift */,
 				B10021 /* SettingsPresenter.swift */,
 				B10025 /* AboutPanel.swift */,
+				B10030 /* Intents.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -337,6 +340,7 @@
 				A10016 /* RulesPane.swift in Sources */,
 				A10017 /* GeneralPane.swift in Sources */,
 				A10029 /* HistoryPane.swift in Sources */,
+				A10030 /* Intents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
