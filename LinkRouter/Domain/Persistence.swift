@@ -4,6 +4,9 @@ enum Migrations {
     static func migrate(_ state: PersistedState) -> PersistedState {
         var state = state
         if state.schemaVersion < PersistedState.currentSchemaVersion {
+            if state.schemaVersion < 2 {
+                state.settings.onboardingDone = true
+            }
             state.schemaVersion = PersistedState.currentSchemaVersion
         }
         return state

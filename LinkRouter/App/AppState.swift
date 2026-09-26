@@ -28,6 +28,7 @@ final class AppState: ObservableObject {
     var skipsPersistence = false
     @Published var clipboardURL: URL?
     var loadIssue: String?
+    private(set) var isFirstLaunch = false
     private var pasteboardChangeCount = -1
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
     private var runningObservation: NSKeyValueObservation?
@@ -51,6 +52,7 @@ final class AppState: ObservableObject {
             initialSettings = persisted.settings
             initialRecent = persisted.recent
         case .missing:
+            isFirstLaunch = true
             let seed = BrowserCatalog.seedFromLaunchServices()
             initialBrowsers = seed.browsers
             initialRows = seed.rows
