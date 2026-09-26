@@ -57,6 +57,18 @@ Rows that point at a deleted profile or an uninstalled browser show a **Missing 
 
 Not supported: Safari and Orion profiles, and Arc Spaces — they can't be targeted from outside the browser.
 
+## Links in
+
+Beyond acting as the default browser, links can reach LinkRouter from:
+
+- **Shortcuts**: the *Open Link with LinkRouter* and *Open Link in a Browser* intents route a URL through the rules or straight to a chosen row.
+- **Services**: select text containing a URL in any app → Services → *Route Link with LinkRouter*.
+- **Clipboard**: the menu bar's *Route Clipboard Link* item sends the first http(s) URL on the pasteboard through the router.
+
+## Picker and history
+
+The picker can auto-dismiss after 15/30/60 s (General → Opening links); an expired picker opens the favourite if one is set. The menu bar can pause routing so every link goes straight to the favourite, and keeps a Recent list. Settings → History shows a searchable list of the last 200 routed links with reopen, copy, and always-open-here actions.
+
 ## Troubleshooting
 
 - **State file**: `~/Library/Application Support/LinkRouter/state.json`. If the file can't be decoded, the original is kept next to it as `state.corrupt-*.json` and the app reseeds from Launch Services.
@@ -71,6 +83,8 @@ Not supported: Safari and Orion profiles, and Arc Spaces — they can't be targe
 - First-match URL and running-count rules
 - Chromium-family profiles / private windows (Chrome, Canary, Beta, Brave, Edge, Vivaldi, Chromium, Arc) and Firefox.app profiles / private windows
 - Menu bar extra, hide Dock, open at login
+- Pause routing, auto-dismissing picker, 200-entry history
+- Shortcuts intents, Services entry, route-from-clipboard
 
 Not in v1: source-app rules, Safari and Orion profiles, Arc Spaces, browser extensions, Mac App Store build.
 
