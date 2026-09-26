@@ -55,6 +55,16 @@ struct GeneralPane: View {
                         .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
                 }
 
+                settingsGroup("Menu bar") {
+                    Toggle("Show menu bar icon", isOn: $state.settings.showMenuBar)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.showMenuBar) { _, _ in state.save() }
+                    Text("With the icon hidden, open LinkRouter again from Finder or Spotlight to reach Settings.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
                 settingsGroup("Login") {
                     Toggle("Open at login", isOn: $loginOn)
                         .toggleStyle(.switch)

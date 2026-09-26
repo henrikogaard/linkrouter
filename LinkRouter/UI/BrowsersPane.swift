@@ -169,7 +169,7 @@ struct BrowsersPane: View {
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         var used = false
         for provider in providers {
-            _ = provider.loadItem(forTypeIdentifier: UTType.application.identifier, options: nil) { item, _ in
+            provider.loadItem(forTypeIdentifier: UTType.application.identifier, options: nil) { item, _ in
                 let url: URL?
                 if let data = item as? Data {
                     url = URL(dataRepresentation: data, relativeTo: nil)
@@ -217,6 +217,7 @@ private struct BrowserRow: View {
                 .controlSize(.small)
                 .labelsHidden()
                 .tint(LR.accent)
+                .disabled(!state.isAvailable(row))
         }
         .padding(.leading, 10)
         .padding(.trailing, 14)
@@ -252,7 +253,7 @@ private struct BrowserRow: View {
             .resizable()
             .interpolation(.high)
             .frame(width: 36, height: 36)
-            .opacity(state.isRunning(row) ? 1 : 0.42)
+            .opacity(state.isAvailable(row) ? (state.isRunning(row) ? 1 : 0.42) : 0.3)
     }
 
     private var titles: some View {
@@ -265,9 +266,15 @@ private struct BrowserRow: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(LR.accent)
                 }
-                Text(state.isRunning(row) ? "Running" : "Not running")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                if state.isAvailable(row) {
+                    Text(state.isRunning(row) ? "Running" : "Not running")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Missing")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.red)
+                }
                 if let subtitle = state.subtitle(for: row) {
                     Text(subtitle)
                         .font(.system(size: 11))
@@ -289,7 +296,10 @@ private struct BrowserRow: View {
     }
 
     private var label: String {
-        state.title(for: row) + (state.isRunning(row) ? ", running" : ", not running")
+        if !state.isAvailable(row) {
+            return state.title(for: row) + ", missing"
+        }
+        return state.title(for: row) + (state.isRunning(row) ? ", running" : ", not running")
     }
 
     private var enabledBinding: Binding<Bool> {
