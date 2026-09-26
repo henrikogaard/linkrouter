@@ -6,18 +6,26 @@ final class KeyPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+final class PromptCountdown: ObservableObject {
+    @Published var remaining: Int?
+}
+
 @MainActor
 final class PromptController {
     private var panel: KeyPanel?
     private var hosting: NSHostingView<PromptView>?
+    private var timeoutTimer: Timer?
+    let countdown = PromptCountdown()
 
     var isVisible: Bool { panel != nil }
 
     func show(
         items: [PromptItem],
         link: IncomingLink,
+        timeout: Int = 0,
         onPick: @escaping (UUID?, Bool) -> Void,
-        onAlways: @escaping (UUID) -> Void
+        onAlways: @escaping (UUID) -> Void,
+        onTimeout: @escaping () -> Void = {}
     ) {
         dismiss()
         guard !items.isEmpty else { return }
@@ -46,7 +54,8 @@ final class PromptController {
             onCancel: { [weak self] in
                 self?.dismiss()
                 onPick(nil, false)
-            }
+            },
+            countdown: countdown
         )
 
         let hosting = NSHostingView(rootView: view)
@@ -72,6 +81,21 @@ final class PromptController {
         self.panel = panel
         self.hosting = hosting
 
+        if timeout > 0 {
+            countdown.remaining = timeout
+            timeoutTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    guard let remaining = self.countdown.remaining, remaining > 1 else {
+                        self.dismiss()
+                        onTimeout()
+                        return
+                    }
+                    self.countdown.remaining = remaining - 1
+                }
+            }
+        }
+
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
         origin = clamped(origin, size: panel.frame.size)
@@ -79,6 +103,9 @@ final class PromptController {
     }
 
     func dismiss() {
+        timeoutTimer?.invalidate()
+        timeoutTimer = nil
+        countdown.remaining = nil
         panel?.orderOut(nil)
         panel = nil
         hosting = nil

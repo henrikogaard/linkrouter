@@ -318,6 +318,7 @@ final class AppState: ObservableObject {
         prompt.show(
             items: items,
             link: link,
+            timeout: settings.promptTimeout,
             onPick: { [weak self] picked, keepOpen in
                 guard let self else { return }
                 if let picked, let row = self.rows.first(where: { $0.id == picked }) {
@@ -331,6 +332,13 @@ final class AppState: ObservableObject {
                 guard let self else { return }
                 self.alwaysOpen(host: link.host, in: rowID)
                 if let row = self.rows.first(where: { $0.id == rowID }) {
+                    self.dispatch(link, row: row, isRetry: true)
+                }
+                self.showNextQueuedPrompt()
+            },
+            onTimeout: { [weak self] in
+                guard let self else { return }
+                if let row = self.favourite {
                     self.dispatch(link, row: row, isRetry: true)
                 }
                 self.showNextQueuedPrompt()

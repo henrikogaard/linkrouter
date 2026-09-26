@@ -53,6 +53,23 @@ struct GeneralPane: View {
                         .toggleStyle(.switch)
                         .tint(LR.accent)
                         .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
+                    HStack {
+                        Text("Auto-dismiss picker")
+                        Spacer()
+                        Picker("Auto-dismiss picker", selection: $state.settings.promptTimeout) {
+                            Text("None").tag(0)
+                            Text("15 s").tag(15)
+                            Text("30 s").tag(30)
+                            Text("60 s").tag(60)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 90)
+                        .onChange(of: state.settings.promptTimeout) { _, _ in state.save() }
+                    }
+                    Text("Opens the favourite when it expires, if one is set.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
 
                 settingsGroup("Link cleaning") {
