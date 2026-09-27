@@ -680,8 +680,8 @@ final class AppState: ObservableObject {
         save()
     }
 
-    func addRule() {
-        let insertAt = rules.lastIndex(where: \.isFallback) ?? rules.count
+    @discardableResult
+    func addRule() -> Rule {
         let rule = Rule(
             id: UUID(),
             title: "New rule",
@@ -691,8 +691,9 @@ final class AppState: ObservableObject {
             behaviour: .promptAll,
             isFallback: false
         )
-        rules.insert(rule, at: insertAt)
+        rules.insert(rule, at: 0)
         save()
+        return rule
     }
 
     func updateRule(_ rule: Rule) {
