@@ -120,3 +120,7 @@ The picker can auto-dismiss after 15/30/60 s (General → Opening links); an exp
 Not in v1: source-app rules, Safari and Orion profiles, Arc Spaces, browser extensions, Mac App Store build.
 
 The research spec lives in `.scratch/graph/20260911-1530-choosy-clone/report.md`.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Like the app? You can [buy Henrik a coffee](https://buymeacoffee.com/henrikogaard).
