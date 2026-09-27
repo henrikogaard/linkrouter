@@ -1,0 +1,159 @@
+name: Preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "App version (MAJOR.MINOR.PATCH); artifact is labelled preview"
+        required: true
+        default: "1.0.0"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      APPSTORE_API_KEY_ID: ${{ vars.APPSTORE_API_KEY_ID }}
+      APPSTORE_ISSUER_ID: ${{ vars.APPSTORE_ISSUER_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate preview version
+        env:
+          PREVIEW_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$PREVIEW_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
+            echo 'Version must have the form MAJOR.MINOR.PATCH.' >&2
+            exit 1
+          }
+          echo "VERSION=$PREVIEW_VERSION" >> "$GITHUB_ENV"
+          echo "PREVIEW_NAME=LinkRouter-${PREVIEW_VERSION}-preview-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}" >> "$GITHUB_ENV"
+
+      - name: Require signing credentials
+        env:
+          DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${DEVELOPER_ID_P12}" ]] || missing+=(DEVELOPER_ID_P12)
+          [[ -n "${DEVELOPER_ID_P12_PASSWORD}" ]] || missing+=(DEVELOPER_ID_P12_PASSWORD)
+          [[ -n "${APPSTORE_API_PRIVATE_KEY}" ]] || missing+=(APPSTORE_API_PRIVATE_KEY)
+          [[ -n "${APPLE_TEAM_ID}" ]] || missing+=(APPLE_TEAM_ID)
+          [[ -n "${APPSTORE_API_KEY_ID}" ]] || missing+=(APPSTORE_API_KEY_ID)
+          [[ -n "${APPSTORE_ISSUER_ID}" ]] || missing+=(APPSTORE_ISSUER_ID)
+          if (( ${#missing[@]} )); then
+            echo "Missing signing credentials: ${missing[*]}"
+            echo "Run ./scripts/setup-signing.sh locally, then re-run this workflow."
+            exit 1
+          fi
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Import Developer ID certificate
+        uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.DEVELOPER_ID_P12 }}
+          p12-password: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+
+      - name: Test
+        run: |
+          python3 scripts/tests/test_release_tag.py
+          xcodebuild \
+            -project LinkRouter.xcodeproj \
+            -scheme LinkRouter \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Archive and export Developer ID build
+        run: |
+          set -euo pipefail
+
+          cat > /tmp/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>developer-id</string>
+            <key>teamID</key>
+            <string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>signingCertificate</key>
+            <string>Developer ID Application</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild archive \
+            -project LinkRouter.xcodeproj \
+            -scheme LinkRouter \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath build/LinkRouter.xcarchive \
+            -derivedDataPath build \
+            ONLY_ACTIVE_ARCH=NO \
+            ARCHS="arm64 x86_64" \
+            SPARKLE_PUBLIC_ED_KEY="" \
+            MARKETING_VERSION="${VERSION}" \
+            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp"
+
+          xcodebuild -exportArchive \
+            -archivePath build/LinkRouter.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist /tmp/ExportOptions.plist
+
+          test -d build/export/LinkRouter.app
+          codesign --verify --deep --strict --verbose=2 build/export/LinkRouter.app
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' build/export/LinkRouter.app/Contents/Info.plist)" = "$VERSION"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' build/export/LinkRouter.app/Contents/Info.plist)" = "$GITHUB_RUN_NUMBER"
+
+      - name: Package, notarize and verify
+        env:
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: bash scripts/package-release.sh
+
+      - name: Label preview artifact
+        run: |
+          set -euo pipefail
+          mv "dist/LinkRouter-${VERSION}.dmg" "dist/${PREVIEW_NAME}.dmg"
+          (cd dist && shasum -a 256 "${PREVIEW_NAME}.dmg" > SHA256SUMS)
+          printf 'Commit: %s\nRef: %s\nVersion: %s\nBuild: %s\nRun: %s/%s/actions/runs/%s\n' \
+            "$GITHUB_SHA" "$GITHUB_REF" "$VERSION" "$GITHUB_RUN_NUMBER" \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > dist/BUILD.txt
+
+      - name: Upload preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PREVIEW_NAME }}
+          path: |
+            dist/${{ env.PREVIEW_NAME }}.dmg
+            dist/SHA256SUMS
+            dist/BUILD.txt
+          retention-days: 14
+          if-no-files-found: error
