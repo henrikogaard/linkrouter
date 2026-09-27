@@ -10,15 +10,54 @@ struct FirefoxProfile: Equatable {
     var absPath: String
 }
 
+struct ChromiumFamily: Equatable {
+    let bundleID: String
+    let shortName: String
+    let userDataDir: String
+    let privateFlag: String
+
+    var privateWord: String {
+        privateFlag == "--inprivate" ? "InPrivate" : "Incognito"
+    }
+}
+
 enum ProfileReader {
     static let chromeBundleID = "com.google.Chrome"
     static let safariBundleID = "com.apple.Safari"
 
+    static let chromiumFamilies: [ChromiumFamily] = [
+        ChromiumFamily(bundleID: "com.google.Chrome", shortName: "Chrome", userDataDir: "Google/Chrome", privateFlag: "--incognito"),
+        ChromiumFamily(bundleID: "com.google.Chrome.canary", shortName: "Chrome Canary", userDataDir: "Google/Chrome Canary", privateFlag: "--incognito"),
+        ChromiumFamily(bundleID: "com.google.Chrome.beta", shortName: "Chrome Beta", userDataDir: "Google/Chrome Beta", privateFlag: "--incognito"),
+        ChromiumFamily(bundleID: "com.brave.Browser", shortName: "Brave", userDataDir: "BraveSoftware/Brave-Browser", privateFlag: "--incognito"),
+        ChromiumFamily(bundleID: "com.microsoft.edgemac", shortName: "Edge", userDataDir: "Microsoft Edge", privateFlag: "--inprivate"),
+        ChromiumFamily(bundleID: "com.vivaldi.Vivaldi", shortName: "Vivaldi", userDataDir: "Vivaldi", privateFlag: "--incognito"),
+        ChromiumFamily(bundleID: "org.chromium.Chromium", shortName: "Chromium", userDataDir: "Chromium", privateFlag: "--incognito"),
+        ChromiumFamily(bundleID: "company.thebrowser.Browser", shortName: "Arc", userDataDir: "Arc/User Data", privateFlag: "--incognito"),
+    ]
+
+    static func family(for bundleID: String) -> ChromiumFamily? {
+        chromiumFamilies.first { $0.bundleID == bundleID }
+    }
+
+    static func userDataURL(for family: ChromiumFamily) -> URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/\(family.userDataDir)")
+    }
+
+    static func chromeProfiles(family: ChromiumFamily) -> [ChromeProfile] {
+        let url = userDataURL(for: family).appendingPathComponent("Local State")
+        guard let data = try? Data(contentsOf: url) else { return [] }
+        return parseChromeProfiles(localState: data)
+    }
+
     static func chromeProfiles() -> [ChromeProfile] {
-        let url = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/Google/Chrome/Local State")
-        guard let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+        guard let family = family(for: chromeBundleID) else { return [] }
+        return chromeProfiles(family: family)
+    }
+
+    static func parseChromeProfiles(localState data: Data) -> [ChromeProfile] {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let cache = json["profile"] as? [String: Any],
               let info = cache["info_cache"] as? [String: Any]
         else { return [] }
@@ -40,7 +79,10 @@ enum ProfileReader {
             .appendingPathComponent("Library/Application Support/Firefox")
         let iniURL = support.appendingPathComponent("profiles.ini")
         guard let text = try? String(contentsOf: iniURL, encoding: .utf8) else { return [] }
+        return parseFirefoxProfiles(ini: text, support: support)
+    }
 
+    static func parseFirefoxProfiles(ini text: String, support: URL) -> [FirefoxProfile] {
         var profiles: [FirefoxProfile] = []
         var current: [String: String] = [:]
         var inProfile = false

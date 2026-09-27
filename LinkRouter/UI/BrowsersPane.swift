@@ -101,14 +101,17 @@ struct BrowsersPane: View {
 
     @ViewBuilder
     private var profileMenu: some View {
-        if let chrome = state.chromeHost() {
-            let profiles = ProfileReader.chromeProfiles()
-            if profiles.isEmpty {
-                Text("No Chrome profiles found")
-            } else {
-                ForEach(profiles, id: \.directory) { profile in
-                    Button(profile.name) {
-                        state.addChromeProfile(profile, browserID: chrome.id, isPrivate: false)
+        let hosts = state.chromiumHosts()
+        ForEach(hosts) { host in
+            if let family = ProfileReader.family(for: host.bundleIdentifier) {
+                let profiles = ProfileReader.chromeProfiles(family: family)
+                if profiles.isEmpty {
+                    Text("No \(family.shortName) profiles found")
+                } else {
+                    ForEach(profiles, id: \.directory) { profile in
+                        Button(hosts.count > 1 ? "\(family.shortName) · \(profile.name)" : profile.name) {
+                            state.addChromeProfile(profile, browserID: host.id, isPrivate: false)
+                        }
                     }
                 }
             }
@@ -125,20 +128,22 @@ struct BrowsersPane: View {
                 }
             }
         }
-        if state.chromeHost() == nil && state.firefoxHost() == nil {
-            Text("Add Chrome or Firefox.app first")
+        if hosts.isEmpty && state.firefoxHost() == nil {
+            Text("Add a Chromium-based browser (Chrome, Brave, Edge, Vivaldi, Arc) or Firefox first. Safari and Orion profiles, and Arc Spaces, can't be targeted from outside the browser.")
         }
     }
 
     @ViewBuilder
     private var privateMenu: some View {
-        if let chrome = state.chromeHost() {
-            Button("Chrome Incognito") {
-                state.addChromePrivate(browserID: chrome.id)
-            }
-            ForEach(ProfileReader.chromeProfiles(), id: \.directory) { profile in
-                Button("Chrome · \(profile.name) · Incognito") {
-                    state.addChromeProfile(profile, browserID: chrome.id, isPrivate: true)
+        ForEach(state.chromiumHosts()) { host in
+            if let family = ProfileReader.family(for: host.bundleIdentifier) {
+                Button("\(family.shortName) \(family.privateWord)") {
+                    state.addChromePrivate(browserID: host.id)
+                }
+                ForEach(ProfileReader.chromeProfiles(family: family), id: \.directory) { profile in
+                    Button("\(family.shortName) · \(profile.name) · \(family.privateWord)") {
+                        state.addChromeProfile(profile, browserID: host.id, isPrivate: true)
+                    }
                 }
             }
         }
@@ -169,7 +174,7 @@ struct BrowsersPane: View {
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         var used = false
         for provider in providers {
-            _ = provider.loadItem(forTypeIdentifier: UTType.application.identifier, options: nil) { item, _ in
+            provider.loadItem(forTypeIdentifier: UTType.application.identifier, options: nil) { item, _ in
                 let url: URL?
                 if let data = item as? Data {
                     url = URL(dataRepresentation: data, relativeTo: nil)
@@ -217,6 +222,7 @@ private struct BrowserRow: View {
                 .controlSize(.small)
                 .labelsHidden()
                 .tint(LR.accent)
+                .disabled(!state.isAvailable(row))
         }
         .padding(.leading, 10)
         .padding(.trailing, 14)
@@ -252,7 +258,7 @@ private struct BrowserRow: View {
             .resizable()
             .interpolation(.high)
             .frame(width: 36, height: 36)
-            .opacity(state.isRunning(row) ? 1 : 0.42)
+            .opacity(state.isAvailable(row) ? (state.isRunning(row) ? 1 : 0.42) : 0.3)
     }
 
     private var titles: some View {
@@ -265,9 +271,15 @@ private struct BrowserRow: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(LR.accent)
                 }
-                Text(state.isRunning(row) ? "Running" : "Not running")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                if state.isAvailable(row) {
+                    Text(state.isRunning(row) ? "Running" : "Not running")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(state.profileExists(row) ? "Missing" : "Missing profile")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.red)
+                }
                 if let subtitle = state.subtitle(for: row) {
                     Text(subtitle)
                         .font(.system(size: 11))
@@ -289,7 +301,10 @@ private struct BrowserRow: View {
     }
 
     private var label: String {
-        state.title(for: row) + (state.isRunning(row) ? ", running" : ", not running")
+        if !state.isAvailable(row) {
+            return state.title(for: row) + String(localized: ", missing")
+        }
+        return state.title(for: row) + (state.isRunning(row) ? String(localized: ", running") : String(localized: ", not running"))
     }
 
     private var enabledBinding: Binding<Bool> {

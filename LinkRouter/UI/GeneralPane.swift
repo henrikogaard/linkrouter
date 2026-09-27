@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GeneralPane: View {
     @EnvironmentObject private var state: AppState
+    @ObservedObject private var updater = Updater.shared
     @State private var loginOn = false
 
     var body: some View {
@@ -53,6 +54,50 @@ struct GeneralPane: View {
                         .toggleStyle(.switch)
                         .tint(LR.accent)
                         .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
+                    HStack {
+                        Text("Auto-dismiss picker")
+                        Spacer()
+                        Picker("Auto-dismiss picker", selection: $state.settings.promptTimeout) {
+                            Text("None").tag(0)
+                            Text("15 s").tag(15)
+                            Text("30 s").tag(30)
+                            Text("60 s").tag(60)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 90)
+                        .onChange(of: state.settings.promptTimeout) { _, _ in state.save() }
+                    }
+                    Text("Opens the favourite when it expires, if one is set.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
+                settingsGroup("Link cleaning") {
+                    Toggle("Unwrap redirect links", isOn: $state.settings.unwrapRedirects)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.unwrapRedirects) { _, _ in state.save() }
+                    Text("Follows known redirectors (Google /url, Outlook SafeLinks, Facebook l.php) to the real URL before routing.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    Toggle("Strip tracking parameters", isOn: $state.settings.stripTrackingParams)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.stripTrackingParams) { _, _ in state.save() }
+                    Text("Removes utm_* and common click IDs (fbclid, gclid, …) before routing.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
+                settingsGroup("Menu bar") {
+                    Toggle("Show menu bar icon", isOn: $state.settings.showMenuBar)
+                        .toggleStyle(.switch)
+                        .tint(LR.accent)
+                        .onChange(of: state.settings.showMenuBar) { _, _ in state.save() }
+                    Text("With the icon hidden, open LinkRouter again from Finder or Spotlight to reach Settings.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
 
                 settingsGroup("Login") {
@@ -67,11 +112,40 @@ struct GeneralPane: View {
                         .foregroundStyle(.secondary)
                 }
 
-                settingsGroup("About") {
+                settingsGroup("Updates") {
                     HStack {
                         Text("Version")
                         Spacer()
                         Text(version)
+                            .foregroundStyle(.secondary)
+                    }
+                    if updater.canCheck {
+                        Button("Check for Updates…") { updater.check() }
+                        Toggle("Check automatically", isOn: autoUpdateBinding)
+                            .toggleStyle(.switch)
+                            .tint(LR.accent)
+                    } else {
+                        Text("Updates aren't configured for this build")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                settingsGroup("Backup") {
+                    HStack {
+                        Button("Export Settings…") { exportSettings() }
+                        Button("Import Settings…") { importSettings() }
+                    }
+                    Text("Exports browsers, rules, profiles, and settings. Link history stays out of the file.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
+                settingsGroup("About") {
+                    HStack {
+                        Text("Bundle")
+                        Spacer()
+                        Text(Bundle.main.bundleIdentifier ?? "app.linkrouter.LinkRouter")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -104,6 +178,13 @@ struct GeneralPane: View {
         .padding(.horizontal, LR.pageInset)
     }
 
+    private var autoUpdateBinding: Binding<Bool> {
+        Binding(
+            get: { updater.automaticallyChecksForUpdates },
+            set: { value in updater.automaticallyChecksForUpdates = value }
+        )
+    }
+
     private var appearanceBinding: Binding<AppearanceMode> {
         Binding(
             get: { state.settings.appearance },
@@ -113,6 +194,44 @@ struct GeneralPane: View {
                 state.save()
             }
         )
+    }
+
+    private func exportSettings() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "LinkRouter-settings.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try state.exportSettings().write(to: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = String(localized: "Couldn't export settings")
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+
+    private func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let confirm = NSAlert()
+        confirm.messageText = String(localized: "Replace your current browsers, rules and profiles?")
+        confirm.informativeText = String(localized: "Link history is kept. This can't be undone.")
+        confirm.addButton(withTitle: "Replace")
+        confirm.addButton(withTitle: "Cancel")
+        guard confirm.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try state.importSettings(from: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = String(localized: "Couldn't import settings")
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
     }
 
     private var version: String {

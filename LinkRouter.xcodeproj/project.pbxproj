@@ -20,6 +20,12 @@
 		A10008 /* DefaultBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
 		A10009 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
 		A10010 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
+		A10026 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
+		A10027 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
+		A10028 /* URLCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
+		A10029 /* HistoryPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029; };
+		A10030 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030; };
+		A10031 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10031; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -34,6 +40,28 @@
 		A20001 /* RuleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001; };
 		A20002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004; };
 		A20003 /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005; };
+		A20004 /* ProfileReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002; };
+		A20005 /* DispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20003; };
+		A20006 /* PersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20004; };
+		A20007 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10026; };
+		A20008 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006; };
+		A20009 /* ProfileReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10007; };
+		A20010 /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009; };
+		A20011 /* BrowserCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20005; };
+		A20012 /* BrowserCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010; };
+		A20013 /* DefaultBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008; };
+		A20014 /* URLCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10028; };
+		A20015 /* URLCleanerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20006; };
+		A20016 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003; };
+		A20017 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
+		A20018 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
+		A20019 /* SettingsPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
+		A20020 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
+		A20021 /* RoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20007; };
+		A90000 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = P90001 /* Sparkle */; };
+		A90002 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90002; };
+		A90003 /* AppShortcuts.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90003; };
+		A90001 /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90001; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +88,12 @@
 		B10008 /* DefaultBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultBrowser.swift; sourceTree = "<group>"; };
 		B10009 /* Dispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatcher.swift; sourceTree = "<group>"; };
 		B10010 /* BrowserCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalog.swift; sourceTree = "<group>"; };
+		B10026 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		B10027 /* ProfileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileWatcher.swift; sourceTree = "<group>"; };
+		B10028 /* URLCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleaner.swift; sourceTree = "<group>"; };
+		B10029 /* HistoryPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPane.swift; sourceTree = "<group>"; };
+		B10030 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
+		B10031 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -74,6 +108,15 @@
 		B10019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B10020 /* LinkRouter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LinkRouter.entitlements; sourceTree = "<group>"; };
 		B20001 /* RuleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngineTests.swift; sourceTree = "<group>"; };
+		B20002 /* ProfileReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileReaderTests.swift; sourceTree = "<group>"; };
+		B20003 /* DispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatcherTests.swift; sourceTree = "<group>"; };
+		B20004 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
+		B20005 /* BrowserCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalogTests.swift; sourceTree = "<group>"; };
+		B20006 /* URLCleanerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleanerTests.swift; sourceTree = "<group>"; };
+		B20007 /* RoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingTests.swift; sourceTree = "<group>"; };
+		B90001 /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
+		B90002 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		B90003 /* AppShortcuts.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = AppShortcuts.xcstrings; sourceTree = "<group>"; };
 		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -83,6 +126,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A90000 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +156,8 @@
 				G00003 /* Domain */,
 				G00004 /* UI */,
 				B10018 /* Assets.xcassets */,
+				B90002 /* Localizable.xcstrings */,
+				B90003 /* AppShortcuts.xcstrings */,
 				B10019 /* Info.plist */,
 				B10020 /* LinkRouter.entitlements */,
 			);
@@ -126,6 +172,8 @@
 				B10003 /* AppState.swift */,
 				B10021 /* SettingsPresenter.swift */,
 				B10025 /* AboutPanel.swift */,
+				B10030 /* Intents.swift */,
+				B90001 /* Updater.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -140,6 +188,9 @@
 				B10008 /* DefaultBrowser.swift */,
 				B10009 /* Dispatcher.swift */,
 				B10010 /* BrowserCatalog.swift */,
+				B10026 /* Log.swift */,
+				B10027 /* ProfileWatcher.swift */,
+				B10028 /* URLCleaner.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -157,6 +208,8 @@
 				B10024 /* ProfilesPane.swift */,
 				B10016 /* RulesPane.swift */,
 				B10017 /* GeneralPane.swift */,
+				B10029 /* HistoryPane.swift */,
+				B10031 /* WelcomeView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -165,6 +218,12 @@
 			isa = PBXGroup;
 			children = (
 				B20001 /* RuleEngineTests.swift */,
+				B20002 /* ProfileReaderTests.swift */,
+				B20003 /* DispatcherTests.swift */,
+				B20004 /* PersistenceTests.swift */,
+				B20005 /* BrowserCatalogTests.swift */,
+				B20006 /* URLCleanerTests.swift */,
+				B20007 /* RoutingTests.swift */,
 			);
 			path = LinkRouterTests;
 			sourceTree = "<group>";
@@ -194,6 +253,9 @@
 			dependencies = (
 			);
 			name = LinkRouter;
+			packageProductDependencies = (
+				P90001 /* Sparkle */,
+			);
 			productName = LinkRouter;
 			productReference = R00001 /* LinkRouter.app */;
 			productType = "com.apple.product-type.application";
@@ -241,8 +303,12 @@
 			knownRegions = (
 				en,
 				Base,
+				nb,
 			);
 			mainGroup = G00000;
+			packageReferences = (
+				P90000 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = G00006 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -259,6 +325,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10018 /* Assets.xcassets in Resources */,
+				A90002 /* Localizable.xcstrings in Resources */,
+				A90003 /* AppShortcuts.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +349,9 @@
 				A10008 /* DefaultBrowser.swift in Sources */,
 				A10009 /* Dispatcher.swift in Sources */,
 				A10010 /* BrowserCatalog.swift in Sources */,
+				A10026 /* Log.swift in Sources */,
+				A10027 /* ProfileWatcher.swift in Sources */,
+				A10028 /* URLCleaner.swift in Sources */,
 				A10011 /* PromptView.swift in Sources */,
 				A10012 /* PromptController.swift in Sources */,
 				A10013 /* Mark.swift in Sources */,
@@ -291,6 +362,10 @@
 				A10024 /* ProfilesPane.swift in Sources */,
 				A10016 /* RulesPane.swift in Sources */,
 				A10017 /* GeneralPane.swift in Sources */,
+				A10029 /* HistoryPane.swift in Sources */,
+				A10031 /* WelcomeView.swift in Sources */,
+				A90001 /* Updater.swift in Sources */,
+				A10030 /* Intents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,10 +376,47 @@
 				A20001 /* RuleEngineTests.swift in Sources */,
 				A20002 /* Models.swift in Sources */,
 				A20003 /* RuleEngine.swift in Sources */,
+				A20007 /* Log.swift in Sources */,
+				A20008 /* Persistence.swift in Sources */,
+				A20009 /* ProfileReader.swift in Sources */,
+				A20010 /* Dispatcher.swift in Sources */,
+				A20012 /* BrowserCatalog.swift in Sources */,
+				A20013 /* DefaultBrowser.swift in Sources */,
+				A20014 /* URLCleaner.swift in Sources */,
+				A20015 /* URLCleanerTests.swift in Sources */,
+				A20004 /* ProfileReaderTests.swift in Sources */,
+				A20005 /* DispatcherTests.swift in Sources */,
+				A20006 /* PersistenceTests.swift in Sources */,
+				A20011 /* BrowserCatalogTests.swift in Sources */,
+				A20016 /* AppState.swift in Sources */,
+				A20017 /* PromptController.swift in Sources */,
+				A20018 /* PromptView.swift in Sources */,
+				A20019 /* SettingsPresenter.swift in Sources */,
+				A20020 /* ProfileWatcher.swift in Sources */,
+				A20021 /* RoutingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		P90000 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		P90001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = P90000 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin PBXTargetDependency section */
 		D00001 /* PBXTargetDependency */ = {
@@ -368,10 +480,12 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SPARKLE_PUBLIC_ED_KEY = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -395,10 +509,12 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SPARKLE_PUBLIC_ED_KEY = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
