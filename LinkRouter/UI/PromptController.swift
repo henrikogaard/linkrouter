@@ -13,7 +13,7 @@ final class PromptCountdown: ObservableObject {
 @MainActor
 final class PromptController {
     private var panel: KeyPanel?
-    private var hosting: NSHostingView<PromptView>?
+    private var hosting: NSHostingView<AnyView>?
     private var timeoutTimer: Timer?
     let countdown = PromptCountdown()
 
@@ -58,7 +58,8 @@ final class PromptController {
             countdown: countdown
         )
 
-        let hosting = NSHostingView(rootView: view)
+        // Theme.swift (LR) is app-target only; this file is shared with the test target.
+        let hosting = NSHostingView(rootView: AnyView(view.tint(Color("AccentColor"))))
         hosting.frame = NSRect(x: 0, y: 0, width: width, height: height)
 
         let panel = KeyPanel(

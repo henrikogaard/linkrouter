@@ -16,7 +16,7 @@ extension AppearanceMode {
 }
 
 enum LR {
-    static let accent = Color.primary
+    static let accent = Color("AccentColor")
     static let sidebarWidth: CGFloat = 216
     static let titlebar: CGFloat = 36
     static let pageInset: CGFloat = 28
