@@ -36,6 +36,8 @@
 	<string>https://github.com/henrikogaard/linkrouter/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>$(SPARKLE_PUBLIC_ED_KEY)</string>
+	<key>LRStateDirectoryName</key>
+	<string>$(LR_STATE_DIRECTORY_NAME)</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
@@ -47,7 +49,7 @@
 			<key>NSMessage</key>
 			<string>routeLink</string>
 			<key>NSPortName</key>
-			<string>LinkRouter</string>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSStringPboardType</string>

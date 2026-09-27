@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 : "${VERSION:?}" "${APPLE_TEAM_ID:?}" "${APPSTORE_API_KEY_ID:?}" "${APPSTORE_ISSUER_ID:?}" "${APPSTORE_API_PRIVATE_KEY:?}"
-APP="build/export/LinkRouter.app"
+APP_NAME="${APP_NAME:-LinkRouter}"
+APP="build/export/${APP_NAME}.app"
 WORK=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/linkrouter-notary.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 umask 077
@@ -21,19 +22,20 @@ PY
   xcrun stapler validate "$2"
 }
 codesign --verify --deep --strict --verbose=2 "$APP"
+EXEC_NAME=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$APP/Contents/Info.plist")
 for architecture in arm64 x86_64; do
-  xcrun lipo "$APP/Contents/MacOS/LinkRouter" -verify_arch "$architecture"
+  xcrun lipo "$APP/Contents/MacOS/${EXEC_NAME}" -verify_arch "$architecture"
 done
 ditto -c -k --keepParent "$APP" "$WORK/submit.zip"
 notarize "$WORK/submit.zip" "$APP"
 spctl --assess --type execute --verbose=2 "$APP"
 mkdir -p "$WORK/image" dist
-ditto "$APP" "$WORK/image/LinkRouter.app"
+ditto "$APP" "$WORK/image/${APP_NAME}.app"
 ln -s /Applications "$WORK/image/Applications"
-DMG="dist/LinkRouter-${VERSION}.dmg"
-hdiutil create -volname LinkRouter -srcfolder "$WORK/image" -ov -format UDZO "$DMG"
+DMG="dist/${APP_NAME}-${VERSION}.dmg"
+hdiutil create -volname "${APP_NAME}" -srcfolder "$WORK/image" -ov -format UDZO "$DMG"
 codesign --sign "Developer ID Application" --timestamp "$DMG"
 codesign --verify --strict --verbose=2 "$DMG"
 notarize "$DMG" "$DMG"
 spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
-(cd dist && shasum -a 256 "LinkRouter-${VERSION}.dmg" > SHA256SUMS)
+(cd dist && shasum -a 256 "${APP_NAME}-${VERSION}.dmg" > SHA256SUMS)
