@@ -52,6 +52,7 @@ struct WelcomeView: View {
                     Spacer()
                     Toggle("Open at login", isOn: $loginOn)
                         .labelsHidden()
+                        .accessibilityLabel("Open at login")
                         .toggleStyle(.switch)
                         .tint(LR.accent)
                         .onChange(of: loginOn) { _, value in

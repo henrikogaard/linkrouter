@@ -80,9 +80,9 @@ struct RulesPane: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             PaneFooter {
                 Button {
-                    state.addRule()
-                    editing = state.rules.last(where: { !$0.isFallback })
-                    selection = editing?.id
+                    let rule = state.addRule()
+                    editing = rule
+                    selection = rule.id
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
@@ -206,6 +206,7 @@ private struct RuleRow: View {
                         .toggleStyle(.switch)
                         .controlSize(.small)
                         .labelsHidden()
+                        .accessibilityLabel("Enable \(rule.title)")
                         .tint(LR.accent)
                 }
             }
@@ -269,6 +270,7 @@ struct RuleEditorSheet: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                    .accessibilityLabel("Match")
                 }
 
                 EditorSection(title: "Conditions") {
@@ -294,6 +296,7 @@ struct RuleEditorSheet: View {
                 }
                 .pickerStyle(.menu)
                 .labelsHidden()
+                .accessibilityLabel("Then")
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
@@ -359,6 +362,7 @@ struct RuleEditorSheet: View {
                 }
             }
             .labelsHidden()
+            .accessibilityLabel("Condition type")
             .pickerStyle(.menu)
             .frame(width: 150, alignment: .leading)
 
@@ -370,6 +374,7 @@ struct RuleEditorSheet: View {
                     }
                 }
                 .labelsHidden()
+                .accessibilityLabel("URL matcher")
                 .pickerStyle(.menu)
                 .frame(width: 110)
                 TextField("github.com", text: condition.pattern)
@@ -381,6 +386,7 @@ struct RuleEditorSheet: View {
                     }
                 }
                 .labelsHidden()
+                .accessibilityLabel("Count comparator")
                 .pickerStyle(.menu)
                 .frame(width: 140)
                 Stepper(value: condition.count, in: 0...10) {
@@ -388,6 +394,7 @@ struct RuleEditorSheet: View {
                         .monospacedDigit()
                         .frame(width: 24)
                 }
+                .accessibilityLabel("Running browsers count")
             case .linkType:
                 Picker("Kind", selection: condition.linkKind) {
                     ForEach(LinkKind.allCases) { kind in
@@ -395,6 +402,7 @@ struct RuleEditorSheet: View {
                     }
                 }
                 .labelsHidden()
+                .accessibilityLabel("Link kind")
                 .pickerStyle(.menu)
             case .sourceApp:
                 Picker("Matcher", selection: condition.urlMatcher) {
@@ -403,6 +411,7 @@ struct RuleEditorSheet: View {
                     }
                 }
                 .labelsHidden()
+                .accessibilityLabel("App matcher")
                 .pickerStyle(.menu)
                 .frame(width: 110)
                 Picker("App", selection: condition.pattern) {
@@ -413,6 +422,7 @@ struct RuleEditorSheet: View {
                     }
                 }
                 .labelsHidden()
+                .accessibilityLabel("Source app")
                 .pickerStyle(.menu)
                 .frame(width: 210)
                 TextField("com.example.app", text: condition.pattern)
@@ -422,8 +432,10 @@ struct RuleEditorSheet: View {
                     HStack(spacing: 8) {
                         DatePicker("From", selection: minuteBinding(condition, \.startMinute), displayedComponents: .hourAndMinute)
                             .labelsHidden()
+                            .accessibilityLabel("From time")
                         DatePicker("Until", selection: minuteBinding(condition, \.endMinute), displayedComponents: .hourAndMinute)
                             .labelsHidden()
+                            .accessibilityLabel("Until time")
                     }
                     HStack(spacing: 4) {
                         ForEach(weekdayChips, id: \.day) { chip in
@@ -445,6 +457,9 @@ struct RuleEditorSheet: View {
                                         condition.wrappedValue.weekdays.insert(chip.day)
                                     }
                                 }
+                                .accessibilityLabel(chip.label)
+                                .accessibilityValue(on ? "On" : "Off")
+                                .accessibilityAddTraits(.isButton)
                         }
                     }
                 }

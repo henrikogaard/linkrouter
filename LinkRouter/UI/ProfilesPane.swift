@@ -107,6 +107,7 @@ private struct ProfileRow: View {
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .labelsHidden()
+                    .accessibilityLabel("Enable \(profile.name)")
                     .tint(LR.accent)
             }
             .padding(.horizontal, 14)

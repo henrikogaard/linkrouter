@@ -23,6 +23,7 @@ struct GeneralPane: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                    .accessibilityLabel("Appearance")
                     Text("System follows macOS. Light and Dark lock this window and the picker.")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
@@ -45,6 +46,7 @@ struct GeneralPane: View {
                 settingsGroup("Opening links") {
                     Toggle("Force prompt when a modifier key is held", isOn: $state.settings.forcePromptOnModifier)
                         .toggleStyle(.switch)
+                        .accessibilityLabel("Force prompt when a modifier key is held")
                         .tint(LR.accent)
                         .onChange(of: state.settings.forcePromptOnModifier) { _, _ in state.save() }
                     Text("Uses currently held Shift, Control, Option, or Command. Not the keys from the original click.")
@@ -52,6 +54,7 @@ struct GeneralPane: View {
                         .foregroundStyle(.secondary)
                     Toggle("Open browsers in the background", isOn: $state.settings.openInBackground)
                         .toggleStyle(.switch)
+                        .accessibilityLabel("Open browsers in the background")
                         .tint(LR.accent)
                         .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
                     HStack {
@@ -64,6 +67,7 @@ struct GeneralPane: View {
                             Text("60 s").tag(60)
                         }
                         .labelsHidden()
+                        .accessibilityLabel("Auto-dismiss picker")
                         .pickerStyle(.menu)
                         .frame(width: 90)
                         .onChange(of: state.settings.promptTimeout) { _, _ in state.save() }
@@ -76,6 +80,7 @@ struct GeneralPane: View {
                 settingsGroup("Link cleaning") {
                     Toggle("Unwrap redirect links", isOn: $state.settings.unwrapRedirects)
                         .toggleStyle(.switch)
+                        .accessibilityLabel("Unwrap redirect links")
                         .tint(LR.accent)
                         .onChange(of: state.settings.unwrapRedirects) { _, _ in state.save() }
                     Text("Follows known redirectors (Google /url, Outlook SafeLinks, Facebook l.php) to the real URL before routing.")
@@ -83,6 +88,7 @@ struct GeneralPane: View {
                         .foregroundStyle(.secondary)
                     Toggle("Strip tracking parameters", isOn: $state.settings.stripTrackingParams)
                         .toggleStyle(.switch)
+                        .accessibilityLabel("Strip tracking parameters")
                         .tint(LR.accent)
                         .onChange(of: state.settings.stripTrackingParams) { _, _ in state.save() }
                     Text("Removes utm_* and common click IDs (fbclid, gclid, …) before routing.")
@@ -93,6 +99,7 @@ struct GeneralPane: View {
                 settingsGroup("Menu bar") {
                     Toggle("Show menu bar icon", isOn: $state.settings.showMenuBar)
                         .toggleStyle(.switch)
+                        .accessibilityLabel("Show menu bar icon")
                         .tint(LR.accent)
                         .onChange(of: state.settings.showMenuBar) { _, _ in state.save() }
                     Text("With the icon hidden, open LinkRouter again from Finder or Spotlight to reach Settings.")
@@ -103,6 +110,7 @@ struct GeneralPane: View {
                 settingsGroup("Login") {
                     Toggle("Open at login", isOn: $loginOn)
                         .toggleStyle(.switch)
+                        .accessibilityLabel("Open at login")
                         .tint(LR.accent)
                         .onChange(of: loginOn) { _, value in
                             state.setLoginItem(value)
@@ -123,6 +131,7 @@ struct GeneralPane: View {
                         Button("Check for Updates…") { updater.check() }
                         Toggle("Check automatically", isOn: autoUpdateBinding)
                             .toggleStyle(.switch)
+                            .accessibilityLabel("Check for updates automatically")
                             .tint(LR.accent)
                     } else {
                         Text("Updates aren't configured for this build")
