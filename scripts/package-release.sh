@@ -21,7 +21,9 @@ PY
   xcrun stapler validate "$2"
 }
 codesign --verify --deep --strict --verbose=2 "$APP"
-lipo "$APP/Contents/MacOS/LinkRouter" -verify_arch arm64 x86_64
+for architecture in arm64 x86_64; do
+  xcrun lipo "$APP/Contents/MacOS/LinkRouter" -verify_arch "$architecture"
+done
 ditto -c -k --keepParent "$APP" "$WORK/submit.zip"
 notarize "$WORK/submit.zip" "$APP"
 spctl --assess --type execute --verbose=2 "$APP"
