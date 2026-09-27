@@ -9,6 +9,7 @@ struct LinkRouterApp: App {
         Window("LinkRouter", id: "settings") {
             SettingsRootView()
                 .environmentObject(state)
+                .tint(LR.accent)
                 .frame(minWidth: 860, minHeight: 560)
                 .background(AboutWindowOpener())
         }
@@ -26,6 +27,7 @@ struct LinkRouterApp: App {
 
         Window("About LinkRouter", id: "about") {
             AboutView()
+                .tint(LR.accent)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
