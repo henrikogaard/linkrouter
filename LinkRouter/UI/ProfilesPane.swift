@@ -86,38 +86,43 @@ private struct ProfileRow: View {
     var onEdit: () -> Void
 
     var body: some View {
-        Button(action: onEdit) {
-            HStack(spacing: 14) {
-                Image(systemName: "square.grid.2x2")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(LR.accent)
-                    .frame(width: 28, height: 28)
-                    .background(LR.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(profile.name)
+        HStack(spacing: 0) {
+            Button(action: onEdit) {
+                HStack(spacing: 14) {
+                    Image(systemName: "square.grid.2x2")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.primary)
-                    Text(detail)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .foregroundStyle(LR.accent)
+                        .frame(width: 28, height: 28)
+                        .background(LR.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(profile.name)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.primary)
+                        Text(detail)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    Spacer()
                 }
-                Spacer()
-                Toggle("Enabled", isOn: enabledBinding)
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .labelsHidden()
-                    .tint(LR.accent)
+                .padding(.leading, 14)
+                .padding(.vertical, 12)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(isSelected ? LR.accent.opacity(0.10) : LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                    .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
-            }
+            .buttonStyle(.plain)
+            Toggle("Enabled", isOn: enabledBinding)
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .labelsHidden()
+                .accessibilityLabel("Enable \(profile.name)")
+                .tint(LR.accent)
+                .padding(.trailing, 14)
         }
-        .buttonStyle(.plain)
+        .background(isSelected ? LR.accent.opacity(0.10) : LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
+                .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private var detail: String {

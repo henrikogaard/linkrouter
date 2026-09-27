@@ -207,12 +207,20 @@ private struct PromptCell: View {
                     .frame(width: 40, height: 40)
                     .opacity(item.running ? 1 : 0.45)
             }
-            Text(item.title)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(item.running ? .primary : .secondary)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .frame(width: 68, height: 28, alignment: .top)
+            VStack(spacing: 1) {
+                Text(titleParts.base)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(item.running ? .primary : .secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                if let qualifier = titleParts.qualifier {
+                    Text(qualifier)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            .frame(width: 68, height: 40, alignment: .top)
             if index < 9 {
                 Text("\(index + 1)")
                     .font(.system(size: 9, weight: .semibold, design: .rounded))
@@ -221,6 +229,12 @@ private struct PromptCell: View {
         }
         .accessibilityLabel(label)
         .accessibilityAddTraits(.isButton)
+    }
+
+    private var titleParts: (base: String, qualifier: String?) {
+        let parts = item.title.components(separatedBy: " · ")
+        let qualifier = parts.count > 1 ? parts.dropFirst().joined(separator: " · ") : nil
+        return (parts[0], qualifier)
     }
 
     private var label: String {
@@ -246,7 +260,7 @@ private struct CopyCell: View {
             Text("Copy")
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 68, height: 28, alignment: .top)
+                .frame(width: 68, height: 40, alignment: .top)
         }
         .accessibilityLabel("Copy link")
         .accessibilityAddTraits(.isButton)
