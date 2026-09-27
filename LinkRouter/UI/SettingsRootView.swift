@@ -47,7 +47,6 @@ struct SettingsRootView: View {
         }
         .background(LR.pageFill)
         .tint(Color.primary)
-        .preferredColorScheme(state.settings.appearance.colorScheme)
         .sheet(isPresented: welcomeBinding) {
             WelcomeView(pane: $pane)
                 .environmentObject(state)
