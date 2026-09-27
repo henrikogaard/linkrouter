@@ -69,6 +69,18 @@ LinkRouter uses Sparkle for in-app updates. They're off until an EdDSA key pair 
 2. Put the **public** key in the `SPARKLE_PUBLIC_ED_KEY` build setting — either in the project, an xcconfig, or pass `SPARKLE_PUBLIC_ED_KEY=<key>` to xcodebuild in `release.yml`. It's substituted into `SUPublicEDKey` in Info.plist.
 3. Add the **private** key as the `SPARKLE_PRIVATE_ED_KEY` GitHub Actions secret. When set, the release workflow downloads Sparkle 2.6.4, runs `generate_appcast` over `dist/`, and attaches `appcast.xml` to the release; the app's `SUFeedURL` points at `releases/latest/download/appcast.xml`. Without the secret the step is skipped and the app reports that updates aren't configured for the build.
 
+## Manual preview builds
+
+After `preview.yml` has been merged into the default branch, open **Actions → Preview → Run workflow**. Choose the branch to build and enter a numeric app version such as `1.0.0`. The selected branch must contain this workflow and `scripts/package-release.sh`. Only build trusted repository branches: preview builds use the same signing and notarization credentials as releases.
+
+The workflow runs tests, builds a universal Developer ID-signed app, and notarizes and staples the app and DMG using the same packaging script as releases. Download the `LinkRouter-<version>-preview-<run>-<sha>` artifact from the completed run. It contains the DMG, `SHA256SUMS`, and `BUILD.txt` with the exact commit, ref and run URL. Artifacts are retained for 14 days and require repository access while the repository is private.
+
+Preview runs do not create tags, GitHub Releases, or Sparkle appcasts. Sparkle's public key is explicitly empty in preview builds, so automatic updates are disabled. The app keeps the normal LinkRouter name, bundle identifier and settings location; installing a preview replaces the installed app and uses the same data. Preview filenames are distinct, while the app's version is the numeric input and its build number is the workflow run number.
+
+```sh
+gh workflow run preview.yml --ref feature/my-branch -f version=1.0.0
+```
+
 ## Nightlies
 
 The nightly workflow builds the tip of `main` every night at 03:00 UTC (and on demand) and uploads a `LinkRouter-nightly-<sha>.zip` artifact kept for 14 days. Nightly builds are **unsigned** — macOS will warn; right-click the app → **Open** to run it. Tagged releases are signed with Developer ID and notarized, so prefer those.
