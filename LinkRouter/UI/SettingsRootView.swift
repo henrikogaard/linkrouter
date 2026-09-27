@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
-    case browsers, profiles, rules, history, general
+    case browsers, profiles, rules, history, general, about
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -10,6 +10,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         case .rules: String(localized: "Rules")
         case .history: String(localized: "History")
         case .general: String(localized: "General")
+        case .about: String(localized: "About")
         }
     }
     var symbol: String {
@@ -19,6 +20,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         case .rules: "list.bullet.rectangle"
         case .history: "clock"
         case .general: "gearshape"
+        case .about: "info.circle"
         }
     }
 }
@@ -40,6 +42,7 @@ struct SettingsRootView: View {
                 case .rules: RulesPane()
                 case .history: HistoryPane()
                 case .general: GeneralPane()
+                case .about: AboutPane()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
