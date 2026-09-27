@@ -71,9 +71,11 @@ Releases still need the matching **private** key as the `SPARKLE_PRIVATE_ED_KEY`
 
 After `preview.yml` has been merged into the default branch, open **Actions → Preview → Run workflow**. Choose the branch to build and enter a numeric app version such as `1.0.0`. The selected branch must contain this workflow and `scripts/package-release.sh`. Only build trusted repository branches: preview builds use the same signing and notarization credentials as releases.
 
+Preview builds install as **LinkRouter Preview.app** with their own bundle identifier (`app.linkrouter.LinkRouter.preview`), their own `~/Library/Application Support/LinkRouter Preview` state folder, and update checks disabled — they never overwrite a normal install and can never appear in the Sparkle appcast, since they ship as workflow artifacts rather than GitHub releases.
+
 The workflow runs tests, builds a universal Developer ID-signed app, and notarizes and staples the app and DMG using the same packaging script as releases. Download the `LinkRouter-<version>-preview-<run>-<sha>` artifact from the completed run. It contains the DMG, `SHA256SUMS`, and `BUILD.txt` with the exact commit, ref and run URL. Artifacts are retained for 14 days and require repository access while the repository is private.
 
-Preview runs do not create tags, GitHub Releases, or Sparkle appcasts. Sparkle's public key is explicitly empty in preview builds, so automatic updates are disabled. The app keeps the normal LinkRouter name, bundle identifier and settings location; installing a preview replaces the installed app and uses the same data. Preview filenames are distinct, while the app's version is the numeric input and its build number is the workflow run number.
+Preview runs do not create tags, GitHub Releases, or Sparkle appcasts, and Sparkle's public key is explicitly empty in preview builds, so automatic updates are disabled. The app's version is the numeric input and its build number is the workflow run number.
 
 ```sh
 gh workflow run preview.yml --ref feature/my-branch -f version=1.0.0

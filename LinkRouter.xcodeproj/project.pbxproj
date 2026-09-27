@@ -485,6 +485,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				LR_STATE_DIRECTORY_NAME = LinkRouter;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;
@@ -514,6 +515,7 @@
 					"@executable_path/../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				LR_STATE_DIRECTORY_NAME = LinkRouter;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.linkrouter.LinkRouter;
