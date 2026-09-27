@@ -217,6 +217,8 @@ private struct BrowserRow: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+            .accessibilityLabel(label)
             Toggle("In picker", isOn: enabledBinding)
                 .toggleStyle(.switch)
                 .controlSize(.small)
@@ -237,8 +239,7 @@ private struct BrowserRow: View {
         .contentShape(RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
         .onDrag(onDragStart)
         .onHover { hovering = $0 }
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityLabel(label)
+        .accessibilityElement(children: .contain)
     }
 
     private var handle: some View {

@@ -220,7 +220,7 @@ private struct PromptCell: View {
                         .lineLimit(1)
                 }
             }
-            .frame(width: 68, height: 36, alignment: .top)
+            .frame(width: 68, height: 40, alignment: .top)
             if index < 9 {
                 Text("\(index + 1)")
                     .font(.system(size: 9, weight: .semibold, design: .rounded))
@@ -260,7 +260,7 @@ private struct CopyCell: View {
             Text("Copy")
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 68, height: 36, alignment: .top)
+                .frame(width: 68, height: 40, alignment: .top)
         }
         .accessibilityLabel("Copy link")
         .accessibilityAddTraits(.isButton)

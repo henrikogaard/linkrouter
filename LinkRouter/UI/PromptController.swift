@@ -31,7 +31,7 @@ final class PromptController {
         guard !items.isEmpty else { return }
 
         let width = CGFloat(max(items.count, 1) + 1) * 76 + 24
-        let height: CGFloat = items.count > 6 ? 170 : 156
+        let height: CGFloat = items.count > 6 ? 174 : 160
         var origin = originForPointer(size: NSSize(width: width, height: height), itemCount: items.count)
 
         let view = PromptView(

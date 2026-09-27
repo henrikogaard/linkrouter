@@ -182,43 +182,49 @@ private struct RuleRow: View {
     var onEdit: () -> Void
 
     var body: some View {
-        Button(action: onEdit) {
-            HStack(spacing: 14) {
-                Text("\(index + 1)")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                    .frame(width: 20)
-                Image(systemName: rule.isFallback ? "lock.fill" : "line.3.horizontal")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.tertiary)
-                    .frame(width: 20)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(rule.title)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.primary)
-                    Text(rule.behaviour.kind.label)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+        HStack(spacing: 0) {
+            Button(action: onEdit) {
+                HStack(spacing: 14) {
+                    Text("\(index + 1)")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                    Image(systemName: rule.isFallback ? "lock.fill" : "line.3.horizontal")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(rule.title)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.primary)
+                        Text(rule.behaviour.kind.label)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
                 }
-                Spacer()
-                if !rule.isFallback {
-                    Toggle("Enabled", isOn: enabledBinding)
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                        .labelsHidden()
-                        .accessibilityLabel("Enable \(rule.title)")
-                        .tint(LR.accent)
-                }
+                .padding(.leading, 14)
+                .padding(.vertical, 12)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(fill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                    .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
+            .buttonStyle(.plain)
+            if !rule.isFallback {
+                Toggle("Enabled", isOn: enabledBinding)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+                    .accessibilityLabel("Enable \(rule.title)")
+                    .tint(LR.accent)
+                    .padding(.trailing, 14)
+            } else {
+                Spacer().frame(width: 14)
             }
         }
-        .buttonStyle(.plain)
+        .background(fill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
+                .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private var fill: Color {
