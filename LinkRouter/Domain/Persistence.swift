@@ -23,7 +23,8 @@ enum Persistence {
         }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
-        let dir = base.appendingPathComponent("LinkRouter", isDirectory: true)
+        let name = Bundle.main.object(forInfoDictionaryKey: "LRStateDirectoryName") as? String
+        let dir = base.appendingPathComponent(name?.isEmpty == false ? name! : "LinkRouter", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
