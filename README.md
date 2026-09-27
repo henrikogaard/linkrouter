@@ -21,20 +21,39 @@ Copy the built app to `/Applications` before making it the default browser, so L
 
 ## Releases
 
-One-time signing setup (Developer ID + notarization):
+Release tags use `vMAJOR.MINOR.PATCH` (for example `v1.0.0`) and must point to a commit reachable from `main`. The workflow rejects tags from unmerged branches and does not run on ordinary pushes. Create a tag only when a release is authorized, after the release workflow has been merged into `main`.
+
+One-time signing setup:
 
 ```sh
 ./scripts/setup-signing.sh
 ```
 
-That walks through the Apple pages and writes the GitHub Actions secrets. After that, push a version tag:
+Configure these in GitHub → Settings → Secrets and variables → Actions:
+
+| Kind | Name | Content |
+| --- | --- | --- |
+| Secret | `DEVELOPER_ID_P12` | Base64 Developer ID Application certificate **including its private key** |
+| Secret | `DEVELOPER_ID_P12_PASSWORD` | Password protecting the exported certificate |
+| Secret | `APPSTORE_API_PRIVATE_KEY` | Contents of the Team API key `.p8` file |
+| Variable | `APPLE_TEAM_ID` | Apple Developer Team ID |
+| Variable | `APPSTORE_API_KEY_ID` | Team API key ID |
+| Variable | `APPSTORE_ISSUER_ID` | Team API key issuer ID |
+
+Use a **Developer ID Application** certificate and a **Team API key**. This workflow passes an issuer ID and is not configured for Individual API keys. Never commit certificate or key files. Repository settings can restrict tag creation to release maintainers.
+
+From an up-to-date `main`, when ready to publish:
 
 ```sh
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-CI archives a Developer ID build, notarizes it, staples the ticket, and attaches `LinkRouter-1.0.0.zip` to the GitHub Release.
+CI runs tests, archives a universal Apple Silicon + Intel app, signs with Developer ID and hardened runtime, and notarizes and staples both the app and its signed DMG. Gatekeeper checks must pass before `LinkRouter-1.0.0.dmg` and `SHA256SUMS` are attached to the GitHub Release. The app version comes from the tag; the build number comes from the workflow run. A failed signing or notarization step prevents release publication. No unsigned fallback is published.
+
+Download the DMG, open it, and drag LinkRouter into Applications. Before launch, verify a real GitHub-produced DMG on a clean Mac (download quarantine, install, first launch and default-browser routing). Local unsigned builds do not prove Developer ID or notarization readiness. While this repository is private, releases and downloads require repository access. Making the repository public and publishing the website are separate launch actions.
+
+References: [Apple distribution packaging](https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution), [GitHub workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows).
 
 ## Setup
 

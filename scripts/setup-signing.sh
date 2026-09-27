@@ -235,10 +235,10 @@ note "Certificate will be uploaded as GitHub secret DEVELOPER_ID_P12 in the last
 
 # ── 4. App Store Connect API key (notarytool) ─────────────────────────────
 stage "App Store Connect API key"
-say "notarytool authenticates with an API key. An Individual key is enough for a solo account."
+say "notarytool authenticates with an API key. This workflow uses a Team API key with an Issuer ID."
 open_url "https://appstoreconnect.apple.com/access/integrations/api"
 step "App Store Connect → Users and Access → Integrations → App Store Connect API."
-step "If you don't have access to team keys, open Individual API keys on that page instead."
+step "Use Team Keys; ask your Account Holder for access if needed."
 step "Copy Issuer ID (UUID at the top of the keys page)."
 ask APPSTORE_ISSUER_ID "Paste Issuer ID:"
 step "Click Generate API Key (or +). Name it LinkRouter Notary. Access: Developer or Admin."
@@ -289,5 +289,5 @@ fi
 
 finish
 say "Next: git tag v1.0.0 && git push origin v1.0.0"
-say "The Release workflow will Developer ID-sign, notarize, staple, then attach the zip."
+say "The Release workflow will Developer ID-sign, notarize, staple, then attach the DMG."
 
