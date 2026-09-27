@@ -116,6 +116,10 @@ jobs:
             ONLY_ACTIVE_ARCH=NO \
             ARCHS="arm64 x86_64" \
             SPARKLE_PUBLIC_ED_KEY="" \
+            "PRODUCT_NAME=LinkRouter Preview" \
+            "EXECUTABLE_NAME=LinkRouter" \
+            "PRODUCT_BUNDLE_IDENTIFIER=app.linkrouter.LinkRouter.preview" \
+            "LR_STATE_DIRECTORY_NAME=LinkRouter Preview" \
             MARKETING_VERSION="${VERSION}" \
             CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
             DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
@@ -128,20 +132,22 @@ jobs:
             -exportPath build/export \
             -exportOptionsPlist /tmp/ExportOptions.plist
 
-          test -d build/export/LinkRouter.app
-          codesign --verify --deep --strict --verbose=2 build/export/LinkRouter.app
-          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' build/export/LinkRouter.app/Contents/Info.plist)" = "$VERSION"
-          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' build/export/LinkRouter.app/Contents/Info.plist)" = "$GITHUB_RUN_NUMBER"
+          test -d "build/export/LinkRouter Preview.app"
+          codesign --verify --deep --strict --verbose=2 "build/export/LinkRouter Preview.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' 'build/export/LinkRouter Preview.app/Contents/Info.plist')" = "$VERSION"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' 'build/export/LinkRouter Preview.app/Contents/Info.plist')" = "$GITHUB_RUN_NUMBER"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' 'build/export/LinkRouter Preview.app/Contents/Info.plist')" = "app.linkrouter.LinkRouter.preview"
 
       - name: Package, notarize and verify
         env:
           APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          APP_NAME: "LinkRouter Preview"
         run: bash scripts/package-release.sh
 
       - name: Label preview artifact
         run: |
           set -euo pipefail
-          mv "dist/LinkRouter-${VERSION}.dmg" "dist/${PREVIEW_NAME}.dmg"
+          mv "dist/LinkRouter Preview-${VERSION}.dmg" "dist/${PREVIEW_NAME}.dmg"
           (cd dist && shasum -a 256 "${PREVIEW_NAME}.dmg" > SHA256SUMS)
           printf 'Commit: %s\nRef: %s\nVersion: %s\nBuild: %s\nRun: %s/%s/actions/runs/%s\n' \
             "$GITHUB_SHA" "$GITHUB_REF" "$VERSION" "$GITHUB_RUN_NUMBER" \
