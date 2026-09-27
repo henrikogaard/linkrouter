@@ -10,7 +10,6 @@ struct LinkRouterApp: App {
             SettingsRootView()
                 .environmentObject(state)
                 .frame(minWidth: 860, minHeight: 560)
-                .preferredColorScheme(state.settings.appearance.colorScheme)
                 .background(AboutWindowOpener())
         }
         .windowStyle(.hiddenTitleBar)
@@ -27,7 +26,6 @@ struct LinkRouterApp: App {
 
         Window("About LinkRouter", id: "about") {
             AboutView()
-                .preferredColorScheme(state.settings.appearance.colorScheme)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
