@@ -141,14 +141,6 @@ struct GeneralPane: View {
                         .foregroundStyle(.secondary)
                 }
 
-                settingsGroup("About") {
-                    HStack {
-                        Text("Bundle")
-                        Spacer()
-                        Text(Bundle.main.bundleIdentifier ?? "app.linkrouter.LinkRouter")
-                            .foregroundStyle(.secondary)
-                    }
-                }
             }
             .padding(.bottom, 28)
         }

@@ -26,6 +26,7 @@
 		A10029 /* HistoryPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10029; };
 		A10030 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030; };
 		A10031 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10031; };
+		A10032 /* AboutPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10032; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -94,6 +95,7 @@
 		B10029 /* HistoryPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPane.swift; sourceTree = "<group>"; };
 		B10030 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		B10031 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		B10032 /* AboutPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPane.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -210,6 +212,7 @@
 				B10017 /* GeneralPane.swift */,
 				B10029 /* HistoryPane.swift */,
 				B10031 /* WelcomeView.swift */,
+				B10032 /* AboutPane.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -364,6 +367,7 @@
 				A10017 /* GeneralPane.swift in Sources */,
 				A10029 /* HistoryPane.swift in Sources */,
 				A10031 /* WelcomeView.swift in Sources */,
+				A10032 /* AboutPane.swift in Sources */,
 				A90001 /* Updater.swift in Sources */,
 				A10030 /* Intents.swift in Sources */,
 			);
