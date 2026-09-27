@@ -1,0 +1,26 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Open ${applicationName} link": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne ${applicationName}-lenke"
+          }
+        }
+      }
+    },
+    "Open ${applicationName} link in browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne ${applicationName}-lenke i nettleser"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

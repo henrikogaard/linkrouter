@@ -11,11 +11,22 @@ struct PromptItem: Identifiable {
 struct PromptView: View {
     var items: [PromptItem]
     var link: IncomingLink
-    var onPick: (UUID) -> Void
+    var onPick: (UUID, Bool) -> Void
+    var onAlways: (UUID) -> Void
+    var onCopy: () -> Void
     var onCancel: () -> Void
+    @ObservedObject var countdown: PromptCountdown
 
     @State private var selected: UUID?
     @State private var hovered: UUID?
+    @State private var filter = ""
+
+    private var filtering: Bool { items.count > 6 }
+
+    private var visible: [PromptItem] {
+        guard filtering, !filter.isEmpty else { return items }
+        return items.filter { $0.title.localizedCaseInsensitiveContains(filter) }
+    }
 
     var body: some View {
         VStack(spacing: 10) {
@@ -23,16 +34,32 @@ struct PromptView: View {
                 Image(systemName: link.isSecure ? "lock.fill" : "globe")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.secondary)
-                Text(link.host)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                HStack(spacing: 0) {
+                    Text(link.host)
+                        .foregroundStyle(.secondary)
+                    Text(pathSuffix)
+                        .foregroundStyle(.tertiary)
+                }
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .lineLimit(1)
+                if let sourceName = link.sourceName {
+                    Text("from \(sourceName)")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
             }
             .padding(.top, 12)
+            .help(link.absoluteString)
+
+            if filtering && !filter.isEmpty {
+                Text(filter)
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.tertiary)
+            }
 
             HStack(alignment: .top, spacing: 6) {
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                ForEach(Array(visible.enumerated()), id: \.element.id) { index, item in
                     PromptCell(
                         item: item,
                         index: index,
@@ -42,12 +69,30 @@ struct PromptView: View {
                     .onHover { inside in
                         hovered = inside ? item.id : (hovered == item.id ? nil : hovered)
                     }
-                    .onTapGesture { onPick(item.id) }
+                    .onTapGesture { pick(item.id) }
                     .help(item.title)
+                    .contextMenu {
+                        Button("Always open \(link.host) in \(item.title)") {
+                            onAlways(item.id)
+                        }
+                    }
                 }
+                CopyCell(hovered: hovered == copyID)
+                    .onHover { inside in
+                        hovered = inside ? copyID : (hovered == copyID ? nil : hovered)
+                    }
+                    .onTapGesture { onCopy() }
+                    .help("Copy link")
             }
             .padding(.horizontal, 12)
-            .padding(.bottom, 14)
+            if let remaining = countdown.remaining, remaining <= 10 {
+                Text("Closes in \(remaining) s")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.tertiary)
+            } else {
+                Spacer().frame(height: 1)
+            }
+            Spacer().frame(height: 9)
         }
         .background {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -58,16 +103,24 @@ struct PromptView: View {
                 }
                 .shadow(color: .black.opacity(0.28), radius: 24, y: 10)
         }
-        .onAppear { selected = items.first?.id }
+        .onAppear { selected = visible.first?.id }
+        .onChange(of: filter) {
+            if selected == nil || !visible.contains(where: { $0.id == selected }) {
+                selected = visible.first?.id
+            }
+        }
         .focusable()
         .onKeyPress { press in
             if press.key == .escape {
-                onCancel()
+                if !filter.isEmpty {
+                    filter = ""
+                } else {
+                    onCancel()
+                }
                 return .handled
             }
             if press.key == .return {
-                if let selected { onPick(selected) }
-                else if let first = items.first { onPick(first.id) }
+                pick(selected ?? visible.first?.id, keepOpen: press.modifiers.contains(.shift))
                 return .handled
             }
             if press.key == .leftArrow {
@@ -78,8 +131,26 @@ struct PromptView: View {
                 move(1)
                 return .handled
             }
-            if let value = Int(press.characters), (1...9).contains(value), items.indices.contains(value - 1) {
-                onPick(items[value - 1].id)
+            if press.key == .delete || press.key == .deleteForward
+                || press.characters == "\u{7F}" || press.characters == "\u{8}" {
+                if !filter.isEmpty {
+                    filter.removeLast()
+                    return .handled
+                }
+                return .ignored
+            }
+            if press.modifiers.contains(.command), press.characters.lowercased() == "c" {
+                onCopy()
+                return .handled
+            }
+            if let value = Int(press.characters), (1...9).contains(value), visible.indices.contains(value - 1) {
+                pick(visible[value - 1].id)
+                return .handled
+            }
+            if filtering,
+               press.modifiers.isSubset(of: [.shift, .capsLock]),
+               press.characters.range(of: #"^[[:print:]]+$"#, options: .regularExpression) != nil {
+                filter += press.characters
                 return .handled
             }
             return .ignored
@@ -87,11 +158,34 @@ struct PromptView: View {
         .accessibilityElement(children: .contain)
     }
 
+    private let copyID = UUID()
+
+    private var pathSuffix: String {
+        var path = link.url.path
+        if let query = link.url.query, !query.isEmpty {
+            path += "?" + query
+        }
+        if path.isEmpty || path == "/" { return "" }
+        let budget = max(48 - link.host.count, 8)
+        guard path.count > budget else { return path }
+        return String(path.prefix(budget - 1)) + "…"
+    }
+
+    private func pick(_ id: UUID?, keepOpen: Bool = false) {
+        guard let id else { return }
+        let modifiers = NSEvent.modifierFlags
+        if modifiers.contains(.option) {
+            onAlways(id)
+        } else {
+            onPick(id, keepOpen || modifiers.contains(.shift))
+        }
+    }
+
     private func move(_ delta: Int) {
-        guard !items.isEmpty else { return }
-        let current = selected.flatMap { id in items.firstIndex(where: { $0.id == id }) } ?? 0
-        let next = min(max(current + delta, 0), items.count - 1)
-        selected = items[next].id
+        guard !visible.isEmpty else { return }
+        let current = selected.flatMap { id in visible.firstIndex(where: { $0.id == id }) } ?? 0
+        let next = min(max(current + delta, 0), visible.count - 1)
+        selected = visible[next].id
     }
 }
 
@@ -131,7 +225,30 @@ private struct PromptCell: View {
 
     private var label: String {
         var parts = [item.title]
-        if item.running { parts.append("running") } else { parts.append("not running") }
+        if item.running { parts.append(String(localized: "running")) } else { parts.append(String(localized: "not running")) }
         return parts.joined(separator: ", ")
+    }
+}
+
+private struct CopyCell: View {
+    var hovered: Bool
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(hovered ? Color.primary.opacity(0.12) : Color.primary.opacity(0.04))
+                    .frame(width: 64, height: 64)
+                Image(systemName: "doc.on.doc")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            Text("Copy")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 68, height: 28, alignment: .top)
+        }
+        .accessibilityLabel("Copy link")
+        .accessibilityAddTraits(.isButton)
     }
 }

@@ -1,0 +1,1826 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%1$@ %2$@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%1$@ applies a profile only when it starts cold. Open a separate %2$@ instance for this profile, or open the link in the running %3$@ without a profile.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ bruker en profil bare når den startes helt på nytt. Åpne en egen %2$@-instans for denne profilen, eller åpne lenken i den kjørende %3$@ uten profil."
+          }
+        }
+      }
+    },
+    "%1$@ · %2$@ · %3$@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ · %3$@"
+          }
+        }
+      }
+    },
+    "%1$@ — %2$@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — %2$@"
+          }
+        }
+      }
+    },
+    "%@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
+    "%@ is already running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ kjører allerede"
+          }
+        }
+      }
+    },
+    "%lld": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      }
+    },
+    ", missing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", mangler"
+          }
+        }
+      }
+    },
+    ", not running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", kjører ikke"
+          }
+        }
+      }
+    },
+    ", running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", kjører"
+          }
+        }
+      }
+    },
+    "15 s": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 s"
+          }
+        }
+      }
+    },
+    "30 s": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 s"
+          }
+        }
+      }
+    },
+    "60 s": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 s"
+          }
+        }
+      }
+    },
+    "About LinkRouter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Om LinkRouter"
+          }
+        }
+      }
+    },
+    "Add": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legg til"
+          }
+        }
+      }
+    },
+    "Add a Chromium-based browser (Chrome, Brave, Edge, Vivaldi, Arc) or Firefox first. Safari and Orion profiles, and Arc Spaces, can't be targeted from outside the browser.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legg til en Chromium-basert nettleser (Chrome, Brave, Edge, Vivaldi, Arc) eller Firefox først. Safari- og Orion-profiler, og Arc Spaces, kan ikke velges utenfra nettleseren."
+          }
+        }
+      }
+    },
+    "Add a browser from disk": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legg til en nettleser fra disk"
+          }
+        }
+      }
+    },
+    "Add a browser in LinkRouter → Browsers.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legg til en nettleser i LinkRouter → Nettlesere."
+          }
+        }
+      }
+    },
+    "Add condition": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legg til betingelse"
+          }
+        }
+      }
+    },
+    "Add pattern": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legg til mønster"
+          }
+        }
+      }
+    },
+    "All": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle"
+          }
+        }
+      }
+    },
+    "Always open %1$@ in %2$@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne alltid %1$@ i %2$@"
+          }
+        }
+      }
+    },
+    "Always use this browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruk alltid denne nettleseren"
+          }
+        }
+      }
+    },
+    "Any": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En av"
+          }
+        }
+      }
+    },
+    "App": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App"
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utseende"
+          }
+        }
+      }
+    },
+    "Auto-dismiss picker": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lukk velgeren automatisk"
+          }
+        }
+      }
+    },
+    "Browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nettleser"
+          }
+        }
+      }
+    },
+    "Browsers": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nettlesere"
+          }
+        }
+      }
+    },
+    "Bundle": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pakke"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
+          }
+        }
+      }
+    },
+    "Check automatically": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sjekk automatisk"
+          }
+        }
+      }
+    },
+    "Check for Updates…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se etter oppdateringer…"
+          }
+        }
+      }
+    },
+    "Choose…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velg…"
+          }
+        }
+      }
+    },
+    "Clear History": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tøm historikk"
+          }
+        }
+      }
+    },
+    "Clear Recent": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tøm nylige"
+          }
+        }
+      }
+    },
+    "Closes in %lld s": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lukkes om %lld s"
+          }
+        }
+      }
+    },
+    "Comparator": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sammenligning"
+          }
+        }
+      }
+    },
+    "Copy": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopier"
+          }
+        }
+      }
+    },
+    "Copy link": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopier lenke"
+          }
+        }
+      }
+    },
+    "Couldn't export settings": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke eksportere innstillinger"
+          }
+        }
+      }
+    },
+    "Couldn't import settings": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke importere innstillinger"
+          }
+        }
+      }
+    },
+    "Couldn't open %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kunne ikke åpne %@"
+          }
+        }
+      }
+    },
+    "Dark": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mørk"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slett"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferdig"
+          }
+        }
+      }
+    },
+    "Drag to reorder": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dra for å endre rekkefølge"
+          }
+        }
+      }
+    },
+    "Duplicate": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dupliser"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rediger"
+          }
+        }
+      }
+    },
+    "Enabled": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktivert"
+          }
+        }
+      }
+    },
+    "Export Settings…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksporter innstillinger…"
+          }
+        }
+      }
+    },
+    "Exports browsers, rules, profiles, and settings. Link history stays out of the file.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksporterer nettlesere, regler, profiler og innstillinger. Lenkehistorikken blir ikke med i filen."
+          }
+        }
+      }
+    },
+    "Fallback": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reserve"
+          }
+        }
+      }
+    },
+    "Favourite": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoritt"
+          }
+        }
+      }
+    },
+    "Firefox Private": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Firefox Privat"
+          }
+        }
+      }
+    },
+    "Firefox · %@ · Private": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Firefox · %@ · Privat"
+          }
+        }
+      }
+    },
+    "Follows known redirectors (Google /url, Outlook SafeLinks, Facebook l.php) to the real URL before routing.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Følger kjente omdirigeringer (Google /url, Outlook SafeLinks, Facebook l.php) til den ekte URL-en før ruting."
+          }
+        }
+      }
+    },
+    "For 1 hour": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I 1 time"
+          }
+        }
+      }
+    },
+    "For 15 minutes": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I 15 minutter"
+          }
+        }
+      }
+    },
+    "Force prompt when a modifier key is held": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tving velgeren fram når en endringstast holdes nede"
+          }
+        }
+      }
+    },
+    "Four quick steps and you're set.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fire raske steg, så er du klar."
+          }
+        }
+      }
+    },
+    "From": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fra"
+          }
+        }
+      }
+    },
+    "General": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generelt"
+          }
+        }
+      }
+    },
+    "Henrik Øgård": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henrik Øgård"
+          }
+        }
+      }
+    },
+    "History": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historikk"
+          }
+        }
+      }
+    },
+    "Import Settings…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer innstillinger…"
+          }
+        }
+      }
+    },
+    "In picker": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I velgeren"
+          }
+        }
+      }
+    },
+    "Kind": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type"
+          }
+        }
+      }
+    },
+    "Light": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lys"
+          }
+        }
+      }
+    },
+    "Link history is kept. This can't be undone.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lenkehistorikken beholdes. Dette kan ikke angres."
+          }
+        }
+      }
+    },
+    "Link type": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lenketype"
+          }
+        }
+      }
+    },
+    "LinkRouter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LinkRouter"
+          }
+        }
+      }
+    },
+    "LinkRouter (paused)": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LinkRouter (satt på pause)"
+          }
+        }
+      }
+    },
+    "LinkRouter is the default": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LinkRouter er standard"
+          }
+        }
+      }
+    },
+    "Make LinkRouter the default browser…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gjør LinkRouter til standardnettleser…"
+          }
+        }
+      }
+    },
+    "Match": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Treff"
+          }
+        }
+      }
+    },
+    "Matcher": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matcher"
+          }
+        }
+      }
+    },
+    "Menu bar": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menylinje"
+          }
+        }
+      }
+    },
+    "Missing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mangler"
+          }
+        }
+      }
+    },
+    "Missing profile": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil mangler"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navn"
+          }
+        }
+      }
+    },
+    "No %@ profiles found": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fant ingen %@-profiler"
+          }
+        }
+      }
+    },
+    "No Firefox profiles found": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fant ingen Firefox-profiler"
+          }
+        }
+      }
+    },
+    "No browser available": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen nettleser tilgjengelig"
+          }
+        }
+      }
+    },
+    "No favourite set": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen favoritt valgt"
+          }
+        }
+      }
+    },
+    "No link on clipboard": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen lenke på utklippstavlen"
+          }
+        }
+      }
+    },
+    "No links routed yet": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen lenker rutet ennå"
+          }
+        }
+      }
+    },
+    "No matches": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen treff"
+          }
+        }
+      }
+    },
+    "No running browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen nettleser kjører"
+          }
+        }
+      }
+    },
+    "None": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen"
+          }
+        }
+      }
+    },
+    "Not running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kjører ikke"
+          }
+        }
+      }
+    },
+    "Not the default": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikke standard"
+          }
+        }
+      }
+    },
+    "Not the default browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikke standardnettleser"
+          }
+        }
+      }
+    },
+    "Open Link": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne lenke"
+          }
+        }
+      }
+    },
+    "Open Link in Browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne lenke i nettleser"
+          }
+        }
+      }
+    },
+    "Open Link in a Browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne lenke i en nettleser"
+          }
+        }
+      }
+    },
+    "Open Link with LinkRouter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne lenke med LinkRouter"
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne Systeminnstillinger"
+          }
+        }
+      }
+    },
+    "Open again": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne igjen"
+          }
+        }
+      }
+    },
+    "Open at login": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne ved pålogging"
+          }
+        }
+      }
+    },
+    "Open browsers in the background": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne nettlesere i bakgrunnen"
+          }
+        }
+      }
+    },
+    "Opens %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpner %@"
+          }
+        }
+      }
+    },
+    "Opens the favourite when it expires, if one is set.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpner favoritten når tiden går ut, hvis en er valgt."
+          }
+        }
+      }
+    },
+    "Pause Routing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sett ruting på pause"
+          }
+        }
+      }
+    },
+    "Private": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privat"
+          }
+        }
+      }
+    },
+    "Profile": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil"
+          }
+        }
+      }
+    },
+    "Profiles": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profiler"
+          }
+        }
+      }
+    },
+    "Prompt for %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spør om %@"
+          }
+        }
+      }
+    },
+    "Prompt for all browsers": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spør om alle nettlesere"
+          }
+        }
+      }
+    },
+    "Prompt for running browsers": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spør om kjørende nettlesere"
+          }
+        }
+      }
+    },
+    "Prompt for these browsers": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spør om disse nettleserne"
+          }
+        }
+      }
+    },
+    "Quit LinkRouter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avslutt LinkRouter"
+          }
+        }
+      }
+    },
+    "Recent": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nylige"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oppdater"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern"
+          }
+        }
+      }
+    },
+    "Removes utm_* and common click IDs (fbclid, gclid, …) before routing.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjerner utm_* og vanlige klikk-ID-er (fbclid, gclid, …) før ruting."
+          }
+        }
+      }
+    },
+    "Reorder %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Endre rekkefølgen på %@"
+          }
+        }
+      }
+    },
+    "Replace your current browsers, rules and profiles?": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstatte nåværende nettlesere, regler og profiler?"
+          }
+        }
+      }
+    },
+    "Resume Routing": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortsett rutingen"
+          }
+        }
+      }
+    },
+    "Route Clipboard Link": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rut lenke fra utklippstavlen"
+          }
+        }
+      }
+    },
+    "Rule": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regel"
+          }
+        }
+      }
+    },
+    "Rules": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regler"
+          }
+        }
+      }
+    },
+    "Running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kjører"
+          }
+        }
+      }
+    },
+    "Running browsers": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kjørende nettlesere"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lagre"
+          }
+        }
+      }
+    },
+    "Search links or browsers": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Søk i lenker eller nettlesere"
+          }
+        }
+      }
+    },
+    "Sent from app": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sendt fra app"
+          }
+        }
+      }
+    },
+    "Set as default": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angi som standard"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Innstillinger"
+          }
+        }
+      }
+    },
+    "Setup Guide…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oppsettsveiledning…"
+          }
+        }
+      }
+    },
+    "Show menu bar icon": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vis menylinjeikon"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hopp over"
+          }
+        }
+      }
+    },
+    "Starting with default settings. The original file was kept next to state.json in Application Support.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter med standardinnstillinger. Originalfilen er beholdt ved siden av state.json i Application Support."
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "Strip tracking parameters": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern sporingsparametere"
+          }
+        }
+      }
+    },
+    "System": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        }
+      }
+    },
+    "System Settings → Desktop & Dock → Default web browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Systeminnstillinger → Skrivebord og Dock → Standard nettleser"
+          }
+        }
+      }
+    },
+    "System Settings → Desktop & Dock. macOS has to confirm it.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Systeminnstillinger → Skrivebord og Dock. macOS må bekrefte det."
+          }
+        }
+      }
+    },
+    "System follows macOS. Light and Dark lock this window and the picker.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System følger macOS. Lyst og mørkt låser dette vinduet og velgeren."
+          }
+        }
+      }
+    },
+    "Test a link, e.g. https://github.com/foo": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test en lenke, f.eks. https://github.com/foo"
+          }
+        }
+      }
+    },
+    "Then": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deretter"
+          }
+        }
+      }
+    },
+    "Time of day": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tid på dagen"
+          }
+        }
+      }
+    },
+    "Turn on at least one browser in Browsers.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå på minst én nettleser under Nettlesere."
+          }
+        }
+      }
+    },
+    "Type": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type"
+          }
+        }
+      }
+    },
+    "URL": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "URL"
+          }
+        }
+      }
+    },
+    "Until": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Til"
+          }
+        }
+      }
+    },
+    "Until resumed": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Til den gjenopptas"
+          }
+        }
+      }
+    },
+    "Unwrap redirect links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pakk ut omdirigeringslenker"
+          }
+        }
+      }
+    },
+    "Updates aren't configured for this build": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oppdateringer er ikke konfigurert for denne byggeversjonen"
+          }
+        }
+      }
+    },
+    "Use best running browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruk beste kjørende nettleser"
+          }
+        }
+      }
+    },
+    "Use default behaviour": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruk standardoppførsel"
+          }
+        }
+      }
+    },
+    "Use favourite browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruk favorittnettleser"
+          }
+        }
+      }
+    },
+    "Use these browsers in order": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruk disse nettleserne i rekkefølge"
+          }
+        }
+      }
+    },
+    "Used when no profile and no earlier rule matches.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brukes når ingen profil og ingen tidligere regel passer."
+          }
+        }
+      }
+    },
+    "Uses currently held Shift, Control, Option, or Command. Not the keys from the original click.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruker Shift-, Control-, Option- eller Command-tasten som holdes nede nå. Ikke tastene fra det opprinnelige klikket."
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versjon"
+          }
+        }
+      }
+    },
+    "Version %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versjon %@"
+          }
+        }
+      }
+    },
+    "Web address": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nettadresse"
+          }
+        }
+      }
+    },
+    "Welcome to LinkRouter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velkommen til LinkRouter"
+          }
+        }
+      }
+    },
+    "With the icon hidden, open LinkRouter again from Finder or Spotlight to reach Settings.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Når ikonet er skjult, åpne LinkRouter igjen fra Finder eller Spotlight for å nå Innstillinger."
+          }
+        }
+      }
+    },
+    "Work, Personal, Development…": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jobb, Privat, Utvikling…"
+          }
+        }
+      }
+    },
+    "all of the following are true": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "alle følgende er sanne"
+          }
+        }
+      }
+    },
+    "any of the following are true": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "en av følgende er sann"
+          }
+        }
+      }
+    },
+    "begins with": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "begynner med"
+          }
+        }
+      }
+    },
+    "com.example.app": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "com.example.app"
+          }
+        }
+      }
+    },
+    "contains": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "inneholder"
+          }
+        }
+      }
+    },
+    "ends with": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "slutter med"
+          }
+        }
+      }
+    },
+    "from %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fra %@"
+          }
+        }
+      }
+    },
+    "github.com": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "github.com"
+          }
+        }
+      }
+    },
+    "is": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "er"
+          }
+        }
+      }
+    },
+    "is greater than": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "er større enn"
+          }
+        }
+      }
+    },
+    "is less than": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "er mindre enn"
+          }
+        }
+      }
+    },
+    "is like": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "er som"
+          }
+        }
+      }
+    },
+    "is not": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "er ikke"
+          }
+        }
+      }
+    },
+    "local HTML file": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "lokal HTML-fil"
+          }
+        }
+      }
+    },
+    "macOS may ask you to allow a login item.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS kan be deg om å tillate et påloggingsobjekt."
+          }
+        }
+      }
+    },
+    "matches regex": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "matcher regex"
+          }
+        }
+      }
+    },
+    "none of the following are true": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ingen av følgende er sanne"
+          }
+        }
+      }
+    },
+    "not running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kjører ikke"
+          }
+        }
+      }
+    },
+    "running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kjører"
+          }
+        }
+      }
+    },
+    "website link": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nettlenke"
+          }
+        }
+      }
+    },
+    "→ %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "→ %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

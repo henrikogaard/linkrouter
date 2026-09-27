@@ -11,8 +11,21 @@ enum BrowserCatalog {
         return (identifier, name)
     }
 
+    @MainActor private static var iconCache: [String: NSImage] = [:]
+
+    @MainActor
     static func icon(for path: String) -> NSImage {
-        NSWorkspace.shared.icon(forFile: path)
+        if let cached = iconCache[path] { return cached }
+        let image = NSWorkspace.shared.icon(forFile: path)
+        iconCache[path] = image
+        return image
+    }
+
+    @MainActor
+    static func invalidateIcons(for paths: String...) {
+        for path in paths {
+            iconCache.removeValue(forKey: path)
+        }
     }
 
     static func seedFromLaunchServices() -> (browsers: [BrowserRecord], rows: [CatalogRow]) {
@@ -20,7 +33,7 @@ enum BrowserCatalog {
         var rows: [CatalogRow] = []
         for url in DefaultBrowser.httpHandlers() {
             guard let meta = metadata(for: url) else { continue }
-            if browsers.contains(where: { $0.path == url.path }) { continue }
+            if browsers.contains(where: { $0.path == url.path || $0.bundleIdentifier == meta.bundleIdentifier }) { continue }
             let record = BrowserRecord(
                 id: UUID(),
                 path: url.path,
@@ -46,8 +59,9 @@ enum BrowserCatalog {
 
     static func appendDiscovered(browsers: inout [BrowserRecord], rows: inout [CatalogRow]) {
         let known = Set(browsers.map(\.path))
+        let knownIDs = Set(browsers.map(\.bundleIdentifier))
         for url in DefaultBrowser.httpHandlers() where !known.contains(url.path) {
-            guard let meta = metadata(for: url) else { continue }
+            guard let meta = metadata(for: url), !knownIDs.contains(meta.bundleIdentifier) else { continue }
             let record = BrowserRecord(
                 id: UUID(),
                 path: url.path,
