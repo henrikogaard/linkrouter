@@ -199,13 +199,30 @@ private struct PromptCell: View {
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(selected || hovered ? Color.primary.opacity(0.12) : Color.primary.opacity(0.04))
+                    .fill(selected ? accent.opacity(0.16) : Color.primary.opacity(hovered ? 0.10 : 0.05))
+                    .overlay {
+                        if selected {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(accent.opacity(0.8), lineWidth: 1.5)
+                        }
+                    }
                     .frame(width: 64, height: 64)
                 Image(nsImage: item.icon)
                     .resizable()
                     .interpolation(.high)
                     .frame(width: 40, height: 40)
                     .opacity(item.running ? 1 : 0.45)
+                if index < 9 {
+                    Text("\(index + 1)")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 4))
+                        .padding(.top, 4)
+                        .padding(.leading, 5)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                }
             }
             VStack(spacing: 1) {
                 Text(titleParts.base)
@@ -213,23 +230,19 @@ private struct PromptCell: View {
                     .foregroundStyle(item.running ? .primary : .secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
-                if let qualifier = titleParts.qualifier {
-                    Text(qualifier)
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
+                Text(titleParts.qualifier ?? " ")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-            .frame(width: 68, height: 40, alignment: .top)
-            if index < 9 {
-                Text("\(index + 1)")
-                    .font(.system(size: 9, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.tertiary)
-            }
+            .frame(width: 74, height: 38, alignment: .top)
         }
         .accessibilityLabel(label)
         .accessibilityAddTraits(.isButton)
     }
+
+    // Theme.swift (LR) is app-target only; this file is shared with the test target.
+    private var accent: Color { Color("AccentColor") }
 
     private var titleParts: (base: String, qualifier: String?) {
         let parts = item.title.components(separatedBy: " · ")
@@ -251,16 +264,31 @@ private struct CopyCell: View {
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(hovered ? Color.primary.opacity(0.12) : Color.primary.opacity(0.04))
+                    .fill(Color.primary.opacity(hovered ? 0.10 : 0.05))
                     .frame(width: 64, height: 64)
                 Image(systemName: "doc.on.doc")
                     .font(.system(size: 22, weight: .medium))
                     .foregroundStyle(.secondary)
+                Text("⌘C")
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 4))
+                    .padding(.top, 4)
+                    .padding(.leading, 5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            Text("Copy")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 68, height: 40, alignment: .top)
+            VStack(spacing: 1) {
+                Text("Copy")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Text(" ")
+                    .font(.system(size: 9, weight: .medium))
+                    .lineLimit(1)
+            }
+            .frame(width: 74, height: 38, alignment: .top)
         }
         .accessibilityLabel("Copy link")
         .accessibilityAddTraits(.isButton)

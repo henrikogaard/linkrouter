@@ -15,6 +15,8 @@ final class PromptController {
     private var panel: KeyPanel?
     private var hosting: NSHostingView<AnyView>?
     private var timeoutTimer: Timer?
+    private var resignKeyObserver: NSObjectProtocol?
+    private var onPick: ((UUID?, Bool) -> Void)?
     let countdown = PromptCountdown()
 
     var isVisible: Bool { panel != nil }
@@ -29,8 +31,9 @@ final class PromptController {
     ) {
         dismiss()
         guard !items.isEmpty else { return }
+        self.onPick = onPick
 
-        let width = CGFloat(max(items.count, 1) + 1) * 76 + 24
+        let width = CGFloat(max(items.count, 1) + 1) * 80 + 24
         let height: CGFloat = items.count > 6 ? 174 : 160
         var origin = originForPointer(size: NSSize(width: width, height: height), itemCount: items.count)
 
@@ -62,9 +65,12 @@ final class PromptController {
         let hosting = NSHostingView(rootView: AnyView(view.tint(Color("AccentColor"))))
         hosting.frame = NSRect(x: 0, y: 0, width: width, height: height)
 
+        // .nonactivatingPanel: the picker takes key status and keyboard input
+        // without activating the app — activating would reopen the Settings
+        // scene and steal key focus from the panel.
         let panel = KeyPanel(
             contentRect: NSRect(origin: origin, size: NSSize(width: width, height: height)),
-            styleMask: [.borderless],
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -97,7 +103,17 @@ final class PromptController {
             }
         }
 
-        NSApp.activate(ignoringOtherApps: true)
+        resignKeyObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification,
+            object: panel,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.panel != nil else { return }
+                self.dismiss()
+                self.onPick?(nil, false)
+            }
+        }
         panel.makeKeyAndOrderFront(nil)
         origin = clamped(origin, size: panel.frame.size)
         panel.setFrameOrigin(origin)
@@ -107,9 +123,16 @@ final class PromptController {
         timeoutTimer?.invalidate()
         timeoutTimer = nil
         countdown.remaining = nil
-        panel?.orderOut(nil)
+        if let resignKeyObserver {
+            NotificationCenter.default.removeObserver(resignKeyObserver)
+            self.resignKeyObserver = nil
+        }
+        // Nil the panel before ordering out so the resulting resign-key
+        // notification isn't handled as a second cancel.
+        let closing = panel
         panel = nil
         hosting = nil
+        closing?.orderOut(nil)
     }
 
     private func originForPointer(size: NSSize, itemCount: Int) -> NSPoint {

@@ -1,12 +1,47 @@
 import AppKit
 
 enum SettingsPresenter {
+    private static var suppressUntil = Date.distantPast
+    private static var dismissedSettings = false
+    private static var observersInstalled = false
+
     static func present(openWindow: ((String) -> Void)? = nil) {
+        dismissedSettings = false
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         openWindow?("settings")
         DispatchQueue.main.async { reveal() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { reveal() }
+    }
+
+    // SwiftUI re-inflates the closed Settings scene when the app activates
+    // (e.g. `open -a`, which fires alongside URL delivery). While suppressed,
+    // any Settings window that materializes is ordered back out. A window the
+    // user never closed (or one we presented) is left alone.
+    static func suppressAutoReveal(for seconds: TimeInterval) {
+        installObserversIfNeeded()
+        suppressUntil = Date().addingTimeInterval(seconds)
+        if dismissedSettings, let window = settingsWindow(), window.isVisible {
+            window.orderOut(nil)
+        }
+    }
+
+    static func noteWindowClosed(_ window: NSWindow?) {
+        if let window, settingsWindow() == window { dismissedSettings = true }
+    }
+
+    private static func installObserversIfNeeded() {
+        guard !observersInstalled else { return }
+        observersInstalled = true
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeOcclusionStateNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            guard Date() < suppressUntil, dismissedSettings,
+                  let window = settingsWindow(), window.isVisible else { return }
+            window.orderOut(nil)
+        }
     }
 
     static func reveal() {
