@@ -20,6 +20,7 @@ struct PromptView: View {
     @State private var selected: UUID?
     @State private var hovered: UUID?
     @State private var filter = ""
+    @State private var appeared = false
 
     private var filtering: Bool { items.count > 6 }
 
@@ -29,36 +30,40 @@ struct PromptView: View {
     }
 
     var body: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 4) {
-                Image(systemName: link.isSecure ? "lock.fill" : "globe")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                HStack(spacing: 0) {
-                    Text(link.host)
+        VStack(spacing: 0) {
+            VStack(spacing: 2) {
+                HStack(spacing: 5) {
+                    Image(systemName: link.isSecure ? "lock.fill" : "globe")
+                        .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
-                    Text(pathSuffix)
-                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 0) {
+                        Text(link.host)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text(pathSuffix)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .lineLimit(1)
                 }
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .lineLimit(1)
                 if let sourceName = link.sourceName {
                     Text("from \(sourceName)")
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .font(.system(size: 10))
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                 }
             }
-            .padding(.top, 12)
+            .padding(.top, 13)
             .help(link.absoluteString)
 
             if filtering && !filter.isEmpty {
                 Text(filter)
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
             }
 
-            HStack(alignment: .top, spacing: 6) {
+            HStack(alignment: .top, spacing: 4) {
                 ForEach(Array(visible.enumerated()), id: \.element.id) { index, item in
                     PromptCell(
                         item: item,
@@ -84,26 +89,38 @@ struct PromptView: View {
                     .onTapGesture { onCopy() }
                     .help("Copy link")
             }
-            .padding(.horizontal, 12)
-            if let remaining = countdown.remaining, remaining <= 10 {
-                Text("Closes in \(remaining) s")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
-            } else {
-                Spacer().frame(height: 1)
+            .padding(.horizontal, 14)
+            .padding(.top, 10)
+
+            Spacer(minLength: 0)
+
+            Group {
+                if let remaining = countdown.remaining, remaining <= 10 {
+                    Text("Closes in \(remaining) s")
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Text(" ")
+                }
             }
-            Spacer().frame(height: 9)
+            .font(.system(size: 9, weight: .medium))
+            .padding(.bottom, 8)
         }
         .background {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(.regularMaterial)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(.white.opacity(0.22), lineWidth: 0.5)
+                        .padding(0.5)
                 }
-                .shadow(color: .black.opacity(0.28), radius: 24, y: 10)
+                .shadow(color: .black.opacity(0.24), radius: 30, y: 14)
         }
-        .onAppear { selected = visible.first?.id }
+        .scaleEffect(appeared ? 1 : 0.94)
+        .opacity(appeared ? 1 : 0)
+        .onAppear {
+            selected = visible.first?.id
+            withAnimation(.easeOut(duration: 0.16)) { appeared = true }
+        }
         .onChange(of: filter) {
             if selected == nil || !visible.contains(where: { $0.id == selected }) {
                 selected = visible.first?.id
@@ -196,17 +213,15 @@ private struct PromptCell: View {
     var hovered: Bool
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 5) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(selected ? accent.opacity(0.16) : Color.primary.opacity(hovered ? 0.10 : 0.05))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(selected ? accent.opacity(0.18) : Color.primary.opacity(hovered ? 0.09 : 0.05))
                     .overlay {
-                        if selected {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(accent.opacity(0.8), lineWidth: 1.5)
-                        }
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(selected ? accent : accent.opacity(0), lineWidth: 1.5)
                     }
-                    .frame(width: 64, height: 64)
+                    .frame(width: 62, height: 62)
                 Image(nsImage: item.icon)
                     .resizable()
                     .interpolation(.high)
@@ -214,28 +229,27 @@ private struct PromptCell: View {
                     .opacity(item.running ? 1 : 0.45)
                 if index < 9 {
                     Text("\(index + 1)")
-                        .font(.system(size: 8, weight: .bold, design: .rounded))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 4))
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 13, minHeight: 13)
+                        .background(.quaternary, in: Capsule())
                         .padding(.top, 4)
                         .padding(.leading, 5)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
             }
-            VStack(spacing: 1) {
+            VStack(spacing: 0) {
                 Text(titleParts.base)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(item.running ? .primary : .secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                 Text(titleParts.qualifier ?? " ")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 9))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            .frame(width: 74, height: 38, alignment: .top)
+            .frame(width: 74, height: 37, alignment: .top)
         }
         .accessibilityLabel(label)
         .accessibilityAddTraits(.isButton)
@@ -261,34 +275,33 @@ private struct CopyCell: View {
     var hovered: Bool
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 5) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.primary.opacity(hovered ? 0.10 : 0.05))
-                    .frame(width: 64, height: 64)
-                Image(systemName: "doc.on.doc")
-                    .font(.system(size: 22, weight: .medium))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.primary.opacity(hovered ? 0.09 : 0.05))
+                    .frame(width: 62, height: 62)
+                Image(systemName: "doc.on.clipboard")
+                    .font(.system(size: 21, weight: .medium))
                     .foregroundStyle(.secondary)
                 Text("⌘C")
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 1)
-                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 4))
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 13, minHeight: 13)
+                    .padding(.horizontal, 3)
+                    .background(.quaternary, in: Capsule())
                     .padding(.top, 4)
                     .padding(.leading, 5)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            VStack(spacing: 1) {
+            VStack(spacing: 0) {
                 Text("Copy")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
                 Text(" ")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 9))
                     .lineLimit(1)
             }
-            .frame(width: 74, height: 38, alignment: .top)
+            .frame(width: 74, height: 37, alignment: .top)
         }
         .accessibilityLabel("Copy link")
         .accessibilityAddTraits(.isButton)

@@ -205,7 +205,7 @@ struct Rule: Codable, Equatable, Identifiable {
                 enabled: true,
                 combinator: .all,
                 conditions: [],
-                behaviour: .promptAll,
+                behaviour: .useFavourite,
                 isFallback: true
             )
         ]
