@@ -1,6 +1,20 @@
 import AppKit
 
 enum BrowserCatalog {
+    /// Apps that merely *can* open an https URL (Launch Services document types,
+    /// universal links) are not browsers — a real browser declares the http and
+    /// https URL schemes in its Info.plist.
+    static func isBrowser(_ appURL: URL) -> Bool {
+        guard let bundle = Bundle(url: appURL),
+              let types = bundle.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]]
+        else { return false }
+        let schemes = Set(
+            types.flatMap { $0["CFBundleURLSchemes"] as? [String] ?? [] }
+                .map { $0.lowercased() }
+        )
+        return schemes.contains("http") && schemes.contains("https")
+    }
+
     static func metadata(for appURL: URL) -> (bundleIdentifier: String, displayName: String)? {
         guard let bundle = Bundle(url: appURL),
               let identifier = bundle.bundleIdentifier
@@ -31,7 +45,7 @@ enum BrowserCatalog {
     static func seedFromLaunchServices() -> (browsers: [BrowserRecord], rows: [CatalogRow]) {
         var browsers: [BrowserRecord] = []
         var rows: [CatalogRow] = []
-        for url in DefaultBrowser.httpHandlers() {
+        for url in DefaultBrowser.httpHandlers() where isBrowser(url) {
             guard let meta = metadata(for: url) else { continue }
             if browsers.contains(where: { $0.path == url.path || $0.bundleIdentifier == meta.bundleIdentifier }) { continue }
             let record = BrowserRecord(
@@ -60,7 +74,7 @@ enum BrowserCatalog {
     static func appendDiscovered(browsers: inout [BrowserRecord], rows: inout [CatalogRow]) {
         let known = Set(browsers.map(\.path))
         let knownIDs = Set(browsers.map(\.bundleIdentifier))
-        for url in DefaultBrowser.httpHandlers() where !known.contains(url.path) {
+        for url in DefaultBrowser.httpHandlers() where !known.contains(url.path) && isBrowser(url) {
             guard let meta = metadata(for: url), !knownIDs.contains(meta.bundleIdentifier) else { continue }
             let record = BrowserRecord(
                 id: UUID(),
