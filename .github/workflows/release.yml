@@ -140,6 +140,15 @@ jobs:
             | /tmp/sparkle/bin/generate_appcast --ed-key-file - dist/
           test -f dist/appcast.xml
 
+      # A copy without the version in its name gives the website one link that
+      # always works: releases/latest/download/LinkRouter.dmg. It runs after the
+      # appcast step so Sparkle only ever lists the versioned file.
+      - name: Add stable-name DMG
+        run: |
+          set -euo pipefail
+          cp "dist/LinkRouter-${VERSION}.dmg" dist/LinkRouter.dmg
+          (cd dist && shasum -a 256 LinkRouter.dmg >> SHA256SUMS)
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

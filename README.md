@@ -75,7 +75,7 @@ The Xcode project is maintained by hand — when adding a source file, register 
 
 ## Releases
 
-Release tags use `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`) and must point to a commit reachable from `main` — the workflow rejects tags from unmerged branches. Tagging runs tests, archives a universal Apple Silicon + Intel build, signs with Developer ID and hardened runtime, notarizes and staples the app and its signed DMG, generates the signed Sparkle appcast, and attaches `LinkRouter-<version>.dmg`, `SHA256SUMS`, and `appcast.xml` to the GitHub Release. The app version comes from the tag; the build number is the workflow run number. No unsigned fallback is published.
+Release tags use `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`) and must point to a commit reachable from `main` — the workflow rejects tags from unmerged branches. Tagging runs tests, archives a universal Apple Silicon + Intel build, signs with Developer ID and hardened runtime, notarizes and staples the app and its signed DMG, generates the signed Sparkle appcast, and attaches `LinkRouter-<version>.dmg`, `SHA256SUMS`, and `appcast.xml` to the GitHub Release. It also attaches a copy named `LinkRouter.dmg`, so `https://github.com/henrikogaard/linkrouter/releases/latest/download/LinkRouter.dmg` always downloads the newest release. The website links there. The app version comes from the tag; the build number is the workflow run number. No unsigned fallback is published.
 
 One-time signing setup and required secrets/variables (`DEVELOPER_ID_P12`, `DEVELOPER_ID_P12_PASSWORD`, `APPSTORE_API_PRIVATE_KEY`, `APPLE_TEAM_ID`, `APPSTORE_API_KEY_ID`, `APPSTORE_ISSUER_ID`):
 
