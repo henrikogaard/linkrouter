@@ -66,7 +66,7 @@ final class RuleEngineTests: XCTestCase {
             runningCount: 0,
             modifierForcePrompt: false
         )
-        XCTAssertEqual(result, .promptAll)
+        XCTAssertEqual(result, .favourite)
     }
 
     func testRunningCountPrompt() {
@@ -264,6 +264,6 @@ final class RuleEngineTests: XCTestCase {
             runningCount: 0,
             modifierForcePrompt: false
         )
-        XCTAssertEqual(result, .promptAll)
+        XCTAssertEqual(result, .favourite)
     }
 }
