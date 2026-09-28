@@ -42,6 +42,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async {
                 SettingsPresenter.noteWindowClosed(window)
                 SettingsPresenter.resignToAccessoryIfNeeded()
+                // Sync the close into the SwiftUI scene so it doesn't
+                // re-materialize the window when the app unhides.
+                SettingsPresenter.dismissSettingsScene?()
             }
         }
     }
