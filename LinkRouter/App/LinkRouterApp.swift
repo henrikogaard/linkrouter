@@ -41,7 +41,7 @@ struct LinkRouterApp: App {
                     .renderingMode(.template)
                     .accessibilityLabel("LinkRouter (paused)")
             } else {
-                Image("MenuBarIcon")
+                Image(systemName: "arrow.triangle.branch")
                     .renderingMode(.template)
                     .accessibilityLabel("LinkRouter")
             }
