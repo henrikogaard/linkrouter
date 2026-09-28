@@ -94,9 +94,49 @@ enum BrowserCatalog {
         }
     }
 
+    /// Collapses the catalog to one record per bundle identifier and one row
+    /// per (browser, kind, target). Older versions could persist the same app
+    /// several times — or apps that merely *can* open https URLs — so loading
+    /// also drops records that still exist on disk but aren't browsers.
+    /// Records whose app is missing are kept so their rows can show Missing.
+    static func normalized(browsers: [BrowserRecord], rows: [CatalogRow]) -> (browsers: [BrowserRecord], rows: [CatalogRow]) {
+        var canonicalIDs: [String: UUID] = [:]
+        var remappedIDs: [UUID: UUID] = [:]
+        var keptBrowsers: [BrowserRecord] = []
+        for browser in browsers {
+            if let canonical = canonicalIDs[browser.bundleIdentifier] {
+                remappedIDs[browser.id] = canonical
+                continue
+            }
+            let appURL = browser.bundleURL
+            if FileManager.default.fileExists(atPath: appURL.path), !isBrowser(appURL) {
+                continue
+            }
+            canonicalIDs[browser.bundleIdentifier] = browser.id
+            keptBrowsers.append(browser)
+        }
+        var seenKeys = Set<String>()
+        var keptRows: [CatalogRow] = []
+        for row in rows {
+            var row = row
+            if let canonical = remappedIDs[row.browserID] {
+                row.browserID = canonical
+            }
+            guard canonicalIDs.values.contains(row.browserID) else { continue }
+            let key = [
+                row.browserID.uuidString, row.kind.rawValue,
+                row.chromeDirectory ?? "", row.chromeName ?? "",
+                row.firefoxName ?? "", row.firefoxAbsPath ?? ""
+            ].joined(separator: "\u{1f}")
+            guard seenKeys.insert(key).inserted else { continue }
+            keptRows.append(row)
+        }
+        return (keptBrowsers, keptRows)
+    }
+
     static func addApp(at url: URL, browsers: inout [BrowserRecord], rows: inout [CatalogRow]) -> Bool {
         guard url.pathExtension == "app", let meta = metadata(for: url) else { return false }
-        if let existing = browsers.first(where: { $0.path == url.path }) {
+        if let existing = browsers.first(where: { $0.path == url.path || $0.bundleIdentifier == meta.bundleIdentifier }) {
             if !rows.contains(where: { $0.browserID == existing.id && $0.kind == .app }) {
                 rows.append(CatalogRow(id: UUID(), browserID: existing.id, kind: .app, enabled: true))
             }

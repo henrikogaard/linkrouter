@@ -77,8 +77,9 @@ final class AppState: ObservableObject {
             initialProfiles = RouteProfile.shipped()
             initialSettings = AppSettings()
         }
-        browsers = initialBrowsers
-        rows = initialRows
+        let normalized = BrowserCatalog.normalized(browsers: initialBrowsers, rows: initialRows)
+        browsers = normalized.browsers
+        rows = normalized.rows
         rules = initialRules
         profiles = initialProfiles
         settings = initialSettings
