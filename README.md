@@ -4,8 +4,6 @@ A native macOS menu-bar app that makes every link open in the right browser — 
 
 LinkRouter registers as your default HTTP(S) handler. When a link is opened, it either applies your first-match rules (URL patterns, running browsers, source app, time of day) or shows a compact picker at the pointer so you can choose a browser, a Chrome-family profile, a private window, or a Firefox profile — with one keystroke.
 
-Not affiliated with browser-router — this is an independent app.
-
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="demo/picker-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="demo/picker-light.png">
