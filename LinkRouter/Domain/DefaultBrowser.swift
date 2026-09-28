@@ -26,6 +26,10 @@ enum DefaultBrowser {
             .filter { url in
                 if url.standardizedFileURL == Bundle.main.bundleURL.standardizedFileURL { return false }
                 if url.lastPathComponent == "LinkRouter.app" { return false }
+                // Exclude LinkRouter itself and variants (e.g. LinkRouter Preview)
+                // that also declare the http/https schemes.
+                if let identifier = Bundle(url: url)?.bundleIdentifier,
+                   identifier.hasPrefix("app.linkrouter.LinkRouter") { return false }
                 return true
             }
     }
