@@ -9,4 +9,4 @@ build/
 *.ipa
 *.p12
 *.p8
-.scratch/graph/**/err-*.log
+.scratch/
