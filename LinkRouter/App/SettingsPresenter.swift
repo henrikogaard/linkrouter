@@ -4,6 +4,9 @@ enum SettingsPresenter {
     private static var suppressUntil = Date.distantPast
     private static var dismissedSettings = false
     private static var observersInstalled = false
+    // Registered by the settings window's content; calls the SwiftUI
+    // dismissWindow environment action so the scene marks itself closed.
+    static var dismissSettingsScene: (() -> Void)?
 
     static func present(openWindow: ((String) -> Void)? = nil) {
         dismissedSettings = false

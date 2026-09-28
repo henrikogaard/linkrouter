@@ -12,6 +12,7 @@ struct LinkRouterApp: App {
                 .tint(LR.accent)
                 .frame(minWidth: 860, minHeight: 560)
                 .background(AboutWindowOpener())
+                .background(DismissSettingsSentry())
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 920, height: 640)
@@ -149,6 +150,22 @@ private struct MenuBarMenu: View {
     private func recentLabel(_ entry: RoutedEntry) -> String {
         let host = entry.url.host ?? entry.url.absoluteString
         return "\(String(host.prefix(40))) → \(entry.title)"
+    }
+}
+
+// Exposes the settings scene's dismissWindow action to AppKit-side code so a
+// red-X close is synced into the scene — otherwise SwiftUI still considers the
+// window open and re-materializes it the next time the app unhides.
+private struct DismissSettingsSentry: View {
+    @Environment(\.dismissWindow) private var dismissWindow
+
+    var body: some View {
+        Color.clear
+            .frame(width: 0, height: 0)
+            .allowsHitTesting(false)
+            .onAppear {
+                SettingsPresenter.dismissSettingsScene = { dismissWindow(id: "settings") }
+            }
     }
 }
 

@@ -208,9 +208,10 @@ private struct BrowserRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
+            handle
+                .onDrag(onDragStart)
             Button(action: onSelect) {
                 HStack(spacing: 10) {
-                    handle
                     icon
                     titles
                     Spacer(minLength: 8)
@@ -237,7 +238,6 @@ private struct BrowserRow: View {
         }
         .opacity(isDragging ? 0.42 : 1)
         .contentShape(RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-        .onDrag(onDragStart)
         .onHover { hovering = $0 }
         .accessibilityElement(children: .contain)
     }
