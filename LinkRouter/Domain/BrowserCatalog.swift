@@ -98,8 +98,14 @@ enum BrowserCatalog {
     /// per (browser, kind, target). Older versions could persist the same app
     /// several times — or apps that merely *can* open https URLs — so loading
     /// also drops records that still exist on disk but aren't browsers.
-    /// Records whose app is missing are kept so their rows can show Missing.
-    static func normalized(browsers: [BrowserRecord], rows: [CatalogRow]) -> (browsers: [BrowserRecord], rows: [CatalogRow]) {
+    /// A stale path is re-resolved by bundle identifier before the check, so a
+    /// moved non-browser can't hide behind it. Records whose app can't be found
+    /// at all are kept so their rows can show Missing.
+    static func normalized(
+        browsers: [BrowserRecord],
+        rows: [CatalogRow],
+        resolve: (String) -> URL? = { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }
+    ) -> (browsers: [BrowserRecord], rows: [CatalogRow]) {
         var canonicalIDs: [String: UUID] = [:]
         var remappedIDs: [UUID: UUID] = [:]
         var keptBrowsers: [BrowserRecord] = []
@@ -108,8 +114,10 @@ enum BrowserCatalog {
                 remappedIDs[browser.id] = canonical
                 continue
             }
-            let appURL = browser.bundleURL
-            if FileManager.default.fileExists(atPath: appURL.path), !isBrowser(appURL) {
+            let appURL = FileManager.default.fileExists(atPath: browser.path)
+                ? browser.bundleURL
+                : resolve(browser.bundleIdentifier)
+            if let appURL, FileManager.default.fileExists(atPath: appURL.path), !isBrowser(appURL) {
                 continue
             }
             canonicalIDs[browser.bundleIdentifier] = browser.id

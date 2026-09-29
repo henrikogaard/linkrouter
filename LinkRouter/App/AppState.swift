@@ -560,6 +560,20 @@ final class AppState: ObservableObject {
         refreshProfileSnapshot()
         startProfileWatch()
         BrowserCatalog.appendDiscovered(browsers: &browsers, rows: &rows)
+        let normalized = BrowserCatalog.normalized(browsers: browsers, rows: rows)
+        if normalized.browsers != browsers || normalized.rows != rows {
+            let keptRowIDs = Set(normalized.rows.map(\.id))
+            for index in rules.indices {
+                rules[index].behaviour.rowIDs.removeAll { !keptRowIDs.contains($0) }
+            }
+            for index in profiles.indices {
+                if let id = profiles[index].browserRowID, !keptRowIDs.contains(id) {
+                    profiles[index].browserRowID = nil
+                }
+            }
+            browsers = normalized.browsers
+            rows = normalized.rows
+        }
         let selfPaths = [Bundle.main.bundleURL.standardizedFileURL.path, "LinkRouter.app"]
         let removed = browsers.filter { record in
             record.path.hasSuffix("/LinkRouter.app") || selfPaths.contains(record.path)

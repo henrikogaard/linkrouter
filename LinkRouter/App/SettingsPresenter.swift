@@ -1,74 +1,47 @@
 import AppKit
 
+/// The Settings window is an AppKit-owned `NSWindow` rather than a SwiftUI
+/// `Window` scene: SwiftUI re-materializes scene windows whenever the app
+/// activates or unhides, which flashed Settings on every routed link.
+@MainActor
 enum SettingsPresenter {
-    private static var suppressUntil = Date.distantPast
-    private static var dismissedSettings = false
-    private static var observersInstalled = false
-    // Registered by the settings window's content; calls the SwiftUI
-    // dismissWindow environment action so the scene marks itself closed.
-    static var dismissSettingsScene: (() -> Void)?
+    private static var window: NSWindow?
+    // Set by the app target; the UI types aren't compiled into the test target.
+    static var makeContent: (() -> NSViewController)?
 
-    static func present(openWindow: ((String) -> Void)? = nil) {
-        dismissedSettings = false
+    static func present() {
+        guard let window = self.window ?? makeWindow() else { return }
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        openWindow?("settings")
-        DispatchQueue.main.async { reveal() }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { reveal() }
-    }
-
-    // SwiftUI re-inflates the closed Settings scene when the app activates
-    // (e.g. `open -a`, which fires alongside URL delivery). While suppressed,
-    // any Settings window that materializes is ordered back out. A window the
-    // user never closed (or one we presented) is left alone.
-    static func suppressAutoReveal(for seconds: TimeInterval) {
-        installObserversIfNeeded()
-        suppressUntil = Date().addingTimeInterval(seconds)
-        if dismissedSettings, let window = settingsWindow(), window.isVisible {
-            window.orderOut(nil)
-        }
-    }
-
-    static func noteWindowClosed(_ window: NSWindow?) {
-        if let window, settingsWindow() == window { dismissedSettings = true }
-    }
-
-    private static func installObserversIfNeeded() {
-        guard !observersInstalled else { return }
-        observersInstalled = true
-        NotificationCenter.default.addObserver(
-            forName: NSWindow.didChangeOcclusionStateNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
-            guard Date() < suppressUntil, dismissedSettings,
-                  let window = settingsWindow(), window.isVisible else { return }
-            window.orderOut(nil)
-        }
-    }
-
-    static func reveal() {
-        guard let window = settingsWindow() else { return }
+        self.window = window
         window.collectionBehavior.insert(.moveToActiveSpace)
         window.makeKeyAndOrderFront(nil)
-        window.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
     }
 
     static func settingsWindow() -> NSWindow? {
-        let titled = NSApp.windows.filter { window in
-            guard window.canBecomeKey else { return false }
-            if window is NSPanel { return false }
-            let className = String(describing: type(of: window))
-            if className.localizedCaseInsensitiveContains("status") { return false }
-            if window.frame.height < 80 { return false }
-            return true
+        window
+    }
+
+    private static func makeWindow() -> NSWindow? {
+        guard let content = makeContent?() else { return nil }
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 920, height: 640),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentViewController = content
+        window.setContentSize(NSSize(width: 920, height: 640))
+        window.title = "LinkRouter"
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.identifier = NSUserInterfaceItemIdentifier("settings")
+        window.isReleasedWhenClosed = false
+        window.setFrameAutosaveName("LinkRouterSettings")
+        if !window.setFrameUsingName("LinkRouterSettings") {
+            window.center()
         }
-        if let match = titled.first(where: { $0.identifier?.rawValue == "settings" }) {
-            return match
-        }
-        let titles: Set<String> = ["LinkRouter", "Browsers", "Rules", "General"]
-        return titled.first(where: { titles.contains($0.title) }) ?? titled.first
+        return window
     }
 
     static func resignToAccessoryIfNeeded() {

@@ -5,18 +5,21 @@ struct LinkRouterApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @ObservedObject private var state = AppState.shared
 
-    var body: some Scene {
-        Window("LinkRouter", id: "settings") {
-            SettingsRootView()
-                .environmentObject(state)
-                .tint(LR.accent)
-                .frame(minWidth: 860, minHeight: 560)
-                .background(AboutWindowOpener())
-                .background(DismissSettingsSentry())
+    init() {
+        SettingsPresenter.makeContent = {
+            NSHostingController(
+                rootView: SettingsRootView()
+                    .environmentObject(AppState.shared)
+                    .tint(LR.accent)
+                    .frame(minWidth: 860, minHeight: 560)
+            )
         }
-        .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: 920, height: 640)
-        .windowResizability(.contentSize)
+    }
+
+    var body: some Scene {
+        Settings {
+            EmptyView()
+        }
         .commands {
             CommandGroup(replacing: .newItem) {}
             CommandGroup(replacing: .appInfo) {
@@ -24,15 +27,13 @@ struct LinkRouterApp: App {
                     AboutPanel.show()
                 }
             }
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") {
+                    SettingsPresenter.present()
+                }
+                .keyboardShortcut(",")
+            }
         }
-
-        Window("About LinkRouter", id: "about") {
-            AboutView()
-                .tint(LR.accent)
-        }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
-        .defaultSize(width: 260, height: 220)
 
         MenuBarExtra(isInserted: menuBarBinding) {
             MenuBarMenu()
@@ -65,7 +66,6 @@ struct LinkRouterApp: App {
 }
 
 private struct MenuBarMenu: View {
-    @Environment(\.openWindow) private var openWindow
     @ObservedObject private var state = AppState.shared
 
     var body: some View {
@@ -120,9 +120,7 @@ private struct MenuBarMenu: View {
         Divider()
         Button("Setup Guide…") {
             state.settings.onboardingDone = false
-            SettingsPresenter.present { id in
-                openWindow(id: id)
-            }
+            SettingsPresenter.present()
         }
         if Updater.shared.canCheck {
             Button("Check for Updates…") {
@@ -130,9 +128,7 @@ private struct MenuBarMenu: View {
             }
         }
         Button("Settings") {
-            SettingsPresenter.present { id in
-                openWindow(id: id)
-            }
+            SettingsPresenter.present()
         }
         Button("Quit LinkRouter") {
             NSApp.terminate(nil)
@@ -150,35 +146,5 @@ private struct MenuBarMenu: View {
     private func recentLabel(_ entry: RoutedEntry) -> String {
         let host = entry.url.host ?? entry.url.absoluteString
         return "\(String(host.prefix(40))) → \(entry.title)"
-    }
-}
-
-// Exposes the settings scene's dismissWindow action to AppKit-side code so a
-// red-X close is synced into the scene — otherwise SwiftUI still considers the
-// window open and re-materializes it the next time the app unhides.
-private struct DismissSettingsSentry: View {
-    @Environment(\.dismissWindow) private var dismissWindow
-
-    var body: some View {
-        Color.clear
-            .frame(width: 0, height: 0)
-            .allowsHitTesting(false)
-            .onAppear {
-                SettingsPresenter.dismissSettingsScene = { dismissWindow(id: "settings") }
-            }
-    }
-}
-
-private struct AboutWindowOpener: View {
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        Color.clear
-            .frame(width: 0, height: 0)
-            .allowsHitTesting(false)
-            .onReceive(NotificationCenter.default.publisher(for: .linkRouterOpenAbout)) { _ in
-                openWindow(id: "about")
-                NSApp.activate(ignoringOtherApps: true)
-            }
     }
 }

@@ -226,7 +226,7 @@ private struct BrowserRow: View {
                 .labelsHidden()
                 .accessibilityLabel("Show \(state.title(for: row)) in the picker")
                 .tint(LR.accent)
-                .disabled(!state.isAvailable(row))
+                .disabled(!state.isAvailable(row) && !row.enabled)
         }
         .padding(.leading, 10)
         .padding(.trailing, 14)

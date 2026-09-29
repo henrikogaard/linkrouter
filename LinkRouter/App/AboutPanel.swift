@@ -1,16 +1,33 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 enum AboutPanel {
+    private static var window: NSWindow?
+
     static func show() {
         NSApp.setActivationPolicy(.regular)
+        let window = self.window ?? makeWindow()
+        self.window = window
+        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        NotificationCenter.default.post(name: .linkRouterOpenAbout, object: nil)
     }
-}
 
-extension Notification.Name {
-    static let linkRouterOpenAbout = Notification.Name("LinkRouterOpenAbout")
+    private static func makeWindow() -> NSWindow {
+        let window = NSWindow(
+            contentRect: .zero,
+            styleMask: [.titled, .closable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentViewController = NSHostingController(rootView: AboutView().tint(LR.accent))
+        window.title = String(localized: "About LinkRouter")
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isReleasedWhenClosed = false
+        window.center()
+        return window
+    }
 }
 
 struct AboutView: View {
