@@ -38,13 +38,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil,
             queue: .main
         ) { note in
-            let window = note.object as? NSWindow
             DispatchQueue.main.async {
-                SettingsPresenter.noteWindowClosed(window)
                 SettingsPresenter.resignToAccessoryIfNeeded()
-                // Sync the close into the SwiftUI scene so it doesn't
-                // re-materialize the window when the app unhides.
-                SettingsPresenter.dismissSettingsScene?()
             }
         }
     }
@@ -64,7 +59,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         reopenSettingsWork?.cancel()
         reopenSettingsWork = nil
         let source = sender()
-        SettingsPresenter.suppressAutoReveal(for: 1.5)
         for url in urls {
             AppState.shared.handleIncoming(url, source: source)
         }
@@ -123,7 +117,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return (front.bundleIdentifier ?? "", front.localizedName ?? "")
         }()
         DispatchQueue.main.async {
-            SettingsPresenter.suppressAutoReveal(for: 1.5)
             AppState.shared.handleIncoming(url, source: source)
         }
     }
