@@ -223,10 +223,10 @@ private struct PromptCell: View {
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 17, style: .continuous)
-                    .fill(selected ? accent.opacity(0.20) : Color.primary.opacity(hovered ? 0.10 : 0.05))
+                    .fill(Color.primary.opacity(selected ? 0.13 : hovered ? 0.08 : 0.04))
                     .overlay {
                         RoundedRectangle(cornerRadius: 17, style: .continuous)
-                            .strokeBorder(selected ? accent : accent.opacity(0), lineWidth: 2)
+                            .strokeBorder(Color.primary.opacity(selected ? 0.28 : 0), lineWidth: 1)
                     }
                     .frame(width: 68, height: 68)
                 Image(nsImage: item.icon)
@@ -237,9 +237,9 @@ private struct PromptCell: View {
                     .saturation(item.running ? 1 : 0.6)
                 if item.running {
                     Circle()
-                        .fill(Color.green)
+                        .fill(Color.primary.opacity(0.55))
                         .frame(width: 7, height: 7)
-                        .overlay(Circle().strokeBorder(.white.opacity(0.9), lineWidth: 1.2))
+                        .overlay(Circle().strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 1.2))
                         .padding(6)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 }
@@ -266,9 +266,6 @@ private struct PromptCell: View {
         .accessibilityLabel(label)
         .accessibilityAddTraits(.isButton)
     }
-
-    // Theme.swift (LR) is app-target only; this file is shared with the test target.
-    private var accent: Color { Color("AccentColor") }
 
     private var titleParts: (base: String, qualifier: String?) {
         let parts = item.title.components(separatedBy: " · ")

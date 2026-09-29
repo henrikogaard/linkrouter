@@ -45,7 +45,7 @@ struct WelcomeView: View {
                 }
                 HStack(spacing: 10) {
                     Image(systemName: loginOn ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(loginOn ? LR.accent : Color.secondary)
+                        .foregroundStyle(loginOn ? Color.primary : Color.secondary)
                         .font(.system(size: 15, weight: .semibold))
                     Text("Open at login")
                         .font(.system(size: 13))
@@ -83,7 +83,7 @@ struct WelcomeView: View {
     private func checklistRow(done: Bool, title: String, button: String, action: @escaping () -> Void) -> some View {
         HStack(spacing: 10) {
             Image(systemName: done ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(done ? LR.accent : Color.secondary)
+                .foregroundStyle(done ? Color.primary : Color.secondary)
                 .font(.system(size: 15, weight: .semibold))
             Text(title)
                 .font(.system(size: 13))

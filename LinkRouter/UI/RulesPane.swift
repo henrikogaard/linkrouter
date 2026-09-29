@@ -67,8 +67,9 @@ struct RulesPane: View {
                         selection = id
                     } label: {
                         Text(text)
-                            .font(.system(size: 12))
-                            .foregroundStyle(LR.accent)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .underline()
                     }
                     .buttonStyle(.plain)
                 }
@@ -222,13 +223,13 @@ private struct RuleRow: View {
         .background(fill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
+                .strokeBorder(isSelected ? LR.selectionStroke : LR.hairline, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
     }
 
     private var fill: Color {
-        isSelected ? LR.accent.opacity(0.10) : LR.rowFill
+        isSelected ? LR.selectionFill : LR.rowFill
     }
 
     private var enabledBinding: Binding<Bool> {
@@ -450,10 +451,10 @@ struct RuleEditorSheet: View {
                                 .font(.system(size: 11, weight: .medium))
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 4)
-                                .background(on ? LR.accent.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+                                .background(on ? LR.selectionFill : Color.clear, in: RoundedRectangle(cornerRadius: 6))
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 6)
-                                        .strokeBorder(on ? LR.accent.opacity(0.45) : LR.hairline)
+                                        .strokeBorder(on ? LR.selectionStroke : LR.hairline)
                                 }
                                 .contentShape(Rectangle())
                                 .onTapGesture {
