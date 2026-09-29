@@ -95,6 +95,7 @@ final class AppState: ObservableObject {
                 self?.refreshProfileSnapshot()
             }
             self.startProfileWatch()
+            for browser in self.browsers { _ = BrowserCatalog.icon(for: browser.path) }
         }
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {

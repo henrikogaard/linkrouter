@@ -33,9 +33,13 @@ final class PromptController {
         guard !items.isEmpty else { return }
         self.onPick = onPick
 
-        let width = CGFloat(max(items.count, 1) + 1) * 78 + 28
-        let height: CGFloat = items.count > 6 ? 182 : 168
-        var origin = originForPointer(size: NSSize(width: width, height: height), itemCount: items.count)
+        let contentWidth = CGFloat(max(items.count, 1) + 1) * 86 + 22
+        let width = max(contentWidth, 320)
+        let height: CGFloat = items.count > 6 ? 208 : 194
+        var origin = originForPointer(
+            size: NSSize(width: width, height: height),
+            firstCenterX: 14 + 40 + (width - contentWidth) / 2
+        )
 
         let view = PromptView(
             items: items,
@@ -76,7 +80,7 @@ final class PromptController {
         )
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = false
+        panel.hasShadow = true
         panel.level = .floating
         panel.isFloatingPanel = true
         panel.becomesKeyOnlyIfNeeded = false
@@ -135,10 +139,9 @@ final class PromptController {
         closing?.orderOut(nil)
     }
 
-    private func originForPointer(size: NSSize, itemCount: Int) -> NSPoint {
+    private func originForPointer(size: NSSize, firstCenterX: CGFloat) -> NSPoint {
         let mouse = NSEvent.mouseLocation
-        let firstCenterX = 14 + 37
-        let x = mouse.x - CGFloat(firstCenterX)
+        let x = mouse.x - firstCenterX
         let y = mouse.y - size.height + 40
         return clamped(NSPoint(x: x, y: y), size: size)
     }

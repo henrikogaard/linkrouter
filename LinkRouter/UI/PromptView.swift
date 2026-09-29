@@ -34,26 +34,27 @@ struct PromptView: View {
             VStack(spacing: 2) {
                 HStack(spacing: 5) {
                     Image(systemName: link.isSecure ? "lock.fill" : "globe")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.secondary)
                     HStack(spacing: 0) {
                         Text(link.host)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.primary)
                         Text(pathSuffix)
-                            .font(.system(size: 12))
+                            .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                     }
                     .lineLimit(1)
                 }
                 if let sourceName = link.sourceName {
                     Text("from \(sourceName)")
-                        .font(.system(size: 10))
+                        .font(.system(size: 10.5))
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                 }
             }
-            .padding(.top, 13)
+            .padding(.top, 14)
+            .padding(.horizontal, 18)
             .help(link.absoluteString)
 
             if filtering && !filter.isEmpty {
@@ -63,7 +64,7 @@ struct PromptView: View {
                     .padding(.top, 4)
             }
 
-            HStack(alignment: .top, spacing: 4) {
+            HStack(alignment: .top, spacing: 6) {
                 ForEach(Array(visible.enumerated()), id: \.element.id) { index, item in
                     PromptCell(
                         item: item,
@@ -90,7 +91,7 @@ struct PromptView: View {
                     .help("Copy link")
             }
             .padding(.horizontal, 14)
-            .padding(.top, 10)
+            .padding(.top, 12)
 
             Spacer(minLength: 0)
 
@@ -99,27 +100,32 @@ struct PromptView: View {
                     Text("Closes in \(remaining) s")
                         .foregroundStyle(.tertiary)
                 } else {
-                    Text(" ")
+                    HStack(spacing: 10) {
+                        KeyHint(key: "↩", label: "Open")
+                        KeyHint(key: "⇧↩", label: "Keep open")
+                        KeyHint(key: "⌥", label: "Always")
+                        KeyHint(key: "esc", label: "Cancel")
+                    }
                 }
             }
             .font(.system(size: 9, weight: .medium))
-            .padding(.bottom, 8)
+            .padding(.bottom, 9)
         }
         .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(.regularMaterial)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(.white.opacity(0.22), lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(.white.opacity(0.28), lineWidth: 0.5)
                         .padding(0.5)
                 }
-                .shadow(color: .black.opacity(0.24), radius: 30, y: 14)
         }
-        .scaleEffect(appeared ? 1 : 0.94)
+        .scaleEffect(appeared ? 1 : 0.92)
+        .offset(y: appeared ? 0 : 6)
         .opacity(appeared ? 1 : 0)
         .onAppear {
             selected = visible.first?.id
-            withAnimation(.easeOut(duration: 0.16)) { appeared = true }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) { appeared = true }
         }
         .onChange(of: filter) {
             if selected == nil || !visible.contains(where: { $0.id == selected }) {
@@ -127,6 +133,7 @@ struct PromptView: View {
             }
         }
         .focusable()
+        .focusEffectDisabled()
         .onKeyPress { press in
             if press.key == .escape {
                 if !filter.isEmpty {
@@ -213,43 +220,48 @@ private struct PromptCell: View {
     var hovered: Bool
 
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 6) {
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(selected ? accent.opacity(0.18) : Color.primary.opacity(hovered ? 0.09 : 0.05))
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .fill(selected ? accent.opacity(0.20) : Color.primary.opacity(hovered ? 0.10 : 0.05))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(selected ? accent : accent.opacity(0), lineWidth: 1.5)
+                        RoundedRectangle(cornerRadius: 17, style: .continuous)
+                            .strokeBorder(selected ? accent : accent.opacity(0), lineWidth: 2)
                     }
-                    .frame(width: 62, height: 62)
+                    .frame(width: 68, height: 68)
                 Image(nsImage: item.icon)
                     .resizable()
                     .interpolation(.high)
-                    .frame(width: 40, height: 40)
-                    .opacity(item.running ? 1 : 0.45)
+                    .frame(width: 46, height: 46)
+                    .opacity(item.running ? 1 : 0.55)
+                    .saturation(item.running ? 1 : 0.6)
+                if item.running {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 7, height: 7)
+                        .overlay(Circle().strokeBorder(.white.opacity(0.9), lineWidth: 1.2))
+                        .padding(6)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                }
                 if index < 9 {
-                    Text("\(index + 1)")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.secondary)
-                        .frame(minWidth: 13, minHeight: 13)
-                        .background(.quaternary, in: Capsule())
-                        .padding(.top, 4)
-                        .padding(.leading, 5)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    KeyBadge(text: "\(index + 1)")
                 }
             }
+            .frame(width: 68, height: 68)
+            .scaleEffect(hovered && !selected ? 1.04 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: hovered)
             VStack(spacing: 0) {
                 Text(titleParts.base)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(item.running ? .primary : .secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                 Text(titleParts.qualifier ?? " ")
-                    .font(.system(size: 9))
+                    .font(.system(size: 9.5))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            .frame(width: 74, height: 37, alignment: .top)
+            .frame(width: 80, height: 40, alignment: .top)
         }
         .accessibilityLabel(label)
         .accessibilityAddTraits(.isButton)
@@ -275,35 +287,65 @@ private struct CopyCell: View {
     var hovered: Bool
 
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 6) {
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.primary.opacity(hovered ? 0.09 : 0.05))
-                    .frame(width: 62, height: 62)
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .fill(Color.primary.opacity(hovered ? 0.10 : 0.05))
+                    .frame(width: 68, height: 68)
                 Image(systemName: "doc.on.clipboard")
-                    .font(.system(size: 21, weight: .medium))
+                    .font(.system(size: 24, weight: .medium))
                     .foregroundStyle(.secondary)
-                Text("⌘C")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 13, minHeight: 13)
-                    .padding(.horizontal, 3)
-                    .background(.quaternary, in: Capsule())
-                    .padding(.top, 4)
-                    .padding(.leading, 5)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                KeyBadge(text: "⌘C")
             }
+            .frame(width: 68, height: 68)
+            .scaleEffect(hovered ? 1.04 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: hovered)
             VStack(spacing: 0) {
                 Text("Copy")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
                 Text(" ")
-                    .font(.system(size: 9))
+                    .font(.system(size: 9.5))
                     .lineLimit(1)
             }
-            .frame(width: 74, height: 37, alignment: .top)
+            .frame(width: 80, height: 40, alignment: .top)
         }
         .accessibilityLabel("Copy link")
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+private struct KeyBadge: View {
+    var text: String
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 9, weight: .bold, design: .rounded))
+            .foregroundStyle(.secondary)
+            .frame(minWidth: 15, minHeight: 15)
+            .padding(.horizontal, 3)
+            .background(.quaternary, in: Capsule())
+            .padding(.top, 5)
+            .padding(.leading, 5)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private struct KeyHint: View {
+    var key: String
+    var label: LocalizedStringKey
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Text(key)
+                .font(.system(size: 8.5, weight: .semibold, design: .rounded))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 4)
+                .frame(minHeight: 13)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 3.5, style: .continuous))
+            Text(label)
+                .foregroundStyle(.tertiary)
+        }
+        .fixedSize()
     }
 }
