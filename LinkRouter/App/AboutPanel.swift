@@ -20,7 +20,9 @@ enum AboutPanel {
             backing: .buffered,
             defer: false
         )
-        window.contentViewController = NSHostingController(rootView: AboutView().tint(LR.accent))
+        let content = NSHostingController(rootView: AboutView().tint(LR.accent))
+        window.contentViewController = content
+        window.setContentSize(content.view.fittingSize)
         window.title = String(localized: "About LinkRouter")
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
