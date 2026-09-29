@@ -91,9 +91,9 @@ private struct ProfileRow: View {
                 HStack(spacing: 14) {
                     Image(systemName: "square.grid.2x2")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(LR.accent)
+                        .foregroundStyle(.secondary)
                         .frame(width: 28, height: 28)
-                        .background(LR.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        .background(LR.badgeFill, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
                     VStack(alignment: .leading, spacing: 3) {
                         Text(profile.name)
                             .font(.system(size: 14, weight: .medium))
@@ -117,10 +117,10 @@ private struct ProfileRow: View {
                 .tint(LR.accent)
                 .padding(.trailing, 14)
         }
-        .background(isSelected ? LR.accent.opacity(0.10) : LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
+        .background(isSelected ? LR.selectionFill : LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                .strokeBorder(isSelected ? LR.accent.opacity(0.45) : LR.hairline, lineWidth: isSelected ? 1.5 : 1)
+                .strokeBorder(isSelected ? LR.selectionStroke : LR.hairline, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
     }

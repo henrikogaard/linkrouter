@@ -49,7 +49,7 @@ struct SettingsRootView: View {
             .background(LR.pageFill)
         }
         .background(LR.pageFill)
-        .tint(Color.primary)
+        .tint(LR.accent)
         .sheet(isPresented: welcomeBinding) {
             WelcomeView(pane: $pane)
                 .environmentObject(state)
@@ -100,10 +100,10 @@ struct SettingsRootView: View {
                             .padding(.horizontal, 10)
                             .padding(.vertical, 8)
                             .background(
-                                pane == item ? LR.accent.opacity(0.16) : Color.clear,
+                                pane == item ? LR.selectionFill : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 8, style: .continuous)
                             )
-                            .foregroundStyle(pane == item ? LR.accent : Color.primary)
+                            .foregroundStyle(Color.primary)
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(pane == item ? .isSelected : [])
@@ -148,9 +148,9 @@ struct DefaultBanner: View {
             HStack(alignment: .center, spacing: 14) {
                 Image(systemName: "arrow.triangle.branch")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(LR.accent)
+                    .foregroundStyle(.secondary)
                     .frame(width: 32, height: 32)
-                    .background(LR.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(LR.badgeFill, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Not the default browser")
                         .font(.system(size: 13, weight: .semibold))

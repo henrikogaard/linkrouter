@@ -31,17 +31,17 @@ struct BrowserPicker: View {
                         Spacer(minLength: 8)
                         Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(selected ? LR.accent : Color.secondary.opacity(0.45))
+                            .foregroundStyle(selected ? Color.primary : Color.secondary.opacity(0.45))
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(selected ? LR.accent.opacity(0.12) : LR.rowFill)
+                            .fill(selected ? LR.selectionFill : LR.rowFill)
                     )
                     .overlay {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(selected ? LR.accent.opacity(0.4) : LR.hairline, lineWidth: 1)
+                            .strokeBorder(selected ? LR.selectionStroke : LR.hairline, lineWidth: 1)
                     }
                 }
                 .buttonStyle(.plain)

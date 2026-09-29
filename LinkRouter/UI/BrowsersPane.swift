@@ -51,7 +51,7 @@ struct BrowsersPane: View {
             .overlay {
                 if dropTargeted {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(LR.accent, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                        .strokeBorder(Color.secondary, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
                         .padding(12)
                 }
             }
@@ -234,7 +234,7 @@ private struct BrowserRow: View {
         .background(fill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                .strokeBorder(stroke, lineWidth: isSelected ? 1.5 : 1)
+                .strokeBorder(stroke, lineWidth: 1)
         }
         .opacity(isDragging ? 0.42 : 1)
         .contentShape(RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
@@ -270,8 +270,11 @@ private struct BrowserRow: View {
             HStack(spacing: 8) {
                 if row.id == state.favourite?.id {
                     Text("Favourite")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(LR.accent)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 1.5)
+                        .background(LR.badgeFill, in: Capsule())
                 }
                 if state.isAvailable(row) {
                     Text(state.isRunning(row) ? "Running" : "Not running")
@@ -293,13 +296,13 @@ private struct BrowserRow: View {
     }
 
     private var fill: Color {
-        if isSelected { return LR.accent.opacity(0.10) }
-        if hovering { return LR.accent.opacity(0.07) }
+        if isSelected { return LR.selectionFill }
+        if hovering { return LR.hoverFill }
         return LR.rowFill
     }
 
     private var stroke: Color {
-        isSelected ? LR.accent.opacity(0.45) : LR.hairline
+        isSelected ? LR.selectionStroke : LR.hairline
     }
 
     private var label: String {

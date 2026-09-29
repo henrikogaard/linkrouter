@@ -37,4 +37,20 @@ enum LR {
     static var hairline: Color {
         Color.primary.opacity(0.10)
     }
+
+    static var hoverFill: Color {
+        Color.primary.opacity(0.065)
+    }
+
+    static var selectionFill: Color {
+        Color.primary.opacity(0.09)
+    }
+
+    static var selectionStroke: Color {
+        Color.primary.opacity(0.22)
+    }
+
+    static var badgeFill: Color {
+        Color.primary.opacity(0.07)
+    }
 }

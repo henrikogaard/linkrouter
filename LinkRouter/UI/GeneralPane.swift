@@ -34,7 +34,7 @@ struct GeneralPane: View {
                         Text("Status")
                         Spacer()
                         Text(state.isDefaultBrowser ? "LinkRouter is the default" : "Not the default")
-                            .foregroundStyle(state.isDefaultBrowser ? Color.secondary : LR.accent)
+                            .foregroundStyle(state.isDefaultBrowser ? Color.secondary : Color.primary)
                     }
                     Button("Set as default") { state.requestDefault() }
                     Button("Open System Settings") { DefaultBrowser.openSystemSettings() }
