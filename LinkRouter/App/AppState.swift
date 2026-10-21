@@ -201,20 +201,22 @@ final class AppState: ObservableObject {
     }
 
     func title(for row: CatalogRow) -> String {
-        let base = browser(for: row)?.displayName ?? "Browser"
+        let base = browser(for: row)?.displayName ?? String(localized: "Browser")
         switch row.kind {
         case .app:
             return base
         case .chromeProfile:
-            return row.chromeName.map { "\(base) · \($0)" } ?? base
+            return row.chromeName.map { String(localized: "\(base) · \($0)") } ?? base
         case .firefoxProfile:
-            return row.firefoxName.map { "\(base) · \($0)" } ?? base
+            return row.firefoxName.map { String(localized: "\(base) · \($0)") } ?? base
         case .chromePrivate:
-            if let name = row.chromeName { return "\(base) · \(name) · Private" }
-            return "\(base) · Private"
+            let suffix = String(localized: "Private")
+            if let name = row.chromeName { return String(localized: "\(base) · \(name) · \(suffix)") }
+            return String(localized: "\(base) · \(suffix)")
         case .firefoxPrivate:
-            if let name = row.firefoxName { return "\(base) · \(name) · Private" }
-            return "\(base) · Private"
+            let suffix = String(localized: "Private")
+            if let name = row.firefoxName { return String(localized: "\(base) · \(name) · \(suffix)") }
+            return String(localized: "\(base) · \(suffix)")
         }
     }
 
@@ -225,8 +227,8 @@ final class AppState: ObservableObject {
         case .firefoxProfile: return row.firefoxAbsPath
         case .chromePrivate:
             let family = browser(for: row).flatMap { ProfileReader.family(for: $0.bundleIdentifier) }
-            return family?.privateWord ?? "Incognito"
-        case .firefoxPrivate: return "Private window"
+            return family?.privateWord ?? String(localized: "Incognito")
+        case .firefoxPrivate: return String(localized: "Private window")
         }
     }
 
@@ -696,11 +698,19 @@ final class AppState: ObservableObject {
         save()
     }
 
+    func moveProfile(id: UUID, to target: UUID) {
+        guard let from = profiles.firstIndex(where: { $0.id == id }),
+              let to = profiles.firstIndex(where: { $0.id == target }),
+              from != to else { return }
+        profiles.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+        save()
+    }
+
     @discardableResult
     func addRule() -> Rule {
         let rule = Rule(
             id: UUID(),
-            title: "New rule",
+            title: String(localized: "New rule"),
             enabled: true,
             combinator: .all,
             conditions: [.url()],
@@ -735,6 +745,14 @@ final class AppState: ObservableObject {
         working.move(fromOffsets: offsets, toOffset: min(destination, working.count))
         if let fallback { working.append(fallback) }
         rules = working
+        save()
+    }
+
+    func moveRule(id: UUID, to target: UUID) {
+        guard let from = rules.firstIndex(where: { $0.id == id && !$0.isFallback }),
+              let to = rules.firstIndex(where: { $0.id == target && !$0.isFallback }),
+              from != to else { return }
+        rules.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
         save()
     }
 
@@ -791,7 +809,7 @@ final class AppState: ObservableObject {
 
     private func rowTitles(_ ids: [UUID]) -> String {
         let titles = ids.compactMap { id in rows.first { $0.id == id } }.map { title(for: $0) }
-        return titles.isEmpty ? "no browsers" : titles.joined(separator: ", ")
+        return titles.isEmpty ? String(localized: "no browsers") : titles.joined(separator: ", ")
     }
 
     func setLoginItem(_ enabled: Bool) {

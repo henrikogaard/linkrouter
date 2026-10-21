@@ -4,156 +4,131 @@ import UniformTypeIdentifiers
 
 struct BrowsersPane: View {
     @EnvironmentObject private var state: AppState
-    @State private var selection: CatalogRow.ID?
-    @State private var draggingID: CatalogRow.ID?
+    @State private var draggingID: UUID?
     @State private var dropTargeted = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            PageHeader(
-                title: "Browsers",
-                subtitle: "First in the list is the favourite. A click on the picker lands there. Drag the handle to reorder."
-            )
-            DefaultBanner()
-
-            ScrollView {
-                LazyVStack(spacing: 8) {
-                    ForEach(state.rows) { row in
-                        BrowserRow(
-                            row: row,
-                            isSelected: selection == row.id,
-                            isDragging: draggingID == row.id,
-                            onSelect: { selection = row.id },
-                            onDragStart: {
-                                draggingID = row.id
-                                return NSItemProvider(object: Self.dragPayload(row.id) as NSString)
-                            }
-                        )
-                        .onDrop(
-                            of: [.plainText],
-                            delegate: BrowserReorderDrop(
-                                targetID: row.id,
-                                draggingID: $draggingID,
-                                move: { from, to in
-                                    withAnimation(.snappy(duration: 0.18)) {
-                                        state.moveRow(id: from, to: to)
-                                    }
-                                }
-                            )
-                        )
-                    }
-                }
-                .padding(.horizontal, LR.pageInset)
-                .padding(.bottom, 16)
-                .animation(.snappy(duration: 0.18), value: state.rows.map(\.id))
-            }
-            .onDrop(of: [.application], isTargeted: $dropTargeted, perform: handleDrop)
-            .overlay {
-                if dropTargeted {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.secondary, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                        .padding(12)
-                }
-            }
-        }
-        .background(LR.pageFill)
-        .safeAreaInset(edge: .bottom, spacing: 0) { footer }
-    }
-
-    static func dragPayload(_ id: CatalogRow.ID) -> String {
-        "linkrouter-row:\(id.uuidString)"
-    }
-
-    private var footer: some View {
-        PaneFooter {
-            Button(action: pickApp) {
-                Label("Add", systemImage: "plus")
-            }
-            .help("Add a browser from disk")
-
-            Menu {
-                profileMenu
-            } label: {
-                Label("Profile", systemImage: "person.crop.circle")
-            }
-
-            Menu {
-                privateMenu
-            } label: {
-                Label("Private", systemImage: "eye.slash")
-            }
-
-            Button {
-                if let id = selection, let row = state.rows.first(where: { $0.id == id }) {
-                    state.removeRow(row)
-                    selection = nil
-                }
-            } label: {
-                Label("Remove", systemImage: "minus")
-            }
-            .disabled(selection == nil)
-
-            Spacer()
-
-            Button("Refresh", action: state.refreshDiscovered)
-        }
-    }
-
-    @ViewBuilder
-    private var profileMenu: some View {
-        let hosts = state.chromiumHosts()
-        ForEach(hosts) { host in
-            if let family = ProfileReader.family(for: host.bundleIdentifier) {
-                let profiles = ProfileReader.chromeProfiles(family: family)
-                if profiles.isEmpty {
-                    Text("No \(family.shortName) profiles found")
-                } else {
-                    ForEach(profiles, id: \.directory) { profile in
-                        Button(hosts.count > 1 ? "\(family.shortName) · \(profile.name)" : profile.name) {
-                            state.addChromeProfile(profile, browserID: host.id, isPrivate: false)
+        Form {
+            if !state.isDefaultBrowser {
+                Section {
+                    LabeledContent {
+                        Button("Set as Default…") { state.requestDefault() }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("LinkRouter isn't your default browser")
+                            Text("Links only route through LinkRouter once it's the default. macOS asks you to confirm.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
             }
-        }
-        if let firefox = state.firefoxHost() {
-            let profiles = ProfileReader.firefoxProfiles(appURL: firefox.bundleURL)
-            if profiles.isEmpty {
-                Text("No Firefox profiles found")
-            } else {
-                ForEach(profiles, id: \.absPath) { profile in
-                    Button(profile.name) {
-                        state.addFirefoxProfile(profile, browserID: firefox.id, isPrivate: false)
-                    }
+
+            Section {
+                if state.rows.isEmpty {
+                    Text("No browsers found.")
+                        .foregroundStyle(.secondary)
                 }
+                ForEach(state.rows) { row in
+                    BrowserRow(
+                        row: row,
+                        draggingID: $draggingID,
+                        move: state.moveRow
+                    )
+                }
+            } footer: {
+                Text("The first browser is your favourite: it's preselected in the picker and used when the picker times out. Drag to reorder.")
             }
         }
-        if hosts.isEmpty && state.firefoxHost() == nil {
-            Text("Add a Chromium-based browser (Chrome, Brave, Edge, Vivaldi, Arc) or Firefox first. Safari and Orion profiles, and Arc Spaces, can't be targeted from outside the browser.")
+        .formStyle(.grouped)
+        .onDrop(of: [.application], isTargeted: $dropTargeted, perform: handleDrop)
+        .overlay {
+            if dropTargeted {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(
+                        Color.secondary.opacity(0.55),
+                        style: StrokeStyle(lineWidth: 1, dash: [5, 4])
+                    )
+                    .padding(10)
+                    .allowsHitTesting(false)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button("Browser from Applications…", action: pickApp)
+                    Menu("Browser Profile") {
+                        profileMenu
+                    }
+                    Menu("Private Window") {
+                        privateMenu
+                    }
+                    Divider()
+                    Button("Refresh Browser List", action: state.refreshDiscovered)
+                } label: {
+                    Label("Add", systemImage: "plus")
+                }
+            }
         }
     }
 
-    @ViewBuilder
-    private var privateMenu: some View {
-        ForEach(state.chromiumHosts()) { host in
-            if let family = ProfileReader.family(for: host.bundleIdentifier) {
-                Button("\(family.shortName) \(family.privateWord)") {
-                    state.addChromePrivate(browserID: host.id)
-                }
-                ForEach(ProfileReader.chromeProfiles(family: family), id: \.directory) { profile in
-                    Button("\(family.shortName) · \(profile.name) · \(family.privateWord)") {
-                        state.addChromeProfile(profile, browserID: host.id, isPrivate: true)
+    private var profileMenu: some View {
+        let hosts = state.chromiumHosts()
+        return Group {
+            ForEach(hosts) { host in
+                if let family = ProfileReader.family(for: host.bundleIdentifier) {
+                    let profiles = ProfileReader.chromeProfiles(family: family)
+                    if profiles.isEmpty {
+                        Text("No \(family.shortName) profiles found")
+                    } else {
+                        ForEach(profiles, id: \.directory) { profile in
+                            Button(hosts.count > 1 ? "\(family.shortName) · \(profile.name)" : profile.name) {
+                                state.addChromeProfile(profile, browserID: host.id, isPrivate: false)
+                            }
+                        }
                     }
                 }
             }
-        }
-        if let firefox = state.firefoxHost() {
-            Button("Firefox Private") {
-                state.addFirefoxPrivate(browserID: firefox.id)
+            if let firefox = state.firefoxHost() {
+                let profiles = ProfileReader.firefoxProfiles(appURL: firefox.bundleURL)
+                if profiles.isEmpty {
+                    Text("No Firefox profiles found")
+                } else {
+                    ForEach(profiles, id: \.absPath) { profile in
+                        Button(profile.name) {
+                            state.addFirefoxProfile(profile, browserID: firefox.id, isPrivate: false)
+                        }
+                    }
+                }
             }
-            ForEach(ProfileReader.firefoxProfiles(appURL: firefox.bundleURL), id: \.absPath) { profile in
-                Button("Firefox · \(profile.name) · Private") {
-                    state.addFirefoxProfile(profile, browserID: firefox.id, isPrivate: true)
+            if hosts.isEmpty && state.firefoxHost() == nil {
+                Text("Add a Chromium-based browser (Chrome, Brave, Edge, Vivaldi, Arc) or Firefox first. Safari and Orion profiles, and Arc Spaces, can't be targeted from outside the browser.")
+            }
+        }
+    }
+
+    private var privateMenu: some View {
+        Group {
+            ForEach(state.chromiumHosts()) { host in
+                if let family = ProfileReader.family(for: host.bundleIdentifier) {
+                    Button("\(family.shortName) \(family.privateWord)") {
+                        state.addChromePrivate(browserID: host.id)
+                    }
+                    ForEach(ProfileReader.chromeProfiles(family: family), id: \.directory) { profile in
+                        Button("\(family.shortName) · \(profile.name) · \(family.privateWord)") {
+                            state.addChromeProfile(profile, browserID: host.id, isPrivate: true)
+                        }
+                    }
+                }
+            }
+            if let firefox = state.firefoxHost() {
+                Button("Firefox Private") {
+                    state.addFirefoxPrivate(browserID: firefox.id)
+                }
+                ForEach(ProfileReader.firefoxProfiles(appURL: firefox.bundleURL), id: \.absPath) { profile in
+                    Button("Firefox · \(profile.name) · Private") {
+                        state.addFirefoxProfile(profile, browserID: firefox.id, isPrivate: true)
+                    }
                 }
             }
         }
@@ -165,7 +140,7 @@ struct BrowsersPane: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.title = "Add a browser"
+        panel.title = String(localized: "Add a browser")
         if panel.runModal() == .OK, let url = panel.url {
             state.addApp(url: url)
         }
@@ -199,135 +174,124 @@ struct BrowsersPane: View {
 private struct BrowserRow: View {
     @EnvironmentObject private var state: AppState
     var row: CatalogRow
-    var isSelected: Bool
-    var isDragging: Bool
-    var onSelect: () -> Void
-    var onDragStart: () -> NSItemProvider
-
-    @State private var hovering = false
+    @Binding var draggingID: UUID?
+    var move: (UUID, UUID) -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
-            handle
-                .onDrag(onDragStart)
-            Button(action: onSelect) {
-                HStack(spacing: 10) {
-                    icon
-                    titles
-                    Spacer(minLength: 8)
+        HStack(spacing: 12) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.tertiary)
+                .frame(width: 16)
+                .contentShape(Rectangle())
+                .help("Drag to reorder")
+                .onDrag {
+                    draggingID = row.id
+                    return NSItemProvider(object: BrowsersPane.dragPayload(row.id) as NSString)
                 }
+
+            Image(nsImage: BrowserCatalog.icon(for: state.browser(for: row)?.path ?? ""))
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 24, height: 24)
+                .opacity(state.isAvailable(row) ? (state.isRunning(row) ? 1 : 0.55) : 0.3)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(state.title(for: row))
+                    .font(.system(size: 13))
+                HStack(spacing: 6) {
+                    if row.id == state.favourite?.id {
+                        Text("Favourite")
+                    }
+                    if state.isAvailable(row) {
+                        Text(state.isRunning(row) ? "Running" : "Not running")
+                    } else {
+                        Text(state.profileExists(row) ? "Missing" : "Missing profile")
+                            .foregroundStyle(.red)
+                    }
+                    if let subtitle = state.subtitle(for: row) {
+                        Text(subtitle)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(isSelected ? .isSelected : [])
-            .accessibilityLabel(label)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             Toggle("In picker", isOn: enabledBinding)
                 .toggleStyle(.switch)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .labelsHidden()
                 .accessibilityLabel("Show \(state.title(for: row)) in the picker")
-                .tint(LR.accent)
                 .disabled(!state.isAvailable(row) && !row.enabled)
-        }
-        .padding(.leading, 10)
-        .padding(.trailing, 14)
-        .padding(.vertical, 10)
-        .background(fill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                .strokeBorder(stroke, lineWidth: 1)
-        }
-        .opacity(isDragging ? 0.42 : 1)
-        .contentShape(RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-        .onHover { hovering = $0 }
-        .accessibilityElement(children: .contain)
-    }
 
-    private var handle: some View {
-        Image(systemName: "line.3.horizontal")
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(hovering || isSelected ? Color.secondary : Color.primary.opacity(0.35))
-            .frame(width: 18, height: 36)
-            .contentShape(Rectangle())
-            .help("Drag to reorder")
-            .onHover { inside in
-                if inside { NSCursor.openHand.push() } else { NSCursor.pop() }
+            Menu {
+                rowActions
+            } label: {
+                Image(systemName: "ellipsis")
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
-            .accessibilityLabel("Reorder \(state.title(for: row))")
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .accessibilityLabel("Browser actions")
+        }
+        .onDrop(
+            of: [.plainText],
+            delegate: ReorderDropDelegate(
+                targetID: row.id,
+                draggingID: $draggingID,
+                move: move
+            )
+        )
+        .contextMenu { rowActions }
     }
 
-    private var icon: some View {
-        Image(nsImage: BrowserCatalog.icon(for: state.browser(for: row)?.path ?? ""))
-            .resizable()
-            .interpolation(.high)
-            .frame(width: 36, height: 36)
-            .opacity(state.isAvailable(row) ? (state.isRunning(row) ? 1 : 0.42) : 0.3)
-    }
-
-    private var titles: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(state.title(for: row))
-                .font(.system(size: 14, weight: .medium))
-            HStack(spacing: 8) {
-                if row.id == state.favourite?.id {
-                    Text("Favourite")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 1.5)
-                        .background(LR.badgeFill, in: Capsule())
-                }
-                if state.isAvailable(row) {
-                    Text(state.isRunning(row) ? "Running" : "Not running")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(state.profileExists(row) ? "Missing" : "Missing profile")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.red)
-                }
-                if let subtitle = state.subtitle(for: row) {
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                }
+    @ViewBuilder
+    private var rowActions: some View {
+        let index = state.rows.firstIndex(where: { $0.id == row.id }) ?? 0
+        if index > 0, let first = state.rows.first {
+            Button("Make Favourite") { state.moveRow(id: row.id, to: first.id) }
+        }
+        Button("Move Up") {
+            guard index > 0 else { return }
+            state.moveRow(id: row.id, to: state.rows[index - 1].id)
+        }
+        .disabled(index == 0)
+        Button("Move Down") {
+            guard index + 1 < state.rows.count else { return }
+            state.moveRow(id: row.id, to: state.rows[index + 1].id)
+        }
+        .disabled(index + 1 >= state.rows.count)
+        Divider()
+        if let browser = state.browser(for: row),
+           FileManager.default.fileExists(atPath: browser.path) {
+            Button("Show in Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: browser.path)])
             }
         }
-    }
-
-    private var fill: Color {
-        if isSelected { return LR.selectionFill }
-        if hovering { return LR.hoverFill }
-        return LR.rowFill
-    }
-
-    private var stroke: Color {
-        isSelected ? LR.selectionStroke : LR.hairline
-    }
-
-    private var label: String {
-        if !state.isAvailable(row) {
-            return state.title(for: row) + String(localized: ", missing")
-        }
-        return state.title(for: row) + (state.isRunning(row) ? String(localized: ", running") : String(localized: ", not running"))
+        Divider()
+        Button("Remove", role: .destructive) { state.removeRow(row) }
     }
 
     private var enabledBinding: Binding<Bool> {
         Binding(
             get: { row.enabled },
             set: { value in
-                if let index = state.rows.firstIndex(where: { $0.id == row.id }) {
-                    state.rows[index].enabled = value
-                    state.save()
-                }
+                guard let index = state.rows.firstIndex(where: { $0.id == row.id }) else { return }
+                state.rows[index].enabled = value
+                state.save()
             }
         )
     }
 }
 
-private struct BrowserReorderDrop: DropDelegate {
-    let targetID: CatalogRow.ID
-    @Binding var draggingID: CatalogRow.ID?
+struct ReorderDropDelegate: DropDelegate {
+    let targetID: UUID
+    @Binding var draggingID: UUID?
     let move: (UUID, UUID) -> Void
 
     func validateDrop(info: DropInfo) -> Bool {
@@ -346,5 +310,11 @@ private struct BrowserReorderDrop: DropDelegate {
     func performDrop(info: DropInfo) -> Bool {
         draggingID = nil
         return true
+    }
+}
+
+extension BrowsersPane {
+    static func dragPayload(_ id: UUID) -> String {
+        "linkrouter-row:\(id.uuidString)"
     }
 }

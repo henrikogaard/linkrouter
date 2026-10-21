@@ -4,6 +4,8 @@ import SwiftUI
 struct HistoryPane: View {
     @EnvironmentObject private var state: AppState
     @State private var filter = ""
+    @State private var selection = Set<RoutedEntry.ID>()
+    @State private var confirmClear = false
 
     private var visible: [RoutedEntry] {
         guard !filter.isEmpty else { return state.recent }
@@ -14,86 +16,96 @@ struct HistoryPane: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            PageHeader(
-                title: "History",
-                subtitle: "Every link LinkRouter has routed. Kept to the latest 200."
-            )
-
-            TextField("Search links or browsers", text: $filter)
-                .textFieldStyle(.roundedBorder)
-                .padding(.horizontal, LR.pageInset)
-
-            if visible.isEmpty {
-                Text(filter.isEmpty ? "No links routed yet" : "No matches")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, LR.pageInset)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 6) {
-                        ForEach(visible) { entry in
-                            row(entry)
-                        }
-                    }
-                    .padding(.horizontal, LR.pageInset)
-                }
-            }
-
-            PaneFooter {
-                Button("Clear History") { state.clearRecent() }
-                    .disabled(state.recent.isEmpty)
-            }
-        }
-        .padding(.bottom, 28)
-        .background(LR.pageFill)
-    }
-
-    private func row(_ entry: RoutedEntry) -> some View {
-        let row = state.rows.first { $0.id == entry.rowID }
-        let icon = BrowserCatalog.icon(for: row.flatMap { state.browser(for: $0)?.path } ?? "")
-        let host = entry.url.host ?? entry.url.absoluteString
-        let path = entry.url.path.isEmpty ? "" : entry.url.path
-        return HStack(spacing: 10) {
-            Image(nsImage: icon)
-                .resizable()
-                .frame(width: 24, height: 24)
-            VStack(alignment: .leading, spacing: 1) {
+        Table(visible, selection: $selection) {
+            TableColumn("Link") { entry in
+                let host = entry.url.host ?? entry.url.absoluteString
+                let path = entry.url.path == "/" ? "" : entry.url.path
                 HStack(spacing: 0) {
                     Text(host)
+                        .foregroundStyle(.primary)
                     Text(path)
                         .foregroundStyle(.tertiary)
                 }
-                .font(.system(size: 12, weight: .medium))
                 .lineLimit(1)
                 .truncationMode(.middle)
-                Text("→ \(entry.title)")
-                    .font(.system(size: 11))
+                .onTapGesture(count: 2) { state.reopen(entry) }
+            }
+            .width(min: 220)
+
+            TableColumn("Opened In") { entry in
+                let row = state.rows.first { $0.id == entry.rowID }
+                HStack(spacing: 7) {
+                    Image(nsImage: BrowserCatalog.icon(for: row.flatMap { state.browser(for: $0)?.path } ?? ""))
+                        .resizable()
+                        .frame(width: 16, height: 16)
+                    Text(row.map { state.title(for: $0) } ?? entry.title)
+                        .lineLimit(1)
+                }
+            }
+            .width(min: 130)
+
+            TableColumn("When") { entry in
+                Text(entry.date.formatted(.relative(presentation: .named)))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            Spacer()
-            Text(entry.date.formatted(.relative(presentation: .named)))
-                .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
+            .width(110)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
+        .searchable(text: $filter, prompt: Text("Search links or browsers"))
         .overlay {
-            RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                .strokeBorder(LR.hairline, lineWidth: 1)
-        }
-        .contextMenu {
-            Button("Open again") { state.reopen(entry) }
-            Button("Copy link") {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(entry.url.absoluteString, forType: .string)
-            }
-            if let row {
-                Button("Always open \(host) in \(state.title(for: row))") {
-                    state.alwaysOpen(host: host, in: row.id)
+            if visible.isEmpty {
+                if filter.isEmpty {
+                    ContentUnavailableView(
+                        "No Links Yet",
+                        systemImage: "clock",
+                        description: Text("Links LinkRouter routes show up here. The latest 200 are kept.")
+                    )
+                } else {
+                    ContentUnavailableView.search(text: filter)
                 }
+            }
+        }
+        .contextMenu(forSelectionType: RoutedEntry.ID.self) { selected in
+            if let entry = visible.first(where: { selected.contains($0.id) }) {
+                historyActions(for: entry)
+            }
+        }
+        .onTapGesture(count: 2) {
+            guard let entry = visible.first(where: { selection.contains($0.id) }) else { return }
+            state.reopen(entry)
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Clear History…") { confirmClear = true }
+                    .disabled(state.recent.isEmpty)
+            }
+        }
+        .confirmationDialog(
+            "Clear History?",
+            isPresented: $confirmClear,
+            titleVisibility: .visible
+        ) {
+            Button("Clear History", role: .destructive) {
+                state.clearRecent()
+                selection.removeAll()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This can't be undone.")
+        }
+    }
+
+    @ViewBuilder
+    private func historyActions(for entry: RoutedEntry) -> some View {
+        Button("Open Again") { state.reopen(entry) }
+        Button("Copy Link") {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(entry.url.absoluteString, forType: .string)
+        }
+        let host = entry.url.host ?? entry.url.absoluteString
+        if let row = state.rows.first(where: { $0.id == entry.rowID }) {
+            Button("Always Open \(host) in \(state.title(for: row))") {
+                state.alwaysOpen(host: host, in: row.id)
             }
         }
     }

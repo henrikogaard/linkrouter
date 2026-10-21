@@ -223,11 +223,7 @@ private struct PromptCell: View {
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 17, style: .continuous)
-                    .fill(Color.primary.opacity(selected ? 0.13 : hovered ? 0.08 : 0.04))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 17, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(selected ? 0.28 : 0), lineWidth: 1)
-                    }
+                    .fill(Color.primary.opacity(selected ? 0.12 : hovered ? 0.07 : 0.035))
                     .frame(width: 68, height: 68)
                 Image(nsImage: item.icon)
                     .resizable()
