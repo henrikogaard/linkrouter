@@ -236,7 +236,8 @@ struct ProfileEditorSheet: View {
                         onDelete()
                         dismiss()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bordered)
+                    .tint(.red)
                     .foregroundStyle(.red)
                 }
                 Spacer()

@@ -415,7 +415,8 @@ struct RuleEditorSheet: View {
                         onDelete()
                         dismiss()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bordered)
+                    .tint(.red)
                     .foregroundStyle(.red)
                 }
                 if let onDuplicate {
@@ -423,7 +424,7 @@ struct RuleEditorSheet: View {
                         onDuplicate()
                         dismiss()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bordered)
                 }
                 Spacer()
                 Button("Cancel") { dismiss() }

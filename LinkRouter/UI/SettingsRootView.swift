@@ -55,6 +55,15 @@ struct SettingsRootView: View {
             .navigationTitle(pane.title)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .toolbar {
+            if #available(macOS 26.0, *) {
+                ToolbarSpacer(.flexible, placement: .primaryAction)
+            } else {
+                ToolbarItem(placement: .primaryAction) {
+                    Spacer(minLength: 0)
+                }
+            }
+        }
         .tint(LR.accent)
         .sheet(isPresented: welcomeBinding) {
             WelcomeView(pane: $pane)
