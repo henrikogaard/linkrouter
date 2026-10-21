@@ -72,7 +72,7 @@ struct WelcomeView: View {
             }
         }
         .padding(20)
-        .frame(width: 460)
+        .frame(width: 480)
         .onAppear {
             loginOn = state.loginItemOn
             state.refreshDefaultStatus()
@@ -89,6 +89,8 @@ struct WelcomeView: View {
                 .foregroundStyle(done ? Color.primary : Color.secondary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 if let subtitle {
                     Text(subtitle)
                         .font(.caption)

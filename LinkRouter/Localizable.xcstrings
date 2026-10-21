@@ -261,6 +261,16 @@
         }
       }
     },
+    "Always": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alltid"
+          }
+        }
+      }
+    },
     "Always Open %@ in %@": {
       "localizations": {
         "nb": {
@@ -311,6 +321,16 @@
         }
       }
     },
+    "Any browser is running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minst én nettleser kjører"
+          }
+        }
+      }
+    },
     "App": {
       "localizations": {
         "nb": {
@@ -337,6 +357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utseende"
+          }
+        }
+      }
+    },
+    "Ask when a modifier key is held": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spør når en modifikatortast holdes nede"
           }
         }
       }
@@ -497,6 +527,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tøm historikk"
+          }
+        }
+      }
+    },
+    "Clear History?": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tømme historikken?"
           }
         }
       }
@@ -701,6 +741,16 @@
         }
       }
     },
+    "Development": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utvikling"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
         "nb": {
@@ -771,6 +821,16 @@
         }
       }
     },
+    "Exactly %lld browsers running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nøyaktig %lld nettlesere kjører"
+          }
+        }
+      }
+    },
     "Every link": {
       "localizations": {
         "nb": {
@@ -817,6 +877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favoritt"
+          }
+        }
+      }
+    },
+    "Fewer than %lld browsers running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Færre enn %lld nettlesere kjører"
           }
         }
       }
@@ -887,6 +957,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fra"
+          }
+        }
+      }
+    },
+    "From %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fra %@"
           }
         }
       }
@@ -1041,6 +1121,16 @@
         }
       }
     },
+    "Keep open": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold åpent"
+          }
+        }
+      }
+    },
     "Kind": {
       "localizations": {
         "nb": {
@@ -1186,7 +1276,7 @@
         "nb": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gjør LinkRouter til standardnettleseren din"
+            "value": "Bruk LinkRouter som standardnettleser"
           }
         }
       }
@@ -1257,6 +1347,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifikatortast holdt inne → %@"
+          }
+        }
+      }
+    },
+    "More than %lld browsers running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flere enn %lld nettlesere kjører"
           }
         }
       }
@@ -1381,6 +1481,16 @@
         }
       }
     },
+    "No browsers are running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen nettlesere kjører"
+          }
+        }
+      }
+    },
     "No browsers found.": {
       "localizations": {
         "nb": {
@@ -1461,12 +1571,32 @@
         }
       }
     },
+    "Not exactly %lld browsers running": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikke nøyaktig %lld nettlesere kjører"
+          }
+        }
+      }
+    },
     "OK": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        }
+      }
+    },
+    "Open": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne"
           }
         }
       }
@@ -1631,6 +1761,16 @@
         }
       }
     },
+    "Personal": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personlig"
+          }
+        }
+      }
+    },
     "Pick a browser for every link.": {
       "localizations": {
         "nb": {
@@ -1781,6 +1921,16 @@
         }
       }
     },
+    "Remove tracking parameters": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fjern sporingsparametere"
+          }
+        }
+      }
+    },
     "Removes utm_* and common click IDs (fbclid, gclid, …) before routing.": {
       "localizations": {
         "nb": {
@@ -1827,6 +1977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fortsett rutingen"
+          }
+        }
+      }
+    },
+    "Routing paused": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruting er satt på pause"
           }
         }
       }
@@ -2011,12 +2171,32 @@
         }
       }
     },
+    "Show in menu bar": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vis i menylinjen"
+          }
+        }
+      }
+    },
     "Source app": {
       "localizations": {
         "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "Kildeapp"
+          }
+        }
+      }
+    },
+    "Source code, issues and releases": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kildekode, problemer og utgivelser"
           }
         }
       }
@@ -2037,6 +2217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Oppstart"
+          }
+        }
+      }
+    },
+    "Support development": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Støtt utviklingen"
           }
         }
       }
@@ -2357,6 +2547,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Når ingenting annet samsvarer"
+          }
+        }
+      }
+    },
+    "Work": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arbeid"
           }
         }
       }

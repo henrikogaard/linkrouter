@@ -11,7 +11,7 @@ struct LinkRouterApp: App {
                 rootView: SettingsRootView()
                     .environmentObject(AppState.shared)
                     .tint(LR.accent)
-                    .frame(minWidth: 720, minHeight: 480)
+                    .frame(minWidth: 720, minHeight: 540)
             )
             controller.sceneBridgingOptions = [.toolbars, .title]
             return controller
@@ -139,7 +139,7 @@ private struct MenuBarMenu: View {
     }
 
     private var pausedLabel: String {
-        guard let until = state.pausedUntil else { return "Routing paused" }
+        guard let until = state.pausedUntil else { return String(localized: "Routing paused") }
         if until == .distantFuture {
             return String(localized: "Routing paused (until resumed)")
         }

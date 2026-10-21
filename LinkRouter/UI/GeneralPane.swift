@@ -8,7 +8,7 @@ struct GeneralPane: View {
 
     var body: some View {
         Form {
-            Section("Default Browser") {
+            Section {
                 LabeledContent("Default web browser") {
                     if state.isDefaultBrowser {
                         HStack(spacing: 6) {
@@ -21,10 +21,13 @@ struct GeneralPane: View {
                         Button("Set as Default…") { state.requestDefault() }
                     }
                 }
+            } header: {
+                Text("Default Browser")
+            } footer: {
                 Button("Open Desktop & Dock Settings…") {
                     DefaultBrowser.openSystemSettings()
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.link)
             }
 
             Section {
@@ -37,11 +40,16 @@ struct GeneralPane: View {
                 .toggleStyle(.switch)
                 .onChange(of: state.settings.forcePromptOnModifier) { _, _ in state.save() }
 
-                Picker("Close automatically after", selection: $state.settings.promptTimeout) {
+                Picker(selection: $state.settings.promptTimeout) {
                     Text("Never").tag(0)
                     Text("15 seconds").tag(15)
                     Text("30 seconds").tag(30)
                     Text("60 seconds").tag(60)
+                } label: {
+                    settingLabel(
+                        "Close automatically after",
+                        subtitle: "When it closes, the link opens in your favourite browser."
+                    )
                 }
                 .pickerStyle(.menu)
                 .onChange(of: state.settings.promptTimeout) { _, _ in state.save() }
@@ -56,8 +64,6 @@ struct GeneralPane: View {
                 .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
             } header: {
                 Text("Picker")
-            } footer: {
-                Text("When it closes, the link opens in your favourite browser.")
             }
 
             Section("Link Cleaning") {
@@ -107,11 +113,18 @@ struct GeneralPane: View {
             }
 
             Section("Updates") {
-                LabeledContent("Version", value: version)
+                LabeledContent("Version") {
+                    HStack(spacing: 8) {
+                        Text(version)
+                            .foregroundStyle(.secondary)
+                        if updater.canCheck {
+                            Button("Check for Updates…") { updater.check() }
+                        }
+                    }
+                }
                 if updater.canCheck {
                     Toggle("Check for updates automatically", isOn: autoUpdateBinding)
                         .toggleStyle(.switch)
-                    Button("Check for Updates…") { updater.check() }
                 } else {
                     Text("Updates aren't configured for this build")
                         .foregroundStyle(.secondary)

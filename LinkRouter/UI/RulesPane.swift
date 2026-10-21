@@ -25,8 +25,6 @@ struct RulesPane: View {
                         onEdit: { editing = rule }
                     )
                 }
-            } header: {
-                Text("Rules")
             } footer: {
                 Text("Checked from top to bottom; the first match wins. Profiles are checked before rules.")
             }
@@ -41,18 +39,22 @@ struct RulesPane: View {
 
             Section("Try a link") {
                 TextField("Link", text: $testLink, prompt: Text("https://github.com/…"))
-                LabeledContent("Result") {
-                    switch testOutcome {
-                    case .none:
-                        EmptyView()
-                    case .plain(let text):
-                        Text(text)
-                            .foregroundStyle(.secondary)
-                    case .rule(let text, let id):
-                        Button(text) {
-                            editing = state.rules.first(where: { $0.id == id })
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if !testLink.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    LabeledContent("Result") {
+                        switch testOutcome {
+                        case .none:
+                            EmptyView()
+                        case .plain(let text):
+                            Text(text)
+                                .foregroundStyle(.secondary)
+                        case .rule(let text, let id):
+                            Button(text) {
+                                editing = state.rules.first(where: { $0.id == id })
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -282,7 +284,20 @@ private extension Condition {
         case .url:
             return String(localized: "URL \(urlMatcher.label.lowercased()) \(pattern)")
         case .runningCount:
-            return String(localized: "\(countComparator.label) \(count) browsers running")
+            switch (countComparator, count) {
+            case (.greaterThan, 0):
+                return String(localized: "Any browser is running")
+            case (.lessThan, 1), (.is, 0):
+                return String(localized: "No browsers are running")
+            case (.greaterThan, _):
+                return String(localized: "More than \(count) browsers running")
+            case (.lessThan, _):
+                return String(localized: "Fewer than \(count) browsers running")
+            case (.is, _):
+                return String(localized: "Exactly \(count) browsers running")
+            case (.isNot, _):
+                return String(localized: "Not exactly \(count) browsers running")
+            }
         case .linkType:
             return linkKind.label
         case .sourceApp:
@@ -293,7 +308,7 @@ private extension Condition {
             } else {
                 appName = pattern
             }
-            return String(localized: "from \(appName)")
+            return String(localized: "From \(appName)")
         case .schedule:
             let start = Self.clockString(startMinute)
             let end = Self.clockString(endMinute)
@@ -384,10 +399,11 @@ struct RuleEditorSheet: View {
 
             }
             .formStyle(.grouped)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             editorBar
         }
-        .frame(minWidth: 560, minHeight: 640)
+        .frame(width: 560, height: 500)
     }
 
     private var editorBar: some View {
@@ -444,8 +460,10 @@ struct RuleEditorSheet: View {
                 .labelsHidden()
                 .accessibilityLabel("URL matcher")
                 .pickerStyle(.menu)
-                .frame(width: 110)
-                TextField("github.com", text: condition.pattern)
+                .frame(width: 120)
+                TextField("Web address", text: condition.pattern, prompt: Text("github.com"))
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
             case .runningCount:
                 Picker("Comparator", selection: condition.countComparator) {
                     ForEach(CountComparator.allCases) { item in
@@ -455,7 +473,7 @@ struct RuleEditorSheet: View {
                 .labelsHidden()
                 .accessibilityLabel("Count comparator")
                 .pickerStyle(.menu)
-                .frame(width: 140)
+                .frame(width: 120)
                 Stepper(value: condition.count, in: 0...10) {
                     Text("\(condition.wrappedValue.count)")
                         .monospacedDigit()
@@ -471,6 +489,7 @@ struct RuleEditorSheet: View {
                 .labelsHidden()
                 .accessibilityLabel("Link kind")
                 .pickerStyle(.menu)
+                .frame(maxWidth: .infinity, alignment: .leading)
             case .sourceApp:
                 Picker("Matcher", selection: condition.urlMatcher) {
                     ForEach([URLMatcher.is, .isNot, .contains]) { matcher in
@@ -480,19 +499,23 @@ struct RuleEditorSheet: View {
                 .labelsHidden()
                 .accessibilityLabel("App matcher")
                 .pickerStyle(.menu)
-                .frame(width: 110)
-                Picker("App", selection: condition.pattern) {
-                    Text("Choose…").tag("")
-                    ForEach(runningApps, id: \.bundleIdentifier) { app in
-                        Text("\(app.localizedName ?? "?") — \(app.bundleIdentifier ?? "")")
-                            .tag(app.bundleIdentifier ?? "")
+                .frame(width: 120)
+                HStack(spacing: 8) {
+                    Picker("App", selection: condition.pattern) {
+                        Text("Choose…").tag("")
+                        ForEach(runningApps, id: \.bundleIdentifier) { app in
+                            Text("\(app.localizedName ?? "?") — \(app.bundleIdentifier ?? "")")
+                                .tag(app.bundleIdentifier ?? "")
+                        }
                     }
+                    .labelsHidden()
+                    .accessibilityLabel("Source app")
+                    .pickerStyle(.menu)
+                    .frame(width: 140)
+                    TextField("Sent from app", text: condition.pattern, prompt: Text("com.example.app"))
+                        .labelsHidden()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .labelsHidden()
-                .accessibilityLabel("Source app")
-                .pickerStyle(.menu)
-                .frame(width: 210)
-                TextField("com.example.app", text: condition.pattern)
             case .schedule:
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 8) {
@@ -513,6 +536,11 @@ struct RuleEditorSheet: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if condition.wrappedValue.kind == .runningCount {
+                Spacer(minLength: 0)
             }
 
             Button {

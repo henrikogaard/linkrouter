@@ -194,7 +194,9 @@ struct ProfileEditorSheet: View {
                 Section {
                     ForEach(Array(profile.patterns.enumerated()), id: \.offset) { index, _ in
                         HStack {
-                            TextField("github.com", text: patternBinding(index))
+                            TextField("Web address", text: patternBinding(index), prompt: Text("github.com"))
+                                .labelsHidden()
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             Button {
                                 profile.patterns.remove(at: index)
                                 if profile.patterns.isEmpty { profile.patterns = [""] }
@@ -218,10 +220,11 @@ struct ProfileEditorSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             editorBar
         }
-        .frame(minWidth: 520, minHeight: 560)
+        .frame(width: 520, height: 480)
     }
 
     private var editorBar: some View {

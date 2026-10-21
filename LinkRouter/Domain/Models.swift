@@ -278,7 +278,11 @@ struct RouteProfile: Codable, Equatable, Identifiable {
     }
 
     static func shipped() -> [RouteProfile] {
-        ["Personal", "Work", "Development"].map { name in
+        [
+            String(localized: "Personal"),
+            String(localized: "Work"),
+            String(localized: "Development")
+        ].map { name in
             RouteProfile(id: UUID(), name: name, enabled: true, browserRowID: nil, patterns: [""])
         }
     }

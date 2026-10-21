@@ -47,7 +47,7 @@ struct AboutPane: View {
         .formStyle(.grouped)
     }
 
-    private func linkRow(symbol: String, title: String, detail: String, url: String) -> some View {
+    private func linkRow(symbol: String, title: String, detail: LocalizedStringKey, url: String) -> some View {
         Link(destination: URL(string: url)!) {
             HStack(spacing: 12) {
                 Image(systemName: symbol)

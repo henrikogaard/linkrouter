@@ -39,6 +39,7 @@ struct SettingsRootView: View {
                     .tag(item)
             }
             .listStyle(.sidebar)
+            .toolbar(removing: .sidebarToggle)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 240)
         } detail: {
             Group {
@@ -54,7 +55,6 @@ struct SettingsRootView: View {
             .navigationTitle(pane.title)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .toolbar(removing: .sidebarToggle)
         .tint(LR.accent)
         .sheet(isPresented: welcomeBinding) {
             WelcomeView(pane: $pane)

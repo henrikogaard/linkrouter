@@ -15,6 +15,7 @@ enum SettingsPresenter {
         self.window = window
         window.collectionBehavior.insert(.moveToActiveSpace)
         window.makeKeyAndOrderFront(nil)
+        removeSidebarToggle(from: window)
         NSApp.activate(ignoringOtherApps: true)
     }
 
@@ -31,6 +32,9 @@ enum SettingsPresenter {
             defer: false
         )
         window.contentViewController = content
+        DispatchQueue.main.async {
+            removeSidebarToggle(from: window)
+        }
         window.setContentSize(NSSize(width: 820, height: 600))
         window.title = "LinkRouter"
         window.toolbarStyle = .unified
@@ -41,6 +45,14 @@ enum SettingsPresenter {
             window.center()
         }
         return window
+    }
+
+    private static func removeSidebarToggle(from window: NSWindow) {
+        guard let toolbar = window.toolbar,
+              let index = toolbar.items.firstIndex(where: { $0.itemIdentifier == .toggleSidebar }) else {
+            return
+        }
+        toolbar.removeItem(at: index)
     }
 
     static func resignToAccessoryIfNeeded() {
