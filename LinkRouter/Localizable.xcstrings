@@ -731,16 +731,6 @@
         }
       }
     },
-    "Delete…": {
-      "localizations": {
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Slett…"
-          }
-        }
-      }
-    },
     "Development": {
       "localizations": {
         "nb": {

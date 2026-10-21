@@ -111,10 +111,10 @@ struct RulesPane: View {
             let name = state.profiles.first { $0.id == id }?.name ?? String(localized: "profile")
             return .plain(String(localized: "Matched profile \(name) → \(destination)"))
         case .rule(let id):
-            let name = state.rules.first { $0.id == id }?.title ?? String(localized: "rule")
+            let name = state.rules.first { $0.id == id }?.displayTitle ?? String(localized: "rule")
             return .rule(String(localized: "Matched rule \(name) → \(destination)"), id)
         case .fallback(let id):
-            let name = state.rules.first { $0.id == id }?.title ?? String(localized: "fallback")
+            let name = state.rules.first { $0.id == id }?.displayTitle ?? String(localized: "fallback")
             return .rule(String(localized: "Fallback \(name) → \(destination)"), id)
         case .none:
             return .plain(String(localized: "No match → \(destination)"))
@@ -144,7 +144,7 @@ private struct RuleRow: View {
 
             Button(action: onEdit) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(rule.title)
+                    Text(rule.displayTitle)
                         .font(.system(size: 13))
                     Text(rule.summary(in: state))
                         .font(.system(size: 11))
@@ -160,7 +160,7 @@ private struct RuleRow: View {
                 .toggleStyle(.switch)
                 .controlSize(.mini)
                 .labelsHidden()
-                .accessibilityLabel("Enable \(rule.title)")
+                .accessibilityLabel("Enable \(rule.displayTitle)")
 
             Menu {
                 rowActions
@@ -224,7 +224,7 @@ private struct FallbackRuleRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(rule.title)
+                Text(rule.displayTitle)
                     .font(.system(size: 13))
                 Text(rule.destination(in: state))
                     .font(.system(size: 11))
@@ -339,7 +339,7 @@ struct RuleEditorSheet: View {
         VStack(spacing: 0) {
             Form {
                 Section {
-                    TextField("Name", text: $rule.title)
+                    TextField("Name", text: titleBinding)
                         .disabled(rule.isFallback)
                 } footer: {
                     if rule.isFallback {
@@ -411,7 +411,7 @@ struct RuleEditorSheet: View {
             Divider()
             HStack {
                 if let onDelete {
-                    Button("Delete…", role: .destructive) {
+                    Button("Delete", role: .destructive) {
                         onDelete()
                         dismiss()
                     }
@@ -437,6 +437,16 @@ struct RuleEditorSheet: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
         }
+    }
+
+    private var titleBinding: Binding<String> {
+        Binding(
+            get: { rule.displayTitle },
+            set: { value in
+                guard !rule.isFallback else { return }
+                rule.title = value
+            }
+        )
     }
 
     private func conditionRow(_ condition: Binding<Condition>) -> some View {

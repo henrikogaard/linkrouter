@@ -232,7 +232,7 @@ struct ProfileEditorSheet: View {
             Divider()
             HStack {
                 if let onDelete {
-                    Button("Delete…", role: .destructive) {
+                    Button("Delete", role: .destructive) {
                         onDelete()
                         dismiss()
                     }

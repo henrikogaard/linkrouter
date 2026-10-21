@@ -5,6 +5,21 @@ final class RuleEngineTests: XCTestCase {
         IncomingLink(url: URL(string: string)!)
     }
 
+    func testFallbackDisplayTitleUsesLocalizedNameInsteadOfStoredTitle() {
+        var fallback = Rule.shipped()[1]
+        fallback.title = "Everything else"
+
+        XCTAssertEqual(fallback.displayTitle, String(localized: "Everything else"))
+        XCTAssertEqual(fallback.title, "Everything else")
+    }
+
+    func testRegularRuleDisplayTitleUsesStoredTitle() {
+        var rule = Rule.shipped()[0]
+        rule.title = "Custom rule"
+
+        XCTAssertEqual(rule.displayTitle, "Custom rule")
+    }
+
     func testContainsMatch() {
         XCTAssertTrue(RuleEngine.urlMatches("https://github.com/org", matcher: .contains, pattern: "github.com"))
         XCTAssertFalse(RuleEngine.urlMatches("https://example.com", matcher: .contains, pattern: "github.com"))

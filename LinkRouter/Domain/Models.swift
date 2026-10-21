@@ -188,6 +188,10 @@ struct Rule: Codable, Equatable, Identifiable {
     var behaviour: Behaviour
     var isFallback: Bool
 
+    var displayTitle: String {
+        isFallback ? String(localized: "Everything else") : title
+    }
+
     static func shipped() -> [Rule] {
         [
             Rule(
