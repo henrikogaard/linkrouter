@@ -13,7 +13,34 @@ struct Explanation: Equatable {
     var result: EngineResult
 }
 
+struct RoutingContext: Equatable {
+    var runningCount: Int
+    var focusMode: String? = nil
+    var wifiSSID: String? = nil
+    var vpnConnected = false
+}
+
 enum RuleEngine {
+    static func evaluate(
+        link: IncomingLink,
+        profiles: [RouteProfile] = [],
+        rules: [Rule],
+        context: RoutingContext,
+        modifierForcePrompt: Bool,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> EngineResult {
+        explain(
+            link: link,
+            profiles: profiles,
+            rules: rules,
+            context: context,
+            modifierForcePrompt: modifierForcePrompt,
+            now: now,
+            calendar: calendar
+        ).result
+    }
+
     static func evaluate(
         link: IncomingLink,
         profiles: [RouteProfile] = [],
@@ -23,22 +50,22 @@ enum RuleEngine {
         now: Date = Date(),
         calendar: Calendar = .current
     ) -> EngineResult {
-        explain(
+        evaluate(
             link: link,
             profiles: profiles,
             rules: rules,
-            runningCount: runningCount,
+            context: RoutingContext(runningCount: runningCount),
             modifierForcePrompt: modifierForcePrompt,
             now: now,
             calendar: calendar
-        ).result
+        )
     }
 
     static func explain(
         link: IncomingLink,
         profiles: [RouteProfile] = [],
         rules: [Rule],
-        runningCount: Int,
+        context: RoutingContext,
         modifierForcePrompt: Bool,
         now: Date = Date(),
         calendar: Calendar = .current
@@ -55,7 +82,7 @@ enum RuleEngine {
         let fallback = enabled.last(where: \.isFallback) ?? enabled.last
 
         for rule in enabled where !rule.isFallback {
-            if matches(rule, link: link, runningCount: runningCount, now: now, calendar: calendar) {
+            if matches(rule, link: link, context: context, now: now, calendar: calendar) {
                 return Explanation(
                     source: .rule(rule.id),
                     result: result(for: rule.behaviour, fallback: fallback)
@@ -63,7 +90,7 @@ enum RuleEngine {
             }
         }
 
-        if let fallback, matches(fallback, link: link, runningCount: runningCount, now: now, calendar: calendar) || fallback.conditions.isEmpty {
+        if let fallback, matches(fallback, link: link, context: context, now: now, calendar: calendar) || fallback.conditions.isEmpty {
             return Explanation(
                 source: .fallback(fallback.id),
                 result: result(for: fallback.behaviour, fallback: nil)
@@ -73,10 +100,30 @@ enum RuleEngine {
         return Explanation(source: .none, result: .promptAll)
     }
 
+    static func explain(
+        link: IncomingLink,
+        profiles: [RouteProfile] = [],
+        rules: [Rule],
+        runningCount: Int,
+        modifierForcePrompt: Bool,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Explanation {
+        explain(
+            link: link,
+            profiles: profiles,
+            rules: rules,
+            context: RoutingContext(runningCount: runningCount),
+            modifierForcePrompt: modifierForcePrompt,
+            now: now,
+            calendar: calendar
+        )
+    }
+
     static func matches(
         _ rule: Rule,
         link: IncomingLink,
-        runningCount: Int,
+        context: RoutingContext,
         now: Date = Date(),
         calendar: Calendar = .current
     ) -> Bool {
@@ -84,7 +131,7 @@ enum RuleEngine {
             return rule.isFallback
         }
         let bits = rule.conditions.map {
-            conditionMatches($0, link: link, runningCount: runningCount, now: now, calendar: calendar)
+            conditionMatches($0, link: link, context: context, now: now, calendar: calendar)
         }
         switch rule.combinator {
         case .any: return bits.contains(true)
@@ -93,10 +140,20 @@ enum RuleEngine {
         }
     }
 
+    static func matches(
+        _ rule: Rule,
+        link: IncomingLink,
+        runningCount: Int,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Bool {
+        matches(rule, link: link, context: RoutingContext(runningCount: runningCount), now: now, calendar: calendar)
+    }
+
     static func conditionMatches(
         _ condition: Condition,
         link: IncomingLink,
-        runningCount: Int,
+        context: RoutingContext,
         now: Date = Date(),
         calendar: Calendar = .current
     ) -> Bool {
@@ -104,7 +161,7 @@ enum RuleEngine {
         case .url:
             return urlMatches(link.absoluteString, matcher: condition.urlMatcher, pattern: condition.pattern)
         case .runningCount:
-            return countMatches(runningCount, comparator: condition.countComparator, n: condition.count)
+            return countMatches(context.runningCount, comparator: condition.countComparator, n: condition.count)
         case .linkType:
             switch condition.linkKind {
             case .website:
@@ -122,7 +179,38 @@ enum RuleEngine {
                 return minute >= condition.startMinute && minute < condition.endMinute
             }
             return minute >= condition.startMinute || minute < condition.endMinute
+        case .focus:
+            return contextValueMatches(context.focusMode, matcher: condition.urlMatcher, pattern: condition.pattern)
+        case .wifi:
+            return contextValueMatches(context.wifiSSID, matcher: condition.urlMatcher, pattern: condition.pattern)
+        case .vpn:
+            return context.vpnConnected == condition.vpnConnected
         }
+    }
+
+    static func conditionMatches(
+        _ condition: Condition,
+        link: IncomingLink,
+        runningCount: Int,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Bool {
+        conditionMatches(
+            condition,
+            link: link,
+            context: RoutingContext(runningCount: runningCount),
+            now: now,
+            calendar: calendar
+        )
+    }
+
+    private static func contextValueMatches(
+        _ value: String?,
+        matcher: URLMatcher,
+        pattern: String
+    ) -> Bool {
+        guard let value, !value.isEmpty else { return matcher == .isNot }
+        return urlMatches(value, matcher: matcher, pattern: pattern)
     }
 
     static func matchProfile(_ profiles: [RouteProfile], link: IncomingLink) -> RouteProfile? {

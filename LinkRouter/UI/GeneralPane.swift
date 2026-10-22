@@ -5,8 +5,13 @@ import UniformTypeIdentifiers
 struct GeneralPane: View {
     @EnvironmentObject private var state: AppState
     @ObservedObject private var updater = Updater.shared
+    @ObservedObject private var syncStore: SyncStore
     @State private var loginOn = false
     @State private var htmlIsDefault = false
+
+    init(syncStore: SyncStore = AppState.shared.syncStore) {
+        self.syncStore = syncStore
+    }
 
     var body: some View {
         Form {
@@ -155,6 +160,30 @@ struct GeneralPane: View {
                 .onChange(of: loginOn) { _, value in state.setLoginItem(value) }
             }
 
+            Section {
+                Toggle(isOn: syncEnabledBinding) {
+                    settingLabel(
+                        "Sync with iCloud Drive",
+                        subtitle: "Rules, profiles and browser order stay the same on all your Macs."
+                    )
+                }
+                .toggleStyle(.switch)
+                .disabled(!syncStore.isICloudDriveAvailable && !state.settings.syncEnabled)
+
+                if state.settings.syncEnabled {
+                    LabeledContent("Last synced") {
+                        Text(lastSyncedText)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text("Sync")
+            } footer: {
+                if !syncStore.isICloudDriveAvailable {
+                    Text("Turn on iCloud Drive in System Settings to sync.")
+                }
+            }
+
             Section("Updates") {
                 LabeledContent("Version") {
                     HStack(spacing: 8) {
@@ -225,6 +254,22 @@ struct GeneralPane: View {
                 state.save()
             }
         )
+    }
+
+    private var syncEnabledBinding: Binding<Bool> {
+        Binding(
+            get: { state.settings.syncEnabled },
+            set: { state.setSyncEnabled($0) }
+        )
+    }
+
+    private var lastSyncedText: String {
+        guard let lastSyncedAt = syncStore.lastSyncedAt else {
+            return String(localized: "Never synced")
+        }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: lastSyncedAt, relativeTo: Date())
     }
 
     private func exportSettings() {

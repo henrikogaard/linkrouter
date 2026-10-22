@@ -264,6 +264,81 @@ final class RuleEngineTests: XCTestCase {
         XCTAssertFalse(RuleEngine.conditionMatches(mondayOnly, link: link, runningCount: 0, now: at(2, 10, 0), calendar: calendar))
     }
 
+    func testContextConditionsUseInjectedValuesAndUnavailableValues() {
+        let link = link("https://example.com")
+        let focus = Condition.focus(matcher: .is, mode: "Work")
+        let wifi = Condition.wifi(matcher: .contains, ssid: "Office")
+        let vpn = Condition.vpn()
+
+        XCTAssertTrue(RuleEngine.conditionMatches(
+            focus,
+            link: link,
+            context: RoutingContext(runningCount: 0, focusMode: "Work")
+        ))
+        XCTAssertFalse(RuleEngine.conditionMatches(
+            focus,
+            link: link,
+            context: RoutingContext(runningCount: 0)
+        ))
+        XCTAssertTrue(RuleEngine.conditionMatches(
+            Condition.focus(matcher: .isNot, mode: "Work"),
+            link: link,
+            context: RoutingContext(runningCount: 0)
+        ))
+        XCTAssertFalse(RuleEngine.conditionMatches(
+            Condition.focus(matcher: .contains, mode: "Work"),
+            link: link,
+            context: RoutingContext(runningCount: 0)
+        ))
+
+        XCTAssertTrue(RuleEngine.conditionMatches(
+            wifi,
+            link: link,
+            context: RoutingContext(runningCount: 0, wifiSSID: "Office Guest")
+        ))
+        XCTAssertFalse(RuleEngine.conditionMatches(
+            Condition.wifi(matcher: .is, ssid: "Office"),
+            link: link,
+            context: RoutingContext(runningCount: 0)
+        ))
+        XCTAssertTrue(RuleEngine.conditionMatches(
+            Condition.wifi(matcher: .isNot, ssid: "Office"),
+            link: link,
+            context: RoutingContext(runningCount: 0)
+        ))
+        XCTAssertFalse(RuleEngine.conditionMatches(
+            Condition.wifi(matcher: .contains, ssid: "Office"),
+            link: link,
+            context: RoutingContext(runningCount: 0)
+        ))
+
+        XCTAssertTrue(RuleEngine.conditionMatches(
+            vpn,
+            link: link,
+            context: RoutingContext(runningCount: 0, vpnConnected: true)
+        ))
+        XCTAssertFalse(RuleEngine.conditionMatches(
+            vpn,
+            link: link,
+            context: RoutingContext(runningCount: 0, vpnConnected: false)
+        ))
+        XCTAssertTrue(RuleEngine.conditionMatches(
+            Condition.vpn(connected: false),
+            link: link,
+            context: RoutingContext(runningCount: 0, vpnConnected: false)
+        ))
+    }
+
+    func testConditionDecodingDefaultsVPNToConnectedForOlderState() throws {
+        let oldCondition = Data(
+            #"{"id":"00000000-0000-0000-0000-000000000001","kind":"url","urlMatcher":"contains","pattern":"example.com","countComparator":"greaterThan","count":0,"linkKind":"website"}"#.utf8
+        )
+
+        let decoded = try JSONDecoder().decode(Condition.self, from: oldCondition)
+
+        XCTAssertTrue(decoded.vpnConnected)
+    }
+
     func testDisabledProfileIsSkipped() {
         let profile = RouteProfile(
             id: UUID(),

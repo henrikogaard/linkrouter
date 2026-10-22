@@ -14,6 +14,7 @@ final class AppState: ObservableObject {
     @Published var rules: [Rule]
     @Published var profiles: [RouteProfile]
     @Published var settings: AppSettings
+    @Published var focusMode: String?
     @Published var isDefaultBrowser: Bool
     @Published var runningIDs: Set<String>
     @Published var pendingQuit: (url: URL, row: CatalogRow, browser: BrowserRecord, options: RuleOptions)?
@@ -22,6 +23,8 @@ final class AppState: ObservableObject {
     private var profileWatcher: ProfileWatcher?
 
     let prompt = PromptController()
+    let networkContext = NetworkContext.shared
+    let syncStore = SyncStore()
     let launchStart = Date()
     private var firstPromptLogged = false
     var dispatcher: Dispatching
@@ -86,6 +89,7 @@ final class AppState: ObservableObject {
         rules = initialRules
         profiles = initialProfiles
         settings = initialSettings
+        focusMode = FocusModeStore.current()
         recent = initialRecent
         pendingQuit = nil
         isDefaultBrowser = DefaultBrowser.isLinkRouterDefault()
@@ -123,6 +127,11 @@ final class AppState: ObservableObject {
                 )
             )
         }
+        if settings.syncEnabled && syncStore.isICloudDriveAvailable {
+            syncStore.startWatching { [weak self] incoming in
+                self?.applySyncedState(incoming)
+            }
+        }
     }
 
     var enabledRows: [CatalogRow] { rows.filter(\.enabled) }
@@ -134,6 +143,90 @@ final class AppState: ObservableObject {
     var runningCount: Int {
         let ids = Set(availableRows.compactMap { browser(for: $0)?.bundleIdentifier })
         return ids.filter { runningIDs.contains($0) }.count
+    }
+
+    var routingContext: RoutingContext {
+        networkContext.refresh()
+        return RoutingContext(
+            runningCount: runningCount,
+            focusMode: focusMode,
+            wifiSSID: networkContext.wifiSSID,
+            vpnConnected: NetworkContext.currentVPNConnected()
+        )
+    }
+
+    func setFocusMode(_ mode: String) {
+        FocusModeStore.set(mode)
+        focusMode = FocusModeStore.current()
+    }
+
+    func setSyncEnabled(_ enabled: Bool) {
+        guard enabled != settings.syncEnabled else { return }
+        guard enabled else {
+            settings.syncEnabled = false
+            syncStore.stopWatching()
+            save()
+            return
+        }
+        guard syncStore.isICloudDriveAvailable else { return }
+
+        let onApply: (PersistedState) -> Void = { [weak self] incoming in
+            self?.applySyncedState(incoming)
+        }
+        if let remote = syncStore.remoteStateFromAnotherDevice() {
+            let alert = NSAlert()
+            alert.messageText = String(localized: "Use settings from iCloud Drive?")
+            alert.addButton(withTitle: String(localized: "Use iCloud Drive Settings"))
+            alert.addButton(withTitle: String(localized: "Use This Mac's Settings"))
+            alert.addButton(withTitle: String(localized: "Cancel"))
+            switch alert.runModal() {
+            case .alertFirstButtonReturn:
+                settings.syncEnabled = true
+                guard syncStore.startWatching(onApply: onApply, checkImmediately: false) else {
+                    settings.syncEnabled = false
+                    return
+                }
+                syncStore.applyRemote(remote, onApply: onApply)
+            case .alertSecondButtonReturn:
+                settings.syncEnabled = true
+                guard syncStore.startWatching(onApply: onApply, checkImmediately: false) else {
+                    settings.syncEnabled = false
+                    return
+                }
+                syncStore.ignoreRemote(remote)
+                save()
+            default:
+                return
+            }
+        } else {
+            settings.syncEnabled = true
+            guard syncStore.startWatching(onApply: onApply, checkImmediately: false) else {
+                settings.syncEnabled = false
+                return
+            }
+            save()
+        }
+    }
+
+    private func applySyncedState(_ incoming: PersistedState) {
+        browsers = incoming.browsers
+        rows = incoming.rows
+        rules = incoming.rules
+        profiles = incoming.profiles
+        var syncedSettings = incoming.settings
+        syncedSettings.showMenuBar = settings.showMenuBar
+        syncedSettings.onboardingDone = settings.onboardingDone
+        syncedSettings.syncEnabled = settings.syncEnabled
+        syncedSettings.shortcuts = settings.shortcuts
+        settings = syncedSettings
+        for index in browsers.indices {
+            guard !FileManager.default.fileExists(atPath: browsers[index].path),
+                  let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browsers[index].bundleIdentifier)
+            else { continue }
+            browsers[index].path = url.path
+        }
+        refreshProfileSnapshot()
+        save()
     }
 
     func browser(for row: CatalogRow) -> BrowserRecord? {
@@ -514,7 +607,7 @@ final class AppState: ObservableObject {
             link: link,
             profiles: profiles,
             rules: rules,
-            runningCount: runningCount,
+            context: routingContext,
             modifierForcePrompt: modifierForcePrompt
         )
         let options: RuleOptions
@@ -1169,18 +1262,10 @@ final class AppState: ObservableObject {
     func save() {
         guard !skipsPersistence else { return }
         saveWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            Persistence.save(
-                PersistedState(
-                    browsers: self.browsers,
-                    rows: self.rows,
-                    rules: self.rules,
-                    profiles: self.profiles,
-                    settings: self.settings,
-                    recent: self.recent
-                )
-            )
+        let state = persistedState()
+        syncStore.scheduleWrite(state)
+        let work = DispatchWorkItem {
+            Persistence.save(state)
         }
         saveWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
@@ -1190,15 +1275,19 @@ final class AppState: ObservableObject {
         guard !skipsPersistence else { return }
         saveWork?.cancel()
         saveWork = nil
-        Persistence.save(
-            PersistedState(
-                browsers: browsers,
-                rows: rows,
-                rules: rules,
-                profiles: profiles,
-                settings: settings,
-                recent: recent
-            )
+        let state = persistedState()
+        syncStore.scheduleWrite(state)
+        Persistence.save(state)
+    }
+
+    private func persistedState() -> PersistedState {
+        PersistedState(
+            browsers: browsers,
+            rows: rows,
+            rules: rules,
+            profiles: profiles,
+            settings: settings,
+            recent: recent
         )
     }
 

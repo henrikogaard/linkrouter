@@ -107,7 +107,7 @@ struct RulesPane: View {
             link: IncomingLink(url: url),
             profiles: state.profiles,
             rules: state.rules,
-            runningCount: state.runningCount,
+            context: state.routingContext,
             modifierForcePrompt: false
         )
         let destination = state.describe(explanation.result)
@@ -325,6 +325,30 @@ private extension Condition {
                 return weekdays[day - 1]
             }
             return String(localized: "\(start)–\(end) on \(days.joined(separator: ", "))")
+        case .focus:
+            switch urlMatcher {
+            case .is: return String(localized: "Focus mode is \(pattern)")
+            case .isNot: return String(localized: "Focus mode isn't \(pattern)")
+            case .contains: return String(localized: "Focus mode contains \(pattern)")
+            case .beginsWith: return String(localized: "Focus mode begins with \(pattern)")
+            case .endsWith: return String(localized: "Focus mode ends with \(pattern)")
+            case .like: return String(localized: "Focus mode is like \(pattern)")
+            case .regex: return String(localized: "Focus mode matches regex \(pattern)")
+            }
+        case .wifi:
+            switch urlMatcher {
+            case .is: return String(localized: "Wi-Fi is \(pattern)")
+            case .isNot: return String(localized: "Wi-Fi isn't \(pattern)")
+            case .contains: return String(localized: "Wi-Fi contains \(pattern)")
+            case .beginsWith: return String(localized: "Wi-Fi begins with \(pattern)")
+            case .endsWith: return String(localized: "Wi-Fi ends with \(pattern)")
+            case .like: return String(localized: "Wi-Fi is like \(pattern)")
+            case .regex: return String(localized: "Wi-Fi matches regex \(pattern)")
+            }
+        case .vpn:
+            return vpnConnected
+                ? String(localized: "VPN is connected")
+                : String(localized: "VPN isn't connected")
         }
     }
 
@@ -336,6 +360,7 @@ private extension Condition {
 struct RuleEditorSheet: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var networkContext = NetworkContext.shared
     @State var rule: Rule
     var onSave: (Rule) -> Void
     var onDelete: (() -> Void)?
@@ -358,7 +383,7 @@ struct RuleEditorSheet: View {
                 }
 
                 if !rule.isFallback {
-                    Section("Conditions") {
+                    Section {
                         Picker("Match", selection: $rule.combinator) {
                             ForEach(Combinator.allCases) { item in
                                 Text(item.shortLabel).tag(item)
@@ -376,6 +401,32 @@ struct RuleEditorSheet: View {
                             Label("Add Condition", systemImage: "plus")
                         }
                         .buttonStyle(.borderless)
+                    } header: {
+                        Text("Conditions")
+                    } footer: {
+                        if rule.conditions.contains(where: { $0.kind == .focus || $0.kind == .wifi }) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                if rule.conditions.contains(where: { $0.kind == .focus }) {
+                                    Text("Add a LinkRouter filter to a Focus in System Settings → Focus and name a mode, e.g. Work.")
+                                    if let mode = state.focusMode {
+                                        Text("Current focus mode: \(mode)")
+                                    } else {
+                                        Text("Current focus mode: none")
+                                    }
+                                }
+                                if rule.conditions.contains(where: { $0.kind == .wifi }) {
+                                    Text("Matches nothing until LinkRouter can read the network name.")
+                                    if networkContext.locationAuthorized {
+                                        Text("Current Wi-Fi network: \(networkContext.wifiSSID ?? String(localized: "unavailable"))")
+                                    } else {
+                                        Button("Allow Location Access…") {
+                                            networkContext.requestLocationAccess()
+                                        }
+                                        .buttonStyle(.link)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -570,6 +621,51 @@ struct RuleEditorSheet: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            case .focus:
+                HStack(spacing: 8) {
+                    Picker("Matcher", selection: condition.urlMatcher) {
+                        ForEach([URLMatcher.is, .isNot, .contains]) { matcher in
+                            Text(matcher.label).tag(matcher)
+                        }
+                    }
+                    .labelsHidden()
+                    .accessibilityLabel("Focus mode matcher")
+                    .pickerStyle(.menu)
+                    .frame(width: 120)
+                    TextField("Focus mode", text: condition.pattern, prompt: Text("Work"))
+                        .labelsHidden()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            case .wifi:
+                HStack(spacing: 8) {
+                    Picker("Matcher", selection: condition.urlMatcher) {
+                        ForEach([URLMatcher.is, .isNot, .contains]) { matcher in
+                            Text(matcher.label).tag(matcher)
+                        }
+                    }
+                    .labelsHidden()
+                    .accessibilityLabel("Wi-Fi matcher")
+                    .pickerStyle(.menu)
+                    .frame(width: 120)
+                    TextField(
+                        "Network name",
+                        text: condition.pattern,
+                        prompt: Text(networkContext.wifiSSID ?? String(localized: "Office"))
+                    )
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            case .vpn:
+                Picker("VPN state", selection: condition.vpnConnected) {
+                    Text("Connected").tag(true)
+                    Text("Not connected").tag(false)
+                }
+                .labelsHidden()
+                .accessibilityLabel("VPN connection state")
+                .pickerStyle(.menu)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 

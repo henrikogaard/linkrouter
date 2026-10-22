@@ -73,7 +73,7 @@ enum LinkKind: String, Codable, CaseIterable, Identifiable {
 
 struct Condition: Codable, Equatable, Identifiable {
     enum Kind: String, Codable, CaseIterable, Identifiable {
-        case url, runningCount, linkType, sourceApp, schedule
+        case url, runningCount, linkType, sourceApp, schedule, focus, wifi, vpn
         var id: String { rawValue }
         var label: String {
             switch self {
@@ -82,6 +82,9 @@ struct Condition: Codable, Equatable, Identifiable {
             case .linkType: String(localized: "Link type")
             case .sourceApp: String(localized: "Sent from app")
             case .schedule: String(localized: "Time of day")
+            case .focus: String(localized: "Focus mode")
+            case .wifi: String(localized: "Wi-Fi network")
+            case .vpn: String(localized: "VPN")
             }
         }
     }
@@ -96,6 +99,7 @@ struct Condition: Codable, Equatable, Identifiable {
     var startMinute: Int = 540
     var endMinute: Int = 1020
     var weekdays: Set<Int> = [2, 3, 4, 5, 6]
+    var vpnConnected = true
 
     static func url(matcher: URLMatcher = .contains, pattern: String = "") -> Condition {
         Condition(
@@ -120,6 +124,43 @@ struct Condition: Codable, Equatable, Identifiable {
             linkKind: .website
         )
     }
+
+    static func focus(matcher: URLMatcher = .is, mode: String = "") -> Condition {
+        Condition(
+            id: UUID(),
+            kind: .focus,
+            urlMatcher: matcher,
+            pattern: mode,
+            countComparator: .greaterThan,
+            count: 0,
+            linkKind: .website
+        )
+    }
+
+    static func wifi(matcher: URLMatcher = .is, ssid: String = "") -> Condition {
+        Condition(
+            id: UUID(),
+            kind: .wifi,
+            urlMatcher: matcher,
+            pattern: ssid,
+            countComparator: .greaterThan,
+            count: 0,
+            linkKind: .website
+        )
+    }
+
+    static func vpn(connected: Bool = true) -> Condition {
+        Condition(
+            id: UUID(),
+            kind: .vpn,
+            urlMatcher: .contains,
+            pattern: "",
+            countComparator: .greaterThan,
+            count: 0,
+            linkKind: .website,
+            vpnConnected: connected
+        )
+    }
 }
 
 extension Condition {
@@ -135,6 +176,7 @@ extension Condition {
         startMinute = try container.decodeIfPresent(Int.self, forKey: .startMinute) ?? 540
         endMinute = try container.decodeIfPresent(Int.self, forKey: .endMinute) ?? 1020
         weekdays = try container.decodeIfPresent(Set<Int>.self, forKey: .weekdays) ?? [2, 3, 4, 5, 6]
+        vpnConnected = try container.decodeIfPresent(Bool.self, forKey: .vpnConnected) ?? true
     }
 }
 
@@ -366,11 +408,12 @@ struct AppSettings: Codable, Equatable {
     var expandShortLinks = true
     var shortcuts: [ShortcutAction: KeyCombo] = [:]
     var mail = MailSettings()
+    var syncEnabled = false
 
     enum CodingKeys: String, CodingKey {
         case showMenuBar, forcePromptOnModifier, openInBackground, appearance
         case unwrapRedirects, stripTrackingParams, promptTimeout, onboardingDone, appLinksDisabled, expandShortLinks
-        case shortcuts, mail
+        case shortcuts, mail, syncEnabled
     }
 
     init() {}
@@ -389,7 +432,34 @@ struct AppSettings: Codable, Equatable {
         expandShortLinks = try container.decodeIfPresent(Bool.self, forKey: .expandShortLinks) ?? true
         shortcuts = try container.decodeIfPresent([ShortcutAction: KeyCombo].self, forKey: .shortcuts) ?? [:]
         mail = try container.decodeIfPresent(MailSettings.self, forKey: .mail) ?? MailSettings()
+        syncEnabled = try container.decodeIfPresent(Bool.self, forKey: .syncEnabled) ?? false
     }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        let isSyncPayload = encoder.userInfo[.linkRouterSyncPayload] as? Bool == true
+
+        try container.encode(forcePromptOnModifier, forKey: .forcePromptOnModifier)
+        try container.encode(openInBackground, forKey: .openInBackground)
+        try container.encode(appearance, forKey: .appearance)
+        try container.encode(unwrapRedirects, forKey: .unwrapRedirects)
+        try container.encode(stripTrackingParams, forKey: .stripTrackingParams)
+        try container.encode(promptTimeout, forKey: .promptTimeout)
+        try container.encode(appLinksDisabled, forKey: .appLinksDisabled)
+        try container.encode(expandShortLinks, forKey: .expandShortLinks)
+        try container.encode(mail, forKey: .mail)
+
+        if !isSyncPayload {
+            try container.encode(showMenuBar, forKey: .showMenuBar)
+            try container.encode(onboardingDone, forKey: .onboardingDone)
+            try container.encode(shortcuts, forKey: .shortcuts)
+            try container.encode(syncEnabled, forKey: .syncEnabled)
+        }
+    }
+}
+
+extension CodingUserInfoKey {
+    static let linkRouterSyncPayload = CodingUserInfoKey(rawValue: "LinkRouterSyncPayload")!
 }
 
 enum MailMode: String, Codable, CaseIterable {
@@ -421,6 +491,12 @@ struct PersistedState: Codable {
     var profiles: [RouteProfile]
     var settings: AppSettings
     var recent: [RoutedEntry]
+    var modifiedAt: Date?
+    var deviceID: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, browsers, rows, rules, profiles, settings, recent, modifiedAt, deviceID
+    }
 
     init(
         browsers: [BrowserRecord],
@@ -428,7 +504,9 @@ struct PersistedState: Codable {
         rules: [Rule],
         profiles: [RouteProfile],
         settings: AppSettings,
-        recent: [RoutedEntry] = []
+        recent: [RoutedEntry] = [],
+        modifiedAt: Date? = nil,
+        deviceID: String? = nil
     ) {
         self.browsers = browsers
         self.rows = rows
@@ -436,6 +514,8 @@ struct PersistedState: Codable {
         self.profiles = profiles
         self.settings = settings
         self.recent = recent
+        self.modifiedAt = modifiedAt
+        self.deviceID = deviceID
     }
 
     init(from decoder: Decoder) throws {
@@ -447,6 +527,38 @@ struct PersistedState: Codable {
         schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
         settings = try container.decode(AppSettings.self, forKey: .settings)
         recent = try container.decodeIfPresent([RoutedEntry].self, forKey: .recent) ?? []
+        modifiedAt = try container.decodeIfPresent(Date.self, forKey: .modifiedAt)
+        deviceID = try container.decodeIfPresent(String.self, forKey: .deviceID)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        let isSyncPayload = encoder.userInfo[.linkRouterSyncPayload] as? Bool == true
+
+        try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encode(browsers, forKey: .browsers)
+        try container.encode(rows, forKey: .rows)
+        try container.encode(rules, forKey: .rules)
+        try container.encode(profiles, forKey: .profiles)
+        try container.encode(settings, forKey: .settings)
+
+        if isSyncPayload {
+            guard let modifiedAt, let deviceID else {
+                throw EncodingError.invalidValue(
+                    self,
+                    EncodingError.Context(
+                        codingPath: encoder.codingPath,
+                        debugDescription: "Sync payload requires modifiedAt and deviceID."
+                    )
+                )
+            }
+            try container.encode(modifiedAt, forKey: .modifiedAt)
+            try container.encode(deviceID, forKey: .deviceID)
+        } else {
+            try container.encode(recent, forKey: .recent)
+            try container.encodeIfPresent(modifiedAt, forKey: .modifiedAt)
+            try container.encodeIfPresent(deviceID, forKey: .deviceID)
+        }
     }
 }
 
