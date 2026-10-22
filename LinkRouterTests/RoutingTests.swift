@@ -97,6 +97,17 @@ final class RoutingTests: XCTestCase {
         XCTAssertEqual(recorder.calls.map(\.rowID), [safariRow.id])
     }
 
+    func testPausedWithoutAvailableBrowserFallsThroughToPrompt() {
+        state.browsers = []
+        state.rows = []
+        state.pause(for: nil)
+
+        state.handleIncoming(link("https://anything.example"))
+
+        XCTAssertTrue(recorder.calls.isEmpty)
+        XCTAssertEqual(promptCount, 1)
+    }
+
     func testCleanedURLIsDispatched() {
         state.rules = [
             Rule(

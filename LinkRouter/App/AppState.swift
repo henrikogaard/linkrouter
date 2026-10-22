@@ -343,10 +343,8 @@ final class AppState: ObservableObject {
             Log.routing.info("Cleaned \(url.absoluteString) -> \(cleaned.absoluteString)")
         }
         let link = IncomingLink(url: cleaned, sourceBundleID: source?.bundleID, sourceName: source?.name)
-        if isPaused {
-            if let row = favourite ?? bestRunning() {
-                dispatch(link, row: row)
-            }
+        if isPaused, let row = favourite ?? bestRunning() {
+            dispatch(link, row: row)
             return
         }
         let flags = NSEvent.modifierFlags
@@ -607,6 +605,18 @@ final class AppState: ObservableObject {
 
     func reopen(_ entry: RoutedEntry) {
         let link = IncomingLink(url: entry.url)
+        if let (handler, transformedURL) = AppLinks.match(
+            entry.url,
+            installed: AppLinks.installedBundleIDs(),
+            disabled: settings.appLinksDisabled
+        ), openAppLink(
+            handler,
+            transformedURL: transformedURL,
+            link: link,
+            modifierForcePrompt: false
+        ) {
+            return
+        }
         if let row = rows.first(where: { $0.id == entry.rowID }) {
             dispatch(link, row: row, isRetry: true)
         } else {
