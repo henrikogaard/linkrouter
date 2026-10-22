@@ -163,8 +163,8 @@ final class SyncStore: ObservableObject {
         if checkImmediately {
             checkForRemoteUpdate()
         }
-        if let latestSnapshot, pendingWrite == nil {
-            schedulePendingWrite(latestSnapshot)
+        if latestSnapshot != nil, pendingWrite == nil {
+            schedulePendingWrite()
         }
         return true
     }
@@ -216,24 +216,42 @@ final class SyncStore: ObservableObject {
         latestSnapshot = snapshot
         localDirtyAt = Date()
         guard isEnabled else { return false }
-        schedulePendingWrite(snapshot)
+        schedulePendingWrite()
         return true
     }
 
-    private func schedulePendingWrite(_ snapshot: PersistedState, after delay: TimeInterval? = nil) {
+    private func schedulePendingWrite(after delay: TimeInterval? = nil) {
+        guard latestSnapshot != nil else { return }
         pendingWrite?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.isEnabled else { return }
             do {
-                try self.writeNow(snapshot)
+                try self.writePendingSnapshot()
             } catch {
                 Log.app.error("Could not sync settings: \(error.localizedDescription)")
-                guard self.isEnabled else { return }
-                self.schedulePendingWrite(snapshot, after: self.writeRetryInterval)
+                guard self.isEnabled, self.latestSnapshot != nil else { return }
+                self.schedulePendingWrite(after: self.writeRetryInterval)
             }
         }
         pendingWrite = work
         DispatchQueue.main.asyncAfter(deadline: .now() + (delay ?? writeDebounceInterval), execute: work)
+    }
+
+    func flushPendingWrite() {
+        guard isEnabled, latestSnapshot != nil else { return }
+        pendingWrite?.cancel()
+        pendingWrite = nil
+        do {
+            try writePendingSnapshot()
+        } catch {
+            Log.app.error("Could not sync settings: \(error.localizedDescription)")
+        }
+    }
+
+    private func writePendingSnapshot() throws {
+        if receiveRemoteIfNewer() { return }
+        guard let snapshot = latestSnapshot else { return }
+        try writeNow(snapshot)
     }
 
     func writeNow(_ state: PersistedState, modifiedAt: Date = Date()) throws {
@@ -314,7 +332,7 @@ final class SyncStore: ObservableObject {
                     try writeNow(latestSnapshot)
                 } catch {
                     Log.app.error("Could not sync settings: \(error.localizedDescription)")
-                    schedulePendingWrite(latestSnapshot)
+                    schedulePendingWrite(after: writeRetryInterval)
                 }
             }
             lastApplied = max(lastApplied, modifiedAt)
@@ -356,6 +374,12 @@ final class SyncStore: ObservableObject {
         var payload = state
         payload.modifiedAt = nil
         payload.deviceID = nil
+        for index in payload.browsers.indices {
+            payload.browsers[index].path = ""
+        }
+        for index in payload.rows.indices {
+            payload.rows[index].firefoxAbsPath = nil
+        }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.userInfo[.linkRouterSyncPayload] = true
