@@ -1350,7 +1350,9 @@ final class AppState: ObservableObject {
         let state = persistedState()
         syncStore.scheduleWrite(state)
         syncStore.flushPendingWrite()
-        Persistence.save(state)
+        saveWork?.cancel()
+        saveWork = nil
+        Persistence.save(persistedState())
     }
 
     private func persistedState() -> PersistedState {

@@ -199,6 +199,59 @@ final class ContextSyncTests: XCTestCase {
         XCTAssertEqual(writeCount, 1)
     }
 
+    func testFlushSavePersistsRemoteAppliedDuringSyncFlush() throws {
+        let persistenceDirectory = temporaryFolder()
+        let syncFolder = temporaryFolder()
+        let previousPersistenceDirectory = Persistence.directoryOverride
+        Persistence.directoryOverride = persistenceDirectory
+        defer {
+            Persistence.directoryOverride = previousPersistenceDirectory
+            try? FileManager.default.removeItem(at: persistenceDirectory)
+            try? FileManager.default.removeItem(at: syncFolder)
+        }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        let store = SyncStore(
+            folderURL: syncFolder,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast
+        )
+        let appState = AppState(syncStore: store)
+        defer {
+            appState.skipsPersistence = true
+            store.stopWatching()
+        }
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local Settings"
+        appState.browsers = localState.browsers
+        appState.rows = localState.rows
+        appState.rules = localState.rules
+        appState.profiles = localState.profiles
+        appState.settings.syncEnabled = true
+        appState.reconcileSync()
+
+        let remote = SyncStore(
+            folderURL: syncFolder,
+            deviceID: UUID().uuidString,
+            defaults: remoteDefaults
+        )
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Remote Settings"
+        try remote.writeNow(remoteState, modifiedAt: Date().addingTimeInterval(60))
+
+        appState.flushSave()
+
+        let saved = try JSONDecoder().decode(
+            PersistedState.self,
+            from: Data(contentsOf: Persistence.stateURL)
+        )
+        XCTAssertEqual(saved.browsers.first?.displayName, "Remote Settings")
+    }
+
     func testFlushPendingWriteAppliesNewerRemoteWithoutWritingLocalSnapshot() async throws {
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
