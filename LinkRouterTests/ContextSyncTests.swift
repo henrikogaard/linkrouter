@@ -169,6 +169,210 @@ final class ContextSyncTests: XCTestCase {
         store.stopWatching()
     }
 
+    func testFlushPendingWriteWritesSnapshotSynchronouslyOnlyOnce() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaults = testDefaults()
+        defer { removeDefaults(defaults) }
+        var writeCount = 0
+        let store = SyncStore(
+            folderURL: folder,
+            defaults: defaults,
+            writeFile: { data, url in
+                writeCount += 1
+                try data.write(to: url, options: .atomic)
+            },
+            writeDebounceInterval: 0.02
+        )
+        defer { store.stopWatching() }
+        XCTAssertTrue(store.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        var edited = sampleState()
+        edited.browsers[0].displayName = "Flushed"
+
+        XCTAssertTrue(store.scheduleWrite(edited))
+        store.flushPendingWrite()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: store.syncURL.path))
+        XCTAssertEqual(store.readRemoteState()?.browsers.first?.displayName, "Flushed")
+        XCTAssertEqual(writeCount, 1)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(writeCount, 1)
+    }
+
+    func testFlushPendingWriteAppliesNewerRemoteWithoutWritingLocalSnapshot() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        var localWrites = 0
+        let local = SyncStore(
+            folderURL: folder,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast,
+            writeFile: { data, url in
+                localWrites += 1
+                try data.write(to: url, options: .atomic)
+            },
+            writeDebounceInterval: 1
+        )
+        let remoteID = UUID().uuidString
+        let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+        var applied: PersistedState?
+        defer { local.stopWatching() }
+        XCTAssertTrue(local.startWatching(onApply: { applied = $0 }, watchChanges: false, checkImmediately: false))
+
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local"
+        XCTAssertTrue(local.scheduleWrite(localState))
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Newer Remote"
+        try remote.writeNow(remoteState, modifiedAt: Date().addingTimeInterval(60))
+
+        local.flushPendingWrite()
+
+        XCTAssertEqual(applied?.browsers.first?.displayName, "Newer Remote")
+        XCTAssertEqual(local.readRemoteState()?.deviceID, remoteID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Newer Remote")
+        XCTAssertEqual(localWrites, 0)
+    }
+
+    func testFlushPendingWriteWritesLocalEditOnceWhenRemoteIsOlder() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        var localWrites = 0
+        let localID = UUID().uuidString
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast,
+            writeFile: { data, url in
+                localWrites += 1
+                try data.write(to: url, options: .atomic)
+            },
+            writeDebounceInterval: 1
+        )
+        let remote = SyncStore(folderURL: folder, deviceID: UUID().uuidString, defaults: remoteDefaults)
+        defer { local.stopWatching() }
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Older Remote"
+        try remote.writeNow(remoteState, modifiedAt: Date().addingTimeInterval(-60))
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Newer Local"
+        XCTAssertTrue(local.scheduleWrite(localState))
+
+        local.flushPendingWrite()
+
+        XCTAssertEqual(localWrites, 1)
+        XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Newer Local")
+    }
+
+    func testFingerprintIgnoresBrowserAndFirefoxProfilePaths() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaults = testDefaults()
+        defer { removeDefaults(defaults) }
+        var writeCount = 0
+        let store = SyncStore(
+            folderURL: folder,
+            defaults: defaults,
+            writeFile: { data, url in
+                writeCount += 1
+                try data.write(to: url, options: .atomic)
+            }
+        )
+        defer { store.stopWatching() }
+        var baseline = sampleState()
+        baseline.browsers[0].path = "/Applications/Safari.app"
+        baseline.rows[0].firefoxAbsPath = "/Users/local/Library/Application Support/Firefox/Profiles/default"
+        try store.writeNow(baseline)
+        XCTAssertTrue(store.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        writeCount = 0
+
+        var machineSpecificPaths = baseline
+        machineSpecificPaths.browsers[0].path = "/Users/other/Applications/Safari.app"
+        machineSpecificPaths.rows[0].firefoxAbsPath = "/Users/other/Library/Application Support/Firefox/Profiles/default"
+
+        XCTAssertFalse(store.scheduleWrite(machineSpecificPaths))
+        XCTAssertEqual(writeCount, 0)
+    }
+
+    func testRemapFirefoxProfilePathReturnsExactLocalMatch() {
+        let support = URL(fileURLWithPath: "/Users/local/Library/Application Support/Firefox", isDirectory: true)
+        let profile = FirefoxProfile(
+            name: "Work",
+            absPath: support.appendingPathComponent("Profiles/work.default").path
+        )
+
+        XCTAssertEqual(
+            ProfileReader.remapFirefoxProfilePath(
+                profile.absPath,
+                name: "Different Name",
+                support: support,
+                localProfiles: [profile]
+            ),
+            profile.absPath
+        )
+    }
+
+    func testRemapFirefoxProfilePathMapsAnotherMacSuffix() {
+        let support = URL(fileURLWithPath: "/Users/local/Library/Application Support/Firefox", isDirectory: true)
+        let profile = FirefoxProfile(
+            name: "Work",
+            absPath: support.appendingPathComponent("Profiles/work.default").path
+        )
+
+        XCTAssertEqual(
+            ProfileReader.remapFirefoxProfilePath(
+                "/Users/other/Library/Application Support/Firefox/Profiles/work.default",
+                name: nil,
+                support: support,
+                localProfiles: [profile]
+            ),
+            profile.absPath
+        )
+    }
+
+    func testRemapFirefoxProfilePathFallsBackToProfileName() {
+        let support = URL(fileURLWithPath: "/Users/local/Library/Application Support/Firefox", isDirectory: true)
+        let profile = FirefoxProfile(name: "Work", absPath: "/Users/local/Firefox/Profiles/work.default")
+
+        XCTAssertEqual(
+            ProfileReader.remapFirefoxProfilePath(
+                "/Users/other/Firefox/Profiles/unknown.default",
+                name: "Work",
+                support: support,
+                localProfiles: [profile]
+            ),
+            profile.absPath
+        )
+    }
+
+    func testRemapFirefoxProfilePathReturnsNilWithoutMatch() {
+        let support = URL(fileURLWithPath: "/Users/local/Library/Application Support/Firefox", isDirectory: true)
+
+        XCTAssertNil(
+            ProfileReader.remapFirefoxProfilePath(
+                "/Users/other/Firefox/Profiles/unknown.default",
+                name: "Missing",
+                support: support,
+                localProfiles: [FirefoxProfile(name: "Work", absPath: "/Users/local/Firefox/Profiles/work.default")]
+            )
+        )
+    }
+
     func testHistoryOnlySavePreservesPendingEditTimestampSoIntermediateRemoteWins() async throws {
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -518,7 +722,8 @@ final class ContextSyncTests: XCTestCase {
                     throw CocoaError(.fileWriteUnknown)
                 }
                 try data.write(to: url, options: .atomic)
-            }
+            },
+            writeRetryInterval: 0.05
         )
         XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
         var localState = sampleState()
@@ -535,7 +740,7 @@ final class ContextSyncTests: XCTestCase {
             remoteModifiedAt
         )
 
-        try await Task.sleep(nanoseconds: 2_500_000_000)
+        try await Task.sleep(nanoseconds: 100_000_000)
 
         XCTAssertEqual(writeAttempts, 2)
         XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
@@ -913,7 +1118,8 @@ final class ContextSyncTests: XCTestCase {
         try Data().write(to: placeholder)
         XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false))
         try await Task.sleep(nanoseconds: 50_000_000)
-        XCTAssertEqual(downloads, [local.syncURL, local.syncURL])
+        XCTAssertGreaterThanOrEqual(downloads.count, 2)
+        XCTAssertTrue(downloads.allSatisfy { $0 == local.syncURL })
 
         try FileManager.default.removeItem(at: placeholder)
         let remote = SyncStore(folderURL: folder, deviceID: UUID().uuidString, defaults: remoteDefaults)

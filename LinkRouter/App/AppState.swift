@@ -209,6 +209,15 @@ final class AppState: ObservableObject {
             return
         }
         guard syncStore.isICloudDriveAvailable else { return }
+        if syncStore.isRemotePendingDownload {
+            _ = syncStore.readRemoteState()
+            let alert = NSAlert()
+            alert.messageText = String(localized: "iCloud Drive is still downloading your settings")
+            alert.informativeText = String(localized: "Try turning on sync again in a moment.")
+            alert.addButton(withTitle: String(localized: "OK"))
+            alert.runModal()
+            return
+        }
 
         let onApply: (PersistedState) -> Void = { [weak self] incoming in
             self?.applySyncedState(incoming)
@@ -269,6 +278,23 @@ final class AppState: ObservableObject {
             else { continue }
             browsers[index].path = url.path
         }
+        for index in rows.indices {
+            guard rows[index].kind == .firefoxProfile || rows[index].kind == .firefoxPrivate,
+                  let path = rows[index].firefoxAbsPath,
+                  !FileManager.default.fileExists(atPath: path),
+                  let browser = browsers.first(where: { $0.id == rows[index].browserID })
+            else { continue }
+            let localProfiles = ProfileReader.firefoxProfiles(appURL: browser.bundleURL)
+            if let localPath = ProfileReader.remapFirefoxProfilePath(
+                path,
+                name: rows[index].firefoxName,
+                support: ProfileReader.firefoxSupportURL,
+                localProfiles: localProfiles
+            ) {
+                rows[index].firefoxAbsPath = localPath
+            }
+        }
+        runningIDs = BrowserCatalog.runningIdentifiers(in: browsers)
         refreshProfileSnapshot()
         save()
     }
@@ -1323,6 +1349,7 @@ final class AppState: ObservableObject {
         saveWork = nil
         let state = persistedState()
         syncStore.scheduleWrite(state)
+        syncStore.flushPendingWrite()
         Persistence.save(state)
     }
 

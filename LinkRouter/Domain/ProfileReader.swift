@@ -48,6 +48,11 @@ enum ProfileReader {
             .appendingPathComponent("Library/Application Support/\(family.userDataDir)")
     }
 
+    static var firefoxSupportURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Firefox", isDirectory: true)
+    }
+
     static func chromeProfiles(family: ChromiumFamily) -> [ChromeProfile] {
         let url = userDataURL(for: family).appendingPathComponent("Local State")
         guard let data = try? Data(contentsOf: url) else { return [] }
@@ -78,11 +83,32 @@ enum ProfileReader {
 
     static func firefoxProfiles(appURL: URL) -> [FirefoxProfile] {
         guard appURL.lastPathComponent == "Firefox.app" else { return [] }
-        let support = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/Firefox")
+        let support = firefoxSupportURL
         let iniURL = support.appendingPathComponent("profiles.ini")
         guard let text = try? String(contentsOf: iniURL, encoding: .utf8) else { return [] }
         return parseFirefoxProfiles(ini: text, support: support)
+    }
+
+    static func remapFirefoxProfilePath(
+        _ path: String,
+        name: String?,
+        support: URL,
+        localProfiles: [FirefoxProfile]
+    ) -> String? {
+        if localProfiles.contains(where: { $0.absPath == path }) {
+            return path
+        }
+        if let marker = path.range(of: "/Library/Application Support/Firefox/") {
+            let suffix = String(path[marker.upperBound...])
+            let localPath = support.appendingPathComponent(suffix).path
+            if localProfiles.contains(where: { $0.absPath == localPath }) {
+                return localPath
+            }
+        }
+        if let name, let profile = localProfiles.first(where: { $0.name == name }) {
+            return profile.absPath
+        }
+        return nil
     }
 
     static func parseFirefoxProfiles(ini text: String, support: URL) -> [FirefoxProfile] {
