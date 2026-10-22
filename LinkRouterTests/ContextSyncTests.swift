@@ -89,6 +89,86 @@ final class ContextSyncTests: XCTestCase {
         XCTAssertEqual(roundTrip.modifiedAt, modifiedAt)
     }
 
+    func testHistoryAndPerMacChangesDoNotDirtySyncedPayload() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        let localModifiedAt = Date().addingTimeInterval(-300)
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: UUID().uuidString,
+            defaults: localDefaults,
+            initialLastApplied: localModifiedAt
+        )
+        var synced = sampleState()
+        synced.settings.shortcuts[.sendCurrentPage] = KeyCombo(keyCode: 0, carbonModifiers: 0)
+        try local.writeNow(synced, modifiedAt: localModifiedAt)
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+
+        var historyOnly = synced
+        historyOnly.recent.append(RoutedEntry(
+            id: UUID(),
+            url: URL(string: "https://history.example")!,
+            rowID: synced.rows[0].id,
+            title: "History",
+            date: Date()
+        ))
+        historyOnly.settings.showMenuBar = false
+        historyOnly.settings.onboardingDone = true
+        historyOnly.settings.syncEnabled = true
+        historyOnly.settings.shortcuts[.sendCurrentPage] = KeyCombo(keyCode: 1, carbonModifiers: 0)
+        XCTAssertFalse(local.scheduleWrite(historyOnly))
+
+        let remote = SyncStore(folderURL: folder, deviceID: UUID().uuidString, defaults: remoteDefaults)
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Remote Settings"
+        try remote.writeNow(remoteState, modifiedAt: Date().addingTimeInterval(-60))
+        var applied: PersistedState?
+        XCTAssertTrue(local.receiveRemoteIfNewer(onApply: { applied = $0 }))
+        XCTAssertEqual(applied?.browsers.first?.displayName, "Remote Settings")
+        local.stopWatching()
+    }
+
+    func testSyncedPayloadRevertCancelsPendingWriteAndRealChangesStillWrite() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaults = testDefaults()
+        defer { removeDefaults(defaults) }
+        var writeCount = 0
+        let store = SyncStore(
+            folderURL: folder,
+            defaults: defaults,
+            writeFile: { data, url in
+                writeCount += 1
+                try data.write(to: url, options: .atomic)
+            },
+            writeDebounceInterval: 0.02
+        )
+        let baseline = sampleState()
+        try store.writeNow(baseline)
+        XCTAssertTrue(store.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        writeCount = 0
+
+        var edited = baseline
+        edited.browsers[0].displayName = "Temporary"
+        XCTAssertTrue(store.scheduleWrite(edited))
+        XCTAssertFalse(store.scheduleWrite(baseline))
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(writeCount, 0)
+
+        edited.browsers[0].displayName = "Updated"
+        XCTAssertTrue(store.scheduleWrite(edited))
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(writeCount, 1)
+        XCTAssertEqual(store.readRemoteState()?.browsers.first?.displayName, "Updated")
+        store.stopWatching()
+    }
+
     func testWriteNowDoesNotCreateFolderWhenCloudDocsIsUnavailable() throws {
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -545,25 +625,128 @@ final class ContextSyncTests: XCTestCase {
         local.stopWatching()
     }
 
-    func testCloudPlaceholderRequestsDownloadAndReturnsNil() throws {
+    func testPlaceholderDownloadProtectsPendingEditAndResolvesNewerAndOlderRemotes() async throws {
+        for placeholderName in ["sync.json.icloud", ".sync.json.icloud"] {
+            let folder = temporaryFolder()
+            defer { try? FileManager.default.removeItem(at: folder) }
+            let localDefaults = testDefaults()
+            let remoteDefaults = testDefaults()
+            defer {
+                removeDefaults(localDefaults)
+                removeDefaults(remoteDefaults)
+            }
+            let localID = UUID().uuidString
+            var downloads: [URL] = []
+            var writes = 0
+            let local = SyncStore(
+                folderURL: folder,
+                deviceID: localID,
+                defaults: localDefaults,
+                initialLastApplied: .distantPast,
+                downloadPlaceholder: { downloads.append($0) },
+                writeFile: { data, url in
+                    writes += 1
+                    try data.write(to: url, options: .atomic)
+                },
+                writeDebounceInterval: 0.01,
+                writeRetryInterval: 0.05
+            )
+            XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+            var localState = sampleState()
+            localState.browsers[0].displayName = "Local Edit"
+            XCTAssertTrue(local.scheduleWrite(localState))
+            local.stopWatching(preservingPendingEdits: true)
+
+            let placeholder = folder.appendingPathComponent(placeholderName)
+            try Data().write(to: placeholder)
+            XCTAssertTrue(local.isRemotePendingDownload)
+            var applied: PersistedState?
+            XCTAssertTrue(local.startWatching(onApply: { applied = $0 }, watchChanges: false))
+            try await Task.sleep(nanoseconds: 200_000_000)
+            XCTAssertGreaterThanOrEqual(downloads.count, 3)
+            XCTAssertTrue(downloads.allSatisfy { $0 == local.syncURL })
+            XCTAssertEqual(writes, 0)
+            XCTAssertFalse(FileManager.default.fileExists(atPath: local.syncURL.path))
+
+            try FileManager.default.removeItem(at: placeholder)
+            let remoteID = UUID().uuidString
+            let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+            var remoteState = sampleState()
+            remoteState.browsers[0].displayName = "Remote"
+            try remote.writeNow(remoteState, modifiedAt: Date().addingTimeInterval(60))
+            XCTAssertTrue(local.receiveRemoteIfNewer())
+            XCTAssertEqual(applied?.browsers.first?.displayName, "Remote")
+            XCTAssertEqual(writes, 0)
+            XCTAssertEqual(local.readRemoteState()?.deviceID, remoteID)
+            local.stopWatching()
+        }
+
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let defaults = testDefaults()
-        defer { removeDefaults(defaults) }
-        var downloadedURL: URL?
-        let store = SyncStore(
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        let localID = UUID().uuidString
+        var downloads: [URL] = []
+        var writes = 0
+        let local = SyncStore(
             folderURL: folder,
-            deviceID: UUID().uuidString,
-            defaults: defaults,
+            deviceID: localID,
+            defaults: localDefaults,
             initialLastApplied: .distantPast,
-            downloadPlaceholder: { downloadedURL = $0 }
+            downloadPlaceholder: { downloads.append($0) },
+            writeFile: { data, url in
+                writes += 1
+                try data.write(to: url, options: .atomic)
+            },
+            writeDebounceInterval: 0.01,
+            writeRetryInterval: 5
         )
-        let placeholder = store.syncURL.appendingPathExtension("icloud")
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local Edit"
+        XCTAssertTrue(local.scheduleWrite(localState))
+        local.stopWatching(preservingPendingEdits: true)
+        let placeholder = folder.appendingPathComponent(".sync.json.icloud")
         try Data().write(to: placeholder)
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false))
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertEqual(downloads, [local.syncURL, local.syncURL])
 
-        XCTAssertNil(store.readRemoteState())
-        XCTAssertEqual(downloadedURL, placeholder)
+        try FileManager.default.removeItem(at: placeholder)
+        let remote = SyncStore(folderURL: folder, deviceID: UUID().uuidString, defaults: remoteDefaults)
+        try remote.writeNow(sampleState(), modifiedAt: Date().addingTimeInterval(-60))
+        XCTAssertFalse(local.receiveRemoteIfNewer())
+        XCTAssertEqual(writes, 1)
+        XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Local Edit")
+        local.stopWatching()
+    }
+
+    func testCloudPlaceholderRequestsDownloadAndReturnsNil() throws {
+        for placeholderName in ["sync.json.icloud", ".sync.json.icloud"] {
+            let folder = temporaryFolder()
+            defer { try? FileManager.default.removeItem(at: folder) }
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let defaults = testDefaults()
+            defer { removeDefaults(defaults) }
+            var downloadedURL: URL?
+            let store = SyncStore(
+                folderURL: folder,
+                deviceID: UUID().uuidString,
+                defaults: defaults,
+                initialLastApplied: .distantPast,
+                downloadPlaceholder: { downloadedURL = $0 }
+            )
+            try Data().write(to: folder.appendingPathComponent(placeholderName))
+
+            XCTAssertTrue(store.isRemotePendingDownload)
+            XCTAssertNil(store.readRemoteState())
+            XCTAssertEqual(downloadedURL, store.syncURL)
+        }
     }
 
     private var defaultSuiteNames = [ObjectIdentifier: String]()

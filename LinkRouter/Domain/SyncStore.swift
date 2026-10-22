@@ -1,9 +1,29 @@
 import Combine
+import CryptoKit
 import Darwin
 import Foundation
 
 private enum SyncStoreError: Error {
     case cloudDocsUnavailable
+    case remotePendingDownload
+}
+
+private struct SyncPayloadFingerprint: Encodable {
+    var state: PersistedState
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, browsers, rows, rules, profiles, settings
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(state.schemaVersion, forKey: .schemaVersion)
+        try container.encode(state.browsers, forKey: .browsers)
+        try container.encode(state.rows, forKey: .rows)
+        try container.encode(state.rules, forKey: .rules)
+        try container.encode(state.profiles, forKey: .profiles)
+        try container.encode(state.settings, forKey: .settings)
+    }
 }
 
 @MainActor
@@ -11,6 +31,7 @@ final class SyncStore: ObservableObject {
     static let deviceIDKey = "LinkRouterDeviceID"
     static let lastSyncedKey = "LinkRouterLastSyncedAt"
     static let lastAppliedKey = "LinkRouterLastAppliedSyncAt"
+    static let lastSyncedFingerprintKey = "LinkRouterLastSyncedFingerprint"
 
     static var cloudDocsURL: URL {
         URL(fileURLWithPath: NSHomeDirectory())
@@ -31,6 +52,8 @@ final class SyncStore: ObservableObject {
     private let downloadPlaceholder: (URL) throws -> Void
     private let cloudDocsAvailability: () -> Bool
     private let writeFile: (Data, URL) throws -> Void
+    private let writeDebounceInterval: TimeInterval
+    private let writeRetryInterval: TimeInterval
     private var lastApplied: Date
     private var isEnabled = false
     private var suppressNextWrite = false
@@ -52,7 +75,9 @@ final class SyncStore: ObservableObject {
             try FileManager.default.startDownloadingUbiquitousItem(at: $0)
         },
         cloudDocsAvailable: (() -> Bool)? = nil,
-        writeFile: ((Data, URL) throws -> Void)? = nil
+        writeFile: ((Data, URL) throws -> Void)? = nil,
+        writeDebounceInterval: TimeInterval = 2,
+        writeRetryInterval: TimeInterval = 5
     ) {
         self.folderURL = folderURL ?? Self.defaultFolderURL
         self.defaults = defaults
@@ -71,6 +96,8 @@ final class SyncStore: ObservableObject {
         self.writeFile = writeFile ?? { data, url in
             try data.write(to: url, options: .atomic)
         }
+        self.writeDebounceInterval = writeDebounceInterval
+        self.writeRetryInterval = writeRetryInterval
         lastSyncedAt = defaults.object(forKey: Self.lastSyncedKey) as? Date
         lastApplied = initialLastApplied
             ?? defaults.object(forKey: Self.lastAppliedKey) as? Date
@@ -80,6 +107,14 @@ final class SyncStore: ObservableObject {
 
     var syncURL: URL {
         folderURL.appendingPathComponent("sync.json")
+    }
+
+    var isRemotePendingDownload: Bool {
+        guard !fileManager.fileExists(atPath: syncURL.path) else { return false }
+        return [
+            folderURL.appendingPathComponent(".sync.json.icloud"),
+            syncURL.appendingPathExtension("icloud")
+        ].contains { fileManager.fileExists(atPath: $0.path) }
     }
 
     var isRunning: Bool { isEnabled }
@@ -162,6 +197,16 @@ final class SyncStore: ObservableObject {
         guard isEnabled || retainsEditsWhileStopped else { return false }
 
         let snapshot = state
+        if let fingerprint = Self.payloadFingerprint(snapshot),
+           fingerprint == defaults.string(forKey: Self.lastSyncedFingerprintKey) {
+            if latestSnapshot != nil || localDirtyAt != nil {
+                pendingWrite?.cancel()
+                pendingWrite = nil
+                latestSnapshot = nil
+                localDirtyAt = nil
+            }
+            return false
+        }
         latestSnapshot = snapshot
         localDirtyAt = Date()
         guard isEnabled else { return false }
@@ -169,7 +214,7 @@ final class SyncStore: ObservableObject {
         return true
     }
 
-    private func schedulePendingWrite(_ snapshot: PersistedState) {
+    private func schedulePendingWrite(_ snapshot: PersistedState, after delay: TimeInterval? = nil) {
         pendingWrite?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.isEnabled else { return }
@@ -177,15 +222,21 @@ final class SyncStore: ObservableObject {
                 try self.writeNow(snapshot)
             } catch {
                 Log.app.error("Could not sync settings: \(error.localizedDescription)")
+                guard self.isEnabled else { return }
+                self.schedulePendingWrite(snapshot, after: self.writeRetryInterval)
             }
         }
         pendingWrite = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + (delay ?? writeDebounceInterval), execute: work)
     }
 
     func writeNow(_ state: PersistedState, modifiedAt: Date = Date()) throws {
         guard isICloudDriveAvailable else {
             throw SyncStoreError.cloudDocsUnavailable
+        }
+        if isRemotePendingDownload {
+            try? downloadPlaceholder(syncURL)
+            throw SyncStoreError.remotePendingDownload
         }
         try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
         var payload = state
@@ -196,6 +247,9 @@ final class SyncStore: ObservableObject {
         encoder.userInfo[.linkRouterSyncPayload] = true
         try writeFile(encoder.encode(payload), syncURL)
         updateLastSynced(modifiedAt)
+        if let fingerprint = Self.payloadFingerprint(payload) {
+            defaults.set(fingerprint, forKey: Self.lastSyncedFingerprintKey)
+        }
         pendingWrite = nil
         latestSnapshot = nil
         localDirtyAt = nil
@@ -203,9 +257,8 @@ final class SyncStore: ObservableObject {
 
     func readRemoteState() -> PersistedState? {
         guard fileManager.fileExists(atPath: syncURL.path) else {
-            let placeholderURL = syncURL.appendingPathExtension("icloud")
-            if fileManager.fileExists(atPath: placeholderURL.path) {
-                try? downloadPlaceholder(placeholderURL)
+            if isRemotePendingDownload {
+                try? downloadPlaceholder(syncURL)
             }
             return nil
         }
@@ -274,6 +327,9 @@ final class SyncStore: ObservableObject {
         lastApplied = timestamp
         defaults.set(timestamp, forKey: Self.lastAppliedKey)
         updateLastSynced(timestamp)
+        if let fingerprint = Self.payloadFingerprint(remote) {
+            defaults.set(fingerprint, forKey: Self.lastSyncedFingerprintKey)
+        }
         suppressNextWrite = true
         (onApply ?? self.onApply)?(remote)
     }
@@ -282,6 +338,17 @@ final class SyncStore: ObservableObject {
         guard remote.deviceID != deviceID, let modifiedAt = remote.modifiedAt else { return }
         lastApplied = max(lastApplied, modifiedAt)
         defaults.set(lastApplied, forKey: Self.lastAppliedKey)
+    }
+
+    private static func payloadFingerprint(_ state: PersistedState) -> String? {
+        var payload = state
+        payload.modifiedAt = nil
+        payload.deviceID = nil
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.userInfo[.linkRouterSyncPayload] = true
+        guard let data = try? encoder.encode(SyncPayloadFingerprint(state: payload)) else { return nil }
+        return SHA256.hash(data: data).map { String(format: "%02x", Int($0)) }.joined()
     }
 
     private func checkForRemoteUpdate() {
