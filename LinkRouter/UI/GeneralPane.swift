@@ -1,10 +1,12 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct GeneralPane: View {
     @EnvironmentObject private var state: AppState
     @ObservedObject private var updater = Updater.shared
     @State private var loginOn = false
+    @State private var htmlIsDefault = false
 
     var body: some View {
         Form {
@@ -19,6 +21,28 @@ struct GeneralPane: View {
                         }
                     } else {
                         Button("Set as Default…") { state.requestDefault() }
+                    }
+                }
+
+                LabeledContent("HTML files") {
+                    if htmlIsDefault {
+                        HStack(spacing: 6) {
+                            Text("LinkRouter")
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Button("Open with LinkRouter") {
+                            NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpen: .html) { error in
+                                DispatchQueue.main.async {
+                                    if let error {
+                                        Log.routing.error("Could not set HTML file handler: \(error.localizedDescription)")
+                                    }
+                                    refreshHTMLDefault()
+                                }
+                            }
+                        }
                     }
                 }
             } header: {
@@ -75,6 +99,15 @@ struct GeneralPane: View {
                 }
                 .toggleStyle(.switch)
                 .onChange(of: state.settings.unwrapRedirects) { _, _ in state.save() }
+
+                Toggle(isOn: $state.settings.expandShortLinks) {
+                    settingLabel(
+                        "Expand short links",
+                        subtitle: "Looks up where t.co, bit.ly and similar links lead, so rules match the real site. The short-link service sees the lookup."
+                    )
+                }
+                .toggleStyle(.switch)
+                .onChange(of: state.settings.expandShortLinks) { _, _ in state.save() }
 
                 Toggle(isOn: $state.settings.stripTrackingParams) {
                     settingLabel(
@@ -148,7 +181,13 @@ struct GeneralPane: View {
         .onAppear {
             loginOn = state.loginItemOn
             state.refreshDefaultStatus()
+            refreshHTMLDefault()
         }
+    }
+
+    private func refreshHTMLDefault() {
+        let appURL = NSWorkspace.shared.urlForApplication(toOpen: .html)
+        htmlIsDefault = appURL?.standardizedFileURL == Bundle.main.bundleURL.standardizedFileURL
     }
 
     private func settingLabel(_ title: LocalizedStringKey, subtitle: LocalizedStringKey) -> some View {

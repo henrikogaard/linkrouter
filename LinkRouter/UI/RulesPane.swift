@@ -96,6 +96,13 @@ struct RulesPane: View {
         guard let url = URL(string: candidate), url.host != nil else {
             return .plain(String(localized: "Invalid URL"))
         }
+        if let (handler, _) = AppLinks.match(
+            url,
+            installed: AppLinks.installedBundleIDs(),
+            disabled: state.settings.appLinksDisabled
+        ) {
+            return .plain(String(localized: "Opens in \(handler.name)"))
+        }
         let explanation = RuleEngine.explain(
             link: IncomingLink(url: url),
             profiles: state.profiles,
@@ -379,6 +386,22 @@ struct RuleEditorSheet: View {
                         }
                     }
                     .pickerStyle(.menu)
+                }
+
+                Section {
+                    Picker("Open in background", selection: $rule.options.background) {
+                        Text("Use General Setting").tag(BackgroundOverride.inherit)
+                        Text("Always").tag(BackgroundOverride.always)
+                        Text("Never").tag(BackgroundOverride.never)
+                    }
+                    .pickerStyle(.menu)
+
+                    Toggle("Open in a private window", isOn: $rule.options.privateWindow)
+                        .toggleStyle(.switch)
+                } header: {
+                    Text("Options")
+                } footer: {
+                    Text("Private windows work with Chrome-family browsers and Firefox.")
                 }
 
                 if rule.behaviour.kind.needsRows {

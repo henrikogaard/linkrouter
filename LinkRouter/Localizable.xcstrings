@@ -2850,6 +2850,366 @@
           }
         }
       }
+    },
+    "Apps": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apper"
+          }
+        }
+      }
+    },
+    "Expand short links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utvid kortlenker"
+          }
+        }
+      }
+    },
+    "HTML files": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTML-filer"
+          }
+        }
+      }
+    },
+    "Open with LinkRouter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne med LinkRouter"
+          }
+        }
+      }
+    },
+    "LinkRouter": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LinkRouter"
+          }
+        }
+      }
+    },
+    "Looks up where t.co, bit.ly and similar links lead, so rules match the real site. The short-link service sees the lookup.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slår opp hvor t.co, bit.ly og lignende lenker leder, slik at reglene samsvarer med det virkelige nettstedet. Kortlenketjenesten ser oppslaget."
+          }
+        }
+      }
+    },
+    "Apple Music": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Music"
+          }
+        }
+      }
+    },
+    "Apple Music links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Music-lenker"
+          }
+        }
+      }
+    },
+    "Discord": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discord"
+          }
+        }
+      }
+    },
+    "Discord channel links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discord-kanallenker"
+          }
+        }
+      }
+    },
+    "Figma": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Figma"
+          }
+        }
+      }
+    },
+    "Figma design links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Figma-designlenker"
+          }
+        }
+      }
+    },
+    "Install a supported app to route its links.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer en støttet app for å rute lenkene dens."
+          }
+        }
+      }
+    },
+    "Install one of these to route its links.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installer en av disse for å rute lenkene deres."
+          }
+        }
+      }
+    },
+    "Installed apps": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installerte apper"
+          }
+        }
+      }
+    },
+    "Linear": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear"
+          }
+        }
+      }
+    },
+    "Linear issue links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear-saklenker"
+          }
+        }
+      }
+    },
+    "Links for these apps open in the app instead of a browser. Hold a modifier key to choose a browser instead.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lenker for disse appene åpnes i appen i stedet for en nettleser. Hold inne en modifikatortast for å velge en nettleser i stedet."
+          }
+        }
+      }
+    },
+    "Microsoft Teams": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microsoft Teams"
+          }
+        }
+      }
+    },
+    "Open in a private window": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne i et privat vindu"
+          }
+        }
+      }
+    },
+    "Open in background": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne i bakgrunnen"
+          }
+        }
+      }
+    },
+    "Options": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valg"
+          }
+        }
+      }
+    },
+    "Private windows work with Chrome-family browsers and Firefox.": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private vinduer fungerer med Chrome-baserte nettlesere og Firefox."
+          }
+        }
+      }
+    },
+    "No supported apps installed": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen støttede apper er installert"
+          }
+        }
+      }
+    },
+    "Notion": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion"
+          }
+        }
+      }
+    },
+    "Notion page links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion-sidelenker"
+          }
+        }
+      }
+    },
+    "Opens in %@": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpnes i %@"
+          }
+        }
+      }
+    },
+    "Slack": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slack"
+          }
+        }
+      }
+    },
+    "Slack channel links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slack-kanallenker"
+          }
+        }
+      }
+    },
+    "Spotify": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify"
+          }
+        }
+      }
+    },
+    "Spotify track, album, and playlist links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify-lenker til spor, album og spillelister"
+          }
+        }
+      }
+    },
+    "Supported apps": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Støttede apper"
+          }
+        }
+      }
+    },
+    "Teams meeting links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teams-møtelenker"
+          }
+        }
+      }
+    },
+    "Use General Setting": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bruk generell innstilling"
+          }
+        }
+      }
+    },
+    "Zoom": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom"
+          }
+        }
+      }
+    },
+    "zoom.us meeting links": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom.us-møtelenker"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

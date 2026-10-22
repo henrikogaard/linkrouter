@@ -179,6 +179,26 @@ struct Behaviour: Codable, Equatable {
     static let useDefaultBehaviour = Behaviour(kind: .useDefaultBehaviour, rowIDs: [])
 }
 
+enum BackgroundOverride: String, Codable, CaseIterable {
+    case inherit
+    case always
+    case never
+
+    func activates(openInBackground: Bool) -> Bool {
+        let background = switch self {
+        case .inherit: openInBackground
+        case .always: true
+        case .never: false
+        }
+        return !background
+    }
+}
+
+struct RuleOptions: Codable, Equatable {
+    var background: BackgroundOverride = .inherit
+    var privateWindow = false
+}
+
 struct Rule: Codable, Equatable, Identifiable {
     var id: UUID
     var title: String
@@ -187,6 +207,43 @@ struct Rule: Codable, Equatable, Identifiable {
     var conditions: [Condition]
     var behaviour: Behaviour
     var isFallback: Bool
+    var options: RuleOptions = .init()
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, enabled, combinator, conditions, behaviour, isFallback, options
+    }
+
+    init(
+        id: UUID,
+        title: String,
+        enabled: Bool,
+        combinator: Combinator,
+        conditions: [Condition],
+        behaviour: Behaviour,
+        isFallback: Bool,
+        options: RuleOptions = .init()
+    ) {
+        self.id = id
+        self.title = title
+        self.enabled = enabled
+        self.combinator = combinator
+        self.conditions = conditions
+        self.behaviour = behaviour
+        self.isFallback = isFallback
+        self.options = options
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        enabled = try container.decode(Bool.self, forKey: .enabled)
+        combinator = try container.decode(Combinator.self, forKey: .combinator)
+        conditions = try container.decode([Condition].self, forKey: .conditions)
+        behaviour = try container.decode(Behaviour.self, forKey: .behaviour)
+        isFallback = try container.decode(Bool.self, forKey: .isFallback)
+        options = try container.decodeIfPresent(RuleOptions.self, forKey: .options) ?? .init()
+    }
 
     var displayTitle: String {
         isFallback ? String(localized: "Everything else") : title
@@ -305,10 +362,12 @@ struct AppSettings: Codable, Equatable {
     var stripTrackingParams = true
     var promptTimeout: Int = 0
     var onboardingDone = false
+    var appLinksDisabled: Set<String> = []
+    var expandShortLinks = true
 
     enum CodingKeys: String, CodingKey {
         case showMenuBar, forcePromptOnModifier, openInBackground, appearance
-        case unwrapRedirects, stripTrackingParams, promptTimeout, onboardingDone
+        case unwrapRedirects, stripTrackingParams, promptTimeout, onboardingDone, appLinksDisabled, expandShortLinks
     }
 
     init() {}
@@ -323,6 +382,8 @@ struct AppSettings: Codable, Equatable {
         stripTrackingParams = try container.decodeIfPresent(Bool.self, forKey: .stripTrackingParams) ?? true
         promptTimeout = try container.decodeIfPresent(Int.self, forKey: .promptTimeout) ?? 0
         onboardingDone = try container.decodeIfPresent(Bool.self, forKey: .onboardingDone) ?? false
+        appLinksDisabled = try container.decodeIfPresent(Set<String>.self, forKey: .appLinksDisabled) ?? []
+        expandShortLinks = try container.decodeIfPresent(Bool.self, forKey: .expandShortLinks) ?? true
     }
 }
 
