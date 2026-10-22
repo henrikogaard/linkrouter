@@ -15,6 +15,7 @@ enum SettingsPresenter {
         self.window = window
         window.collectionBehavior.insert(.moveToActiveSpace)
         window.makeKeyAndOrderFront(nil)
+        removeSidebarToggle(from: window)
         NSApp.activate(ignoringOtherApps: true)
     }
 
@@ -25,23 +26,33 @@ enum SettingsPresenter {
     private static func makeWindow() -> NSWindow? {
         guard let content = makeContent?() else { return nil }
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 920, height: 640),
+            contentRect: NSRect(x: 0, y: 0, width: 820, height: 600),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.contentViewController = content
-        window.setContentSize(NSSize(width: 920, height: 640))
+        DispatchQueue.main.async {
+            removeSidebarToggle(from: window)
+        }
+        window.setContentSize(NSSize(width: 820, height: 600))
         window.title = "LinkRouter"
-        window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = true
+        window.toolbarStyle = .unified
         window.identifier = NSUserInterfaceItemIdentifier("settings")
         window.isReleasedWhenClosed = false
-        window.setFrameAutosaveName("LinkRouterSettings")
-        if !window.setFrameUsingName("LinkRouterSettings") {
+        window.setFrameAutosaveName("LinkRouterSettings2")
+        if !window.setFrameUsingName("LinkRouterSettings2") {
             window.center()
         }
         return window
+    }
+
+    private static func removeSidebarToggle(from window: NSWindow) {
+        guard let toolbar = window.toolbar,
+              let index = toolbar.items.firstIndex(where: { $0.itemIdentifier == .toggleSidebar }) else {
+            return
+        }
+        toolbar.removeItem(at: index)
     }
 
     static func resignToAccessoryIfNeeded() {

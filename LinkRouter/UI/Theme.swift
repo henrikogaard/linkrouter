@@ -17,40 +17,4 @@ extension AppearanceMode {
 
 enum LR {
     static let accent = Color("AccentColor")
-    static let sidebarWidth: CGFloat = 216
-    static let titlebar: CGFloat = 36
-    static let pageInset: CGFloat = 28
-    static let rowRadius: CGFloat = 12
-
-    static var sidebarFill: Color {
-        Color(nsColor: .controlBackgroundColor)
-    }
-
-    static var pageFill: Color {
-        Color(nsColor: .windowBackgroundColor)
-    }
-
-    static var rowFill: Color {
-        Color.primary.opacity(0.045)
-    }
-
-    static var hairline: Color {
-        Color.primary.opacity(0.10)
-    }
-
-    static var hoverFill: Color {
-        Color.primary.opacity(0.065)
-    }
-
-    static var selectionFill: Color {
-        Color.primary.opacity(0.09)
-    }
-
-    static var selectionStroke: Color {
-        Color.primary.opacity(0.22)
-    }
-
-    static var badgeFill: Color {
-        Color.primary.opacity(0.07)
-    }
 }

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct GeneralPane: View {
@@ -6,183 +7,163 @@ struct GeneralPane: View {
     @State private var loginOn = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                PageHeader(
-                    title: "General",
-                    subtitle: "Default browser, login, and how links open."
-                )
-
-                DefaultBanner()
-
-                settingsGroup("Appearance") {
-                    Picker("Appearance", selection: appearanceBinding) {
-                        ForEach(AppearanceMode.allCases) { mode in
-                            Text(mode.label).tag(mode)
+        Form {
+            Section {
+                LabeledContent("Default web browser") {
+                    if state.isDefaultBrowser {
+                        HStack(spacing: 6) {
+                            Text("LinkRouter")
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.secondary)
                         }
+                    } else {
+                        Button("Set as Default…") { state.requestDefault() }
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .accessibilityLabel("Appearance")
-                    Text("System follows macOS. Light and Dark lock this window and the picker.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
                 }
+            } header: {
+                Text("Default Browser")
+            } footer: {
+                Button("Open Desktop & Dock Settings…") {
+                    DefaultBrowser.openSystemSettings()
+                }
+                .buttonStyle(.link)
+            }
 
-                settingsGroup("Default browser") {
-                    HStack {
-                        Text("Status")
-                        Spacer()
-                        Text(state.isDefaultBrowser ? "LinkRouter is the default" : "Not the default")
-                            .foregroundStyle(state.isDefaultBrowser ? Color.secondary : Color.primary)
+            Section {
+                Toggle(isOn: $state.settings.forcePromptOnModifier) {
+                    settingLabel(
+                        "Ask when a modifier key is held",
+                        subtitle: "Hold Shift, Control, Option or Command while a link opens to always show the picker."
+                    )
+                }
+                .toggleStyle(.switch)
+                .onChange(of: state.settings.forcePromptOnModifier) { _, _ in state.save() }
+
+                Picker(selection: $state.settings.promptTimeout) {
+                    Text("Never").tag(0)
+                    Text("15 seconds").tag(15)
+                    Text("30 seconds").tag(30)
+                    Text("60 seconds").tag(60)
+                } label: {
+                    settingLabel(
+                        "Close automatically after",
+                        subtitle: "When it closes, the link opens in your favourite browser."
+                    )
+                }
+                .pickerStyle(.menu)
+                .onChange(of: state.settings.promptTimeout) { _, _ in state.save() }
+
+                Toggle(isOn: $state.settings.openInBackground) {
+                    settingLabel(
+                        "Open browsers in the background",
+                        subtitle: "Keep focus in the app you clicked from."
+                    )
+                }
+                .toggleStyle(.switch)
+                .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
+            } header: {
+                Text("Picker")
+            }
+
+            Section("Link Cleaning") {
+                Toggle(isOn: $state.settings.unwrapRedirects) {
+                    settingLabel(
+                        "Unwrap redirect links",
+                        subtitle: "Follows known redirectors (Google /url, Outlook SafeLinks, Facebook l.php) to the real URL before routing."
+                    )
+                }
+                .toggleStyle(.switch)
+                .onChange(of: state.settings.unwrapRedirects) { _, _ in state.save() }
+
+                Toggle(isOn: $state.settings.stripTrackingParams) {
+                    settingLabel(
+                        "Remove tracking parameters",
+                        subtitle: "Removes utm_* and common click IDs (fbclid, gclid, …) before routing."
+                    )
+                }
+                .toggleStyle(.switch)
+                .onChange(of: state.settings.stripTrackingParams) { _, _ in state.save() }
+            }
+
+            Section("Appearance") {
+                Picker("Appearance", selection: appearanceBinding) {
+                    ForEach(AppearanceMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
                     }
-                    Button("Set as default") { state.requestDefault() }
-                    Button("Open System Settings") { DefaultBrowser.openSystemSettings() }
-                    Text("System Settings → Desktop & Dock → Default web browser")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
                 }
+                .pickerStyle(.menu)
 
-                settingsGroup("Opening links") {
-                    Toggle("Force prompt when a modifier key is held", isOn: $state.settings.forcePromptOnModifier)
-                        .toggleStyle(.switch)
-                        .accessibilityLabel("Force prompt when a modifier key is held")
-                        .tint(LR.accent)
-                        .onChange(of: state.settings.forcePromptOnModifier) { _, _ in state.save() }
-                    Text("Uses currently held Shift, Control, Option, or Command. Not the keys from the original click.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                    Toggle("Open browsers in the background", isOn: $state.settings.openInBackground)
-                        .toggleStyle(.switch)
-                        .accessibilityLabel("Open browsers in the background")
-                        .tint(LR.accent)
-                        .onChange(of: state.settings.openInBackground) { _, _ in state.save() }
-                    HStack {
-                        Text("Auto-dismiss picker")
-                        Spacer()
-                        Picker("Auto-dismiss picker", selection: $state.settings.promptTimeout) {
-                            Text("None").tag(0)
-                            Text("15 s").tag(15)
-                            Text("30 s").tag(30)
-                            Text("60 s").tag(60)
-                        }
-                        .labelsHidden()
-                        .accessibilityLabel("Auto-dismiss picker")
-                        .pickerStyle(.menu)
-                        .frame(width: 90)
-                        .onChange(of: state.settings.promptTimeout) { _, _ in state.save() }
-                    }
-                    Text("Opens the favourite when it expires, if one is set.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                Toggle(isOn: $state.settings.showMenuBar) {
+                    settingLabel(
+                        "Show in menu bar",
+                        subtitle: "When hidden, open LinkRouter from Finder or Spotlight to get back here."
+                    )
                 }
+                .toggleStyle(.switch)
+                .onChange(of: state.settings.showMenuBar) { _, _ in state.save() }
+            }
 
-                settingsGroup("Link cleaning") {
-                    Toggle("Unwrap redirect links", isOn: $state.settings.unwrapRedirects)
-                        .toggleStyle(.switch)
-                        .accessibilityLabel("Unwrap redirect links")
-                        .tint(LR.accent)
-                        .onChange(of: state.settings.unwrapRedirects) { _, _ in state.save() }
-                    Text("Follows known redirectors (Google /url, Outlook SafeLinks, Facebook l.php) to the real URL before routing.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                    Toggle("Strip tracking parameters", isOn: $state.settings.stripTrackingParams)
-                        .toggleStyle(.switch)
-                        .accessibilityLabel("Strip tracking parameters")
-                        .tint(LR.accent)
-                        .onChange(of: state.settings.stripTrackingParams) { _, _ in state.save() }
-                    Text("Removes utm_* and common click IDs (fbclid, gclid, …) before routing.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+            Section("Startup") {
+                Toggle(isOn: $loginOn) {
+                    Text("Open at login")
                 }
+                .toggleStyle(.switch)
+                .onChange(of: loginOn) { _, value in state.setLoginItem(value) }
+            }
 
-                settingsGroup("Menu bar") {
-                    Toggle("Show menu bar icon", isOn: $state.settings.showMenuBar)
-                        .toggleStyle(.switch)
-                        .accessibilityLabel("Show menu bar icon")
-                        .tint(LR.accent)
-                        .onChange(of: state.settings.showMenuBar) { _, _ in state.save() }
-                    Text("With the icon hidden, open LinkRouter again from Finder or Spotlight to reach Settings.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
-
-                settingsGroup("Login") {
-                    Toggle("Open at login", isOn: $loginOn)
-                        .toggleStyle(.switch)
-                        .accessibilityLabel("Open at login")
-                        .tint(LR.accent)
-                        .onChange(of: loginOn) { _, value in
-                            state.setLoginItem(value)
-                        }
-                    Text("macOS may ask you to allow a login item.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
-
-                settingsGroup("Updates") {
-                    HStack {
-                        Text("Version")
-                        Spacer()
+            Section("Updates") {
+                LabeledContent("Version") {
+                    HStack(spacing: 8) {
                         Text(version)
                             .foregroundStyle(.secondary)
-                    }
-                    if updater.canCheck {
-                        Button("Check for Updates…") { updater.check() }
-                        Toggle("Check automatically", isOn: autoUpdateBinding)
-                            .toggleStyle(.switch)
-                            .accessibilityLabel("Check for updates automatically")
-                            .tint(LR.accent)
-                    } else {
-                        Text("Updates aren't configured for this build")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                        if updater.canCheck {
+                            Button("Check for Updates…") { updater.check() }
+                        }
                     }
                 }
-
-                settingsGroup("Backup") {
-                    HStack {
-                        Button("Export Settings…") { exportSettings() }
-                        Button("Import Settings…") { importSettings() }
-                    }
-                    Text("Exports browsers, rules, profiles, and settings. Link history stays out of the file.")
-                        .font(.system(size: 12))
+                if updater.canCheck {
+                    Toggle("Check for updates automatically", isOn: autoUpdateBinding)
+                        .toggleStyle(.switch)
+                } else {
+                    Text("Updates aren't configured for this build")
                         .foregroundStyle(.secondary)
                 }
-
             }
-            .padding(.bottom, 28)
+
+            Section {
+                LabeledContent("Settings") {
+                    HStack {
+                        Button("Export…") { exportSettings() }
+                        Button("Import…") { importSettings() }
+                    }
+                }
+            } header: {
+                Text("Backup")
+            } footer: {
+                Text("Includes browsers, rules, profiles and settings. Link history isn't included.")
+            }
         }
-        .background(LR.pageFill)
+        .formStyle(.grouped)
         .onAppear {
             loginOn = state.loginItemOn
             state.refreshDefaultStatus()
         }
     }
 
-    private func settingsGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func settingLabel(_ title: LocalizedStringKey, subtitle: LocalizedStringKey) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
+            Text(subtitle)
+                .font(.caption)
                 .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 10) {
-                content()
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                    .strokeBorder(LR.hairline, lineWidth: 1)
-            }
         }
-        .padding(.horizontal, LR.pageInset)
     }
 
     private var autoUpdateBinding: Binding<Bool> {
         Binding(
             get: { updater.automaticallyChecksForUpdates },
-            set: { value in updater.automaticallyChecksForUpdates = value }
+            set: { updater.automaticallyChecksForUpdates = $0 }
         )
     }
 
@@ -221,8 +202,8 @@ struct GeneralPane: View {
         let confirm = NSAlert()
         confirm.messageText = String(localized: "Replace your current browsers, rules and profiles?")
         confirm.informativeText = String(localized: "Link history is kept. This can't be undone.")
-        confirm.addButton(withTitle: "Replace")
-        confirm.addButton(withTitle: "Cancel")
+        confirm.addButton(withTitle: String(localized: "Replace"))
+        confirm.addButton(withTitle: String(localized: "Cancel"))
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
         do {
             try state.importSettings(from: url)
@@ -230,7 +211,7 @@ struct GeneralPane: View {
             let alert = NSAlert()
             alert.messageText = String(localized: "Couldn't import settings")
             alert.informativeText = error.localizedDescription
-            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: String(localized: "OK"))
             alert.runModal()
         }
     }

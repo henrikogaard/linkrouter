@@ -188,11 +188,15 @@ struct Rule: Codable, Equatable, Identifiable {
     var behaviour: Behaviour
     var isFallback: Bool
 
+    var displayTitle: String {
+        isFallback ? String(localized: "Everything else") : title
+    }
+
     static func shipped() -> [Rule] {
         [
             Rule(
                 id: UUID(),
-                title: "Some browsers are running",
+                title: String(localized: "Some browsers are running"),
                 enabled: true,
                 combinator: .all,
                 conditions: [.runningCount(.greaterThan, 0)],
@@ -201,7 +205,7 @@ struct Rule: Codable, Equatable, Identifiable {
             ),
             Rule(
                 id: UUID(),
-                title: "Everything else",
+                title: String(localized: "Everything else"),
                 enabled: true,
                 combinator: .all,
                 conditions: [],
@@ -272,19 +276,23 @@ struct RouteProfile: Codable, Equatable, Identifiable {
 
     var patternSummary: String {
         let filled = filledPatterns
-        if filled.isEmpty { return "No URL patterns yet" }
+        if filled.isEmpty { return String(localized: "No URL patterns yet") }
         if filled.count <= 3 { return filled.joined(separator: ", ") }
         return filled.prefix(3).joined(separator: ", ") + " +\(filled.count - 3)"
     }
 
     static func shipped() -> [RouteProfile] {
-        ["Personal", "Work", "Development"].map { name in
+        [
+            String(localized: "Personal"),
+            String(localized: "Work"),
+            String(localized: "Development")
+        ].map { name in
             RouteProfile(id: UUID(), name: name, enabled: true, browserRowID: nil, patterns: [""])
         }
     }
 
     static func blank() -> RouteProfile {
-        RouteProfile(id: UUID(), name: "New profile", enabled: true, browserRowID: nil, patterns: [""])
+        RouteProfile(id: UUID(), name: String(localized: "New profile"), enabled: true, browserRowID: nil, patterns: [""])
     }
 }
 

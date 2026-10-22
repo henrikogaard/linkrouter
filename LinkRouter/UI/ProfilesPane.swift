@@ -1,80 +1,48 @@
+import AppKit
 import SwiftUI
 
 struct ProfilesPane: View {
     @EnvironmentObject private var state: AppState
     @State private var editing: RouteProfile?
-    @State private var selection: UUID?
+    @State private var draggingID: UUID?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            PageHeader(
-                title: "Profiles",
-                subtitle: "Personal, work, development: URL patterns that always open in one browser. First match wins, before Rules."
-            )
-
-            List {
-                ForEach(state.profiles) { profile in
-                    ProfileRow(profile: profile, isSelected: selection == profile.id) {
-                        selection = profile.id
-                        editing = profile
-                    }
-                    .contextMenu {
-                        Button("Edit") {
-                            selection = profile.id
-                            editing = profile
-                        }
-                        Button("Delete", role: .destructive) {
-                            remove(profile)
-                        }
-                    }
-                    .listRowInsets(EdgeInsets(top: 4, leading: LR.pageInset, bottom: 4, trailing: LR.pageInset))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+        Form {
+            Section {
+                if state.profiles.isEmpty {
+                    Text("No profiles yet.")
+                        .foregroundStyle(.secondary)
                 }
-                .onMove(perform: state.moveProfiles)
+                ForEach(state.profiles) { profile in
+                    ProfileRow(
+                        profile: profile,
+                        draggingID: $draggingID,
+                        move: state.moveProfile,
+                        onEdit: { editing = profile }
+                    )
+                }
+            } footer: {
+                Text("A profile sends matching links straight to one browser, before any rule runs. The first match wins.")
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
         }
-        .background(LR.pageFill)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            PaneFooter {
+        .formStyle(.grouped)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
                 Button {
                     state.addProfile()
                     editing = state.profiles.last
-                    selection = editing?.id
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
-                Button {
-                    if let selected = state.profiles.first(where: { $0.id == selection }) {
-                        remove(selected)
-                    }
-                } label: {
-                    Label("Remove", systemImage: "minus")
-                }
-                .disabled(selection == nil)
-                Spacer()
             }
         }
         .sheet(item: $editing) { profile in
             ProfileEditorSheet(
                 profile: profile,
-                onSave: { updated in
-                    state.updateProfile(updated)
-                },
-                onDelete: {
-                    remove(profile)
-                }
+                onSave: state.updateProfile,
+                onDelete: { state.removeProfile(profile) }
             )
             .environmentObject(state)
-        }
-    }
-
-    private func remove(_ profile: RouteProfile) {
-        state.removeProfile(profile)
-        if selection == profile.id {
-            selection = nil
         }
     }
 }
@@ -82,155 +50,208 @@ struct ProfilesPane: View {
 private struct ProfileRow: View {
     @EnvironmentObject private var state: AppState
     var profile: RouteProfile
-    var isSelected: Bool
+    @Binding var draggingID: UUID?
+    var move: (UUID, UUID) -> Void
     var onEdit: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            Button(action: onEdit) {
-                HStack(spacing: 14) {
-                    Image(systemName: "square.grid.2x2")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 28)
-                        .background(LR.badgeFill, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(profile.name)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.primary)
-                        Text(detail)
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                    Spacer()
+        HStack(spacing: 12) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.tertiary)
+                .frame(width: 16)
+                .contentShape(Rectangle())
+                .help("Drag to reorder")
+                .onDrag {
+                    draggingID = profile.id
+                    return NSItemProvider(object: BrowsersPane.dragPayload(profile.id) as NSString)
                 }
-                .padding(.leading, 14)
-                .padding(.vertical, 12)
+
+            browserIcon
+                .frame(width: 24, height: 24)
+
+            Button(action: onEdit) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(profile.name)
+                        .font(.system(size: 13))
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+
             Toggle("Enabled", isOn: enabledBinding)
                 .toggleStyle(.switch)
-                .controlSize(.small)
+                .controlSize(.mini)
                 .labelsHidden()
                 .accessibilityLabel("Enable \(profile.name)")
-                .tint(LR.accent)
-                .padding(.trailing, 14)
+
+            Menu {
+                rowActions
+            } label: {
+                Image(systemName: "ellipsis")
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .accessibilityLabel("Profile actions")
         }
-        .background(isSelected ? LR.selectionFill : LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                .strokeBorder(isSelected ? LR.selectionStroke : LR.hairline, lineWidth: 1)
-        }
-        .accessibilityElement(children: .contain)
+        .onDrop(
+            of: [.plainText],
+            delegate: ReorderDropDelegate(
+                targetID: profile.id,
+                draggingID: $draggingID,
+                move: move
+            )
+        )
+        .contextMenu { rowActions }
     }
 
-    private var detail: String {
+    private var browserIcon: some View {
+        Group {
+            if let id = profile.browserRowID,
+               let row = state.rows.first(where: { $0.id == id }),
+               let browser = state.browser(for: row) {
+                Image(nsImage: BrowserCatalog.icon(for: browser.path))
+                    .resizable()
+                    .interpolation(.high)
+            } else {
+                Image(systemName: "questionmark.app.dashed")
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var subtitle: String {
         let browser: String
         if let id = profile.browserRowID, let row = state.rows.first(where: { $0.id == id }) {
             browser = state.title(for: row)
         } else {
-            browser = "No browser"
+            browser = String(localized: "No browser")
         }
-        return "\(browser) · \(profile.patternSummary)"
+        return String(localized: "\(profile.patternSummary) → \(browser)")
+    }
+
+    @ViewBuilder
+    private var rowActions: some View {
+        Button("Edit…", action: onEdit)
+        let index = state.profiles.firstIndex(where: { $0.id == profile.id }) ?? 0
+        Button("Move Up") {
+            guard index > 0 else { return }
+            state.moveProfile(id: profile.id, to: state.profiles[index - 1].id)
+        }
+        .disabled(index == 0)
+        Button("Move Down") {
+            guard index + 1 < state.profiles.count else { return }
+            state.moveProfile(id: profile.id, to: state.profiles[index + 1].id)
+        }
+        .disabled(index + 1 >= state.profiles.count)
+        Divider()
+        Button("Delete", role: .destructive) {
+            state.removeProfile(profile)
+        }
     }
 
     private var enabledBinding: Binding<Bool> {
         Binding(
             get: { profile.enabled },
             set: { value in
-                var next = profile
-                next.enabled = value
-                state.updateProfile(next)
+                var updated = profile
+                updated.enabled = value
+                state.updateProfile(updated)
             }
         )
     }
 }
 
 struct ProfileEditorSheet: View {
-    @EnvironmentObject private var state: AppState
     @Environment(\.dismiss) private var dismiss
     @State var profile: RouteProfile
     var onSave: (RouteProfile) -> Void
     var onDelete: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            Text(profile.name.isEmpty ? "Profile" : profile.name)
-                .font(.system(size: 18, weight: .semibold))
-
-            EditorSection(title: "Name") {
-                TextField("Work, Personal, Development…", text: $profile.name)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            EditorSection(
-                title: "Open in",
-                footnote: "Chrome and Firefox rows can be a specific browser profile from the Browsers pane."
-            ) {
-                ScrollView {
-                    BrowserPicker(allowsMultiple: false, selection: browserSelection)
+        VStack(spacing: 0) {
+            Form {
+                Section {
+                    TextField("Name", text: $profile.name, prompt: Text("Work, Personal, Development…"))
                 }
-                .frame(maxHeight: 200)
-            }
 
-            EditorSection(
-                title: "URL patterns",
-                footnote: "Host like github.com, or any substring of the URL. First matching profile wins."
-            ) {
-                VStack(alignment: .leading, spacing: 8) {
+                Section {
+                    BrowserPicker(allowsMultiple: false, selection: browserSelection)
+                } header: {
+                    Text("Open In")
+                } footer: {
+                    Text("Chrome and Firefox rows can be a specific browser profile from the Browsers pane.")
+                }
+
+                Section {
                     ForEach(Array(profile.patterns.enumerated()), id: \.offset) { index, _ in
-                        HStack(spacing: 8) {
-                            TextField("github.com", text: patternBinding(index))
-                                .textFieldStyle(.roundedBorder)
+                        HStack {
+                            TextField("Web address", text: patternBinding(index), prompt: Text("github.com"))
+                                .labelsHidden()
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             Button {
                                 profile.patterns.remove(at: index)
                                 if profile.patterns.isEmpty { profile.patterns = [""] }
                             } label: {
-                                Image(systemName: "minus.circle.fill")
-                                    .foregroundStyle(.secondary)
+                                Image(systemName: "minus.circle")
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.borderless)
                             .disabled(profile.patterns.count == 1 && profile.filledPatterns.isEmpty)
                         }
                     }
                     Button {
                         profile.patterns.append("")
                     } label: {
-                        Label("Add pattern", systemImage: "plus")
+                        Label("Add Pattern", systemImage: "plus")
                     }
                     .buttonStyle(.borderless)
+                } header: {
+                    Text("URL Patterns")
+                } footer: {
+                    Text("Host like github.com, or any substring of the URL. First matching profile wins.")
                 }
             }
+            .formStyle(.grouped)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+            editorBar
+        }
+        .frame(width: 520, height: 480)
+    }
+
+    private var editorBar: some View {
+        VStack(spacing: 0) {
+            Divider()
             HStack {
                 if let onDelete {
                     Button("Delete", role: .destructive) {
                         onDelete()
                         dismiss()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bordered)
+                    .tint(.red)
                     .foregroundStyle(.red)
                 }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Save") {
-                    profile.patterns = profile.patterns.map { $0.trimmingCharacters(in: .whitespaces) }
-                    if profile.patterns.filter({ !$0.isEmpty }).isEmpty {
-                        profile.patterns = [""]
-                    }
-                    onSave(profile)
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
-                .tint(LR.accent)
-                .disabled(profile.name.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button("Save", action: save)
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
+                    .tint(LR.accent)
+                    .disabled(profile.name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
         }
-        .padding(24)
-        .frame(width: 520)
     }
 
     private var browserSelection: Binding<[UUID]> {
@@ -248,5 +269,14 @@ struct ProfileEditorSheet: View {
                 profile.patterns[index] = value
             }
         )
+    }
+
+    private func save() {
+        profile.patterns = profile.patterns.map { $0.trimmingCharacters(in: .whitespaces) }
+        if profile.patterns.filter({ !$0.isEmpty }).isEmpty {
+            profile.patterns = [""]
+        }
+        onSave(profile)
+        dismiss()
     }
 }

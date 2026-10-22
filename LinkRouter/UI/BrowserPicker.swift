@@ -3,12 +3,12 @@ import SwiftUI
 struct BrowserPicker: View {
     @EnvironmentObject private var state: AppState
     var allowsMultiple: Bool
+    var showsOrder = false
     @Binding var selection: [UUID]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: 0) {
             ForEach(state.enabledRows) { row in
-                let selected = selection.contains(row.id)
                 Button {
                     toggle(row.id)
                 } label: {
@@ -16,10 +16,10 @@ struct BrowserPicker: View {
                         Image(nsImage: BrowserCatalog.icon(for: state.browser(for: row)?.path ?? ""))
                             .resizable()
                             .interpolation(.high)
-                            .frame(width: 28, height: 28)
-                        VStack(alignment: .leading, spacing: 1) {
+                            .frame(width: 20, height: 20)
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(state.title(for: row))
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: 13))
                                 .foregroundStyle(.primary)
                             if let subtitle = state.subtitle(for: row) {
                                 Text(subtitle)
@@ -29,29 +29,40 @@ struct BrowserPicker: View {
                             }
                         }
                         Spacer(minLength: 8)
-                        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(selected ? Color.primary : Color.secondary.opacity(0.45))
+                        selectionMark(for: row.id)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(selected ? LR.selectionFill : LR.rowFill)
-                    )
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(selected ? LR.selectionStroke : LR.hairline, lineWidth: 1)
-                    }
+                    .padding(.vertical, 7)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .focusEffectDisabled()
             }
             if state.enabledRows.isEmpty {
                 Text("Turn on at least one browser in Browsers.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func selectionMark(for id: UUID) -> some View {
+        if showsOrder, let index = selection.firstIndex(of: id) {
+            Text("\(index + 1)")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.primary)
+                .frame(width: 18, height: 18)
+                .overlay(Circle().strokeBorder(Color.primary.opacity(0.25), lineWidth: 1))
+        } else if selection.contains(id) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 18, height: 18)
+        } else {
+            Color.clear
+                .frame(width: 18, height: 18)
         }
     }
 
@@ -64,26 +75,6 @@ struct BrowserPicker: View {
             }
         } else {
             selection = [id]
-        }
-    }
-}
-
-struct EditorSection<Content: View>: View {
-    var title: String
-    var footnote: String? = nil
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
-            content
-            if let footnote {
-                Text(footnote)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
-            }
         }
     }
 }

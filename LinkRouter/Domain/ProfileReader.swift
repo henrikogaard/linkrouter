@@ -17,7 +17,10 @@ struct ChromiumFamily: Equatable {
     let privateFlag: String
 
     var privateWord: String {
-        privateFlag == "--inprivate" ? "InPrivate" : "Incognito"
+        if privateFlag == "--inprivate" {
+            return String(localized: "InPrivate")
+        }
+        return String(localized: "Incognito")
     }
 }
 

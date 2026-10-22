@@ -3,121 +3,71 @@ import SwiftUI
 
 struct AboutPane: View {
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                PageHeader(
-                    title: "About",
-                    subtitle: "Version, links, and supporting development."
-                )
-
-                VStack(spacing: 4) {
+        Form {
+            Section {
+                VStack(spacing: 3) {
                     Image(nsImage: NSApplication.shared.applicationIconImage)
                         .resizable()
-                        .frame(width: 72, height: 72)
-                        .padding(.bottom, 6)
+                        .frame(width: 64, height: 64)
+                        .padding(.bottom, 4)
                     Text("LinkRouter")
-                        .font(.system(size: 16, weight: .semibold))
-                    Text("Henrik Øgård")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 15, weight: .semibold))
                     Text("Version \(version)")
-                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    Text("by Henrik Øgård")
                         .foregroundStyle(.tertiary)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-
-                group("Links") {
-                    linkRow(
-                        symbol: "chevron.left.forwardslash.chevron.right",
-                        title: "GitHub",
-                        detail: "Source, issues and releases",
-                        url: "https://github.com/henrikogaard/linkrouter"
-                    )
-                    hairline
-                    linkRow(
-                        symbol: "at",
-                        title: "X",
-                        detail: "@henrikogaard",
-                        url: "https://x.com/henrikogaard"
-                    )
-                    hairline
-                    linkRow(
-                        symbol: "cup.and.saucer.fill",
-                        title: "Buy Me a Coffee",
-                        detail: "Support development",
-                        url: "https://buymeacoffee.com/henrikogaard"
-                    )
-                }
-
-                group("Details") {
-                    HStack {
-                        Text("Bundle")
-                        Spacer()
-                        Text(Bundle.main.bundleIdentifier ?? "app.linkrouter.LinkRouter")
-                            .foregroundStyle(.secondary)
-                    }
-                    .font(.system(size: 13))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                }
+                .multilineTextAlignment(.center)
+                .padding(.vertical, 8)
+                .listRowBackground(Color.clear)
             }
-            .padding(.bottom, 28)
-        }
-        .background(LR.pageFill)
-    }
 
-    private func group<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 0) {
-                content()
-            }
-            .padding(.vertical, 6)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(LR.rowFill, in: RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: LR.rowRadius, style: .continuous)
-                    .strokeBorder(LR.hairline, lineWidth: 1)
+            Section("Links") {
+                linkRow(
+                    symbol: "chevron.left.forwardslash.chevron.right",
+                    title: "GitHub",
+                    detail: "Source code, issues and releases",
+                    url: "https://github.com/henrikogaard/linkrouter"
+                )
+                linkRow(
+                    symbol: "at",
+                    title: "X",
+                    detail: "@henrikogaard",
+                    url: "https://x.com/henrikogaard"
+                )
+                linkRow(
+                    symbol: "cup.and.saucer.fill",
+                    title: "Buy Me a Coffee",
+                    detail: "Support development",
+                    url: "https://buymeacoffee.com/henrikogaard"
+                )
             }
         }
-        .padding(.horizontal, LR.pageInset)
+        .formStyle(.grouped)
     }
 
-    private func linkRow(symbol: String, title: String, detail: String, url: String) -> some View {
+    private func linkRow(symbol: String, title: String, detail: LocalizedStringKey, url: String) -> some View {
         Link(destination: URL(string: url)!) {
             HStack(spacing: 12) {
                 Image(systemName: symbol)
-                    .font(.system(size: 14, weight: .medium))
-                    .frame(width: 28, height: 28)
-                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                VStack(alignment: .leading, spacing: 1) {
+                    .frame(width: 20)
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 13, weight: .medium))
                     Text(detail)
-                        .font(.system(size: 11))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .foregroundStyle(.primary)
-    }
-
-    private var hairline: some View {
-        Rectangle()
-            .fill(LR.hairline)
-            .frame(height: 1)
-            .padding(.leading, 54)
     }
 
     private var version: String {
