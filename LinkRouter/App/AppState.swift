@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 @MainActor
 final class AppState: ObservableObject {
     static let shared = AppState()
+    static var lastForeignApp: NSRunningApplication?
 
     @Published var browsers: [BrowserRecord]
     @Published var rows: [CatalogRow]
@@ -25,6 +26,7 @@ final class AppState: ObservableObject {
     private var firstPromptLogged = false
     var dispatcher: Dispatching
     private let shortLinkExpander = ShortLinkExpander()
+    private var hotKeys: HotKeys?
     var onPromptShown: (() -> Void)?
     var skipsPersistence = false
     @Published var clipboardURL: URL?
@@ -332,6 +334,12 @@ final class AppState: ObservableObject {
     }
 
     func handleIncoming(_ url: URL, source: (bundleID: String, name: String)? = nil) {
+        let flags = NSEvent.modifierFlags
+        let force = settings.forcePromptOnModifier && !flags.intersection([.shift, .control, .option, .command]).isEmpty
+        if url.scheme?.lowercased() == "mailto" {
+            routeMailto(url, forcePrompt: force)
+            return
+        }
         let isHTMLFile = url.isFileURL && ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
         let isWebLink = ["http", "https"].contains(url.scheme?.lowercased() ?? "")
         guard isHTMLFile || isWebLink else { return }
@@ -347,8 +355,6 @@ final class AppState: ObservableObject {
             dispatch(link, row: row)
             return
         }
-        let flags = NSEvent.modifierFlags
-        let force = settings.forcePromptOnModifier && !flags.intersection([.shift, .control, .option, .command]).isEmpty
         if settings.expandShortLinks && ShortLinkExpander.isShortLink(cleaned) {
             let sourceBundleID = source?.bundleID
             let sourceName = source?.name
@@ -371,6 +377,123 @@ final class AppState: ObservableObject {
             return
         }
         route(link, modifierForcePrompt: force)
+    }
+
+    func configureHotKeys() {
+        if hotKeys == nil {
+            hotKeys = HotKeys { [weak self] action in
+                switch action {
+                case .openClipboardLink: self?.openClipboardLink()
+                case .sendCurrentPage: self?.openCurrentPage()
+                }
+            }
+        }
+        hotKeys?.configure(settings.shortcuts)
+    }
+
+    func setShortcut(_ combo: KeyCombo?, for action: ShortcutAction) -> Bool {
+        if let combo {
+            if settings.shortcuts.contains(where: { $0.key != action && $0.value == combo })
+                || hotKeys?.set(combo, for: action) == false {
+                NSSound.beep()
+                return false
+            }
+            settings.shortcuts[action] = combo
+        } else {
+            hotKeys?.clear(action)
+            settings.shortcuts.removeValue(forKey: action)
+        }
+        save()
+        return true
+    }
+
+    func openClipboardLink() {
+        refreshClipboard()
+        guard let url = ClipboardLink.firstURL(in: NSPasteboard.general.string(forType: .string)) else { return }
+        handleIncoming(url)
+    }
+
+    func openCurrentPage() {
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        let source = frontmost?.bundleIdentifier == Bundle.main.bundleIdentifier
+            ? Self.lastForeignApp : frontmost
+        guard let source, let bundleID = source.bundleIdentifier else { return }
+        guard FrontmostPage.isSupported(bundleID) else {
+            showCurrentPageAlert(source.localizedName ?? bundleID)
+            return
+        }
+        FrontmostPage.readURL(bundleID: bundleID) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let url):
+                let rows = FrontmostPage.pickerRows(self.availableRows, sourceBundleID: bundleID) {
+                    self.browser(for: $0)?.bundleIdentifier
+                }
+                self.showPrompt(link: IncomingLink(url: url, sourceBundleID: bundleID, sourceName: source.localizedName),
+                                rows: rows)
+            case .failure(.automationDenied):
+                self.showAutomationSettingsAlert()
+            case .failure:
+                self.showCurrentPageAlert(source.localizedName ?? bundleID)
+            }
+        }
+    }
+
+    private func routeMailto(_ url: URL, forcePrompt: Bool) {
+        let apps = MailCatalog.installed()
+        let enabled = apps.filter { !settings.mail.disabled.contains($0.bundleIdentifier) }
+        switch MailRouting.decide(
+            mode: settings.mail.mode,
+            favourite: settings.mail.favouriteBundleID,
+            installed: Set(apps.map(\.bundleIdentifier)),
+            enabled: enabled.map(\.bundleIdentifier),
+            forcePrompt: forcePrompt
+        ) {
+        case .open(let bundleID):
+            if let app = apps.first(where: { $0.bundleIdentifier == bundleID }) { openMailto(url, with: app) }
+        case .prompt(let ids):
+            showMailPrompt(url, apps: ids.compactMap { id in apps.first { $0.bundleIdentifier == id } })
+        case .none:
+            break
+        }
+    }
+
+    private func openMailto(_ url: URL, with app: MailApp) {
+        NSWorkspace.shared.open([url], withApplicationAt: app.url, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    private func showMailPrompt(_ url: URL, apps: [MailApp]) {
+        var appByID: [UUID: MailApp] = [:]
+        let items = apps.map { app -> PromptItem in
+            let id = UUID()
+            appByID[id] = app
+            return PromptItem(id: id, title: app.name, running: !NSRunningApplication.runningApplications(withBundleIdentifier: app.bundleIdentifier).isEmpty,
+                              icon: NSWorkspace.shared.icon(forFile: app.url.path))
+        }
+        prompt.show(items: items, link: IncomingLink(url: url), allowsAlways: false, onPick: { [weak self] id, _ in
+            guard let self, let app = id.flatMap({ appByID[$0] }) else { return }
+            self.openMailto(url, with: app)
+        }, onAlways: { _ in })
+    }
+
+    private func showCurrentPageAlert(_ browser: String) {
+        let alert = NSAlert()
+        alert.messageText = String(localized: "\(browser) doesn't let other apps read its current page.")
+        alert.addButton(withTitle: String(localized: "OK"))
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
+    }
+
+    private func showAutomationSettingsAlert() {
+        let alert = NSAlert()
+        alert.messageText = String(localized: "LinkRouter needs permission to read the current page.")
+        alert.addButton(withTitle: String(localized: "Open Privacy Settings"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertFirstButtonReturn,
+           let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     private func route(

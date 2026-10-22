@@ -364,10 +364,13 @@ struct AppSettings: Codable, Equatable {
     var onboardingDone = false
     var appLinksDisabled: Set<String> = []
     var expandShortLinks = true
+    var shortcuts: [ShortcutAction: KeyCombo] = [:]
+    var mail = MailSettings()
 
     enum CodingKeys: String, CodingKey {
         case showMenuBar, forcePromptOnModifier, openInBackground, appearance
         case unwrapRedirects, stripTrackingParams, promptTimeout, onboardingDone, appLinksDisabled, expandShortLinks
+        case shortcuts, mail
     }
 
     init() {}
@@ -384,7 +387,20 @@ struct AppSettings: Codable, Equatable {
         onboardingDone = try container.decodeIfPresent(Bool.self, forKey: .onboardingDone) ?? false
         appLinksDisabled = try container.decodeIfPresent(Set<String>.self, forKey: .appLinksDisabled) ?? []
         expandShortLinks = try container.decodeIfPresent(Bool.self, forKey: .expandShortLinks) ?? true
+        shortcuts = try container.decodeIfPresent([ShortcutAction: KeyCombo].self, forKey: .shortcuts) ?? [:]
+        mail = try container.decodeIfPresent(MailSettings.self, forKey: .mail) ?? MailSettings()
     }
+}
+
+enum MailMode: String, Codable, CaseIterable {
+    case ask, always
+}
+
+struct MailSettings: Codable, Equatable {
+    var mode: MailMode = .ask
+    var favouriteBundleID: String?
+    var order: [String] = []
+    var disabled: Set<String> = []
 }
 
 struct RoutedEntry: Codable, Equatable, Identifiable {

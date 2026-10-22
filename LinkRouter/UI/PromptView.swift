@@ -15,6 +15,7 @@ struct PromptView: View {
     var onAlways: (UUID) -> Void
     var onCopy: () -> Void
     var onCancel: () -> Void
+    var allowsAlways = true
     @ObservedObject var countdown: PromptCountdown
 
     @State private var selected: UUID?
@@ -33,18 +34,26 @@ struct PromptView: View {
         VStack(spacing: 0) {
             VStack(spacing: 2) {
                 HStack(spacing: 5) {
-                    Image(systemName: link.isSecure ? "lock.fill" : "globe")
+                    let isMailto = link.url.scheme?.lowercased() == "mailto"
+                    Image(systemName: isMailto ? "envelope" : (link.isSecure ? "lock.fill" : "globe"))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.secondary)
-                    HStack(spacing: 0) {
-                        Text(link.host)
+                    if isMailto {
+                        Text(mailtoTitle)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.primary)
-                        Text(pathSuffix)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    } else {
+                        HStack(spacing: 0) {
+                            Text(link.host)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.primary)
+                            Text(pathSuffix)
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                        }
+                        .lineLimit(1)
                     }
-                    .lineLimit(1)
                 }
                 if let sourceName = link.sourceName {
                     Text("from \(sourceName)")
@@ -78,8 +87,10 @@ struct PromptView: View {
                     .onTapGesture { pick(item.id) }
                     .help(item.title)
                     .contextMenu {
-                        Button("Always open \(link.host) in \(item.title)") {
-                            onAlways(item.id)
+                        if allowsAlways {
+                            Button("Always open \(link.host) in \(item.title)") {
+                                onAlways(item.id)
+                            }
                         }
                     }
                 }
@@ -103,7 +114,7 @@ struct PromptView: View {
                     HStack(spacing: 10) {
                         KeyHint(key: "↩", label: "Open")
                         KeyHint(key: "⇧↩", label: "Keep open")
-                        KeyHint(key: "⌥", label: "Always")
+                        if allowsAlways { KeyHint(key: "⌥", label: "Always") }
                         KeyHint(key: "esc", label: "Cancel")
                     }
                 }
@@ -184,6 +195,13 @@ struct PromptView: View {
 
     private let copyID = UUID()
 
+    private var mailtoTitle: String {
+        let encodedPath = URLComponents(url: link.url, resolvingAgainstBaseURL: false)?.percentEncodedPath
+            ?? link.url.path
+        let address = encodedPath.removingPercentEncoding ?? encodedPath
+        return address.isEmpty ? String(localized: "New Email") : address
+    }
+
     private var pathSuffix: String {
         var path = link.url.path
         if let query = link.url.query, !query.isEmpty {
@@ -198,7 +216,7 @@ struct PromptView: View {
     private func pick(_ id: UUID?, keepOpen: Bool = false) {
         guard let id else { return }
         let modifiers = NSEvent.modifierFlags
-        if modifiers.contains(.option) {
+        if allowsAlways && modifiers.contains(.option) {
             onAlways(id)
         } else {
             onPick(id, keepOpen || modifiers.contains(.shift))

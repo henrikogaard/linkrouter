@@ -25,6 +25,7 @@ final class PromptController {
         items: [PromptItem],
         link: IncomingLink,
         timeout: Int = 0,
+        allowsAlways: Bool = true,
         onPick: @escaping (UUID?, Bool) -> Void,
         onAlways: @escaping (UUID) -> Void,
         onTimeout: @escaping () -> Void = {}
@@ -62,6 +63,7 @@ final class PromptController {
                 self?.dismiss()
                 onPick(nil, false)
             },
+            allowsAlways: allowsAlways,
             countdown: countdown
         )
 
