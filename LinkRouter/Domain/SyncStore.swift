@@ -300,6 +300,9 @@ final class SyncStore: ObservableObject {
 
             pendingWrite?.cancel()
             pendingWrite = nil
+            if let fingerprint = Self.payloadFingerprint(remote) {
+                defaults.set(fingerprint, forKey: Self.lastSyncedFingerprintKey)
+            }
             if let latestSnapshot {
                 do {
                     try writeNow(latestSnapshot)
@@ -338,6 +341,9 @@ final class SyncStore: ObservableObject {
         guard remote.deviceID != deviceID, let modifiedAt = remote.modifiedAt else { return }
         lastApplied = max(lastApplied, modifiedAt)
         defaults.set(lastApplied, forKey: Self.lastAppliedKey)
+        if let fingerprint = Self.payloadFingerprint(remote) {
+            defaults.set(fingerprint, forKey: Self.lastSyncedFingerprintKey)
+        }
     }
 
     private static func payloadFingerprint(_ state: PersistedState) -> String? {

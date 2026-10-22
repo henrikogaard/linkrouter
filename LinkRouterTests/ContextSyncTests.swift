@@ -169,6 +169,98 @@ final class ContextSyncTests: XCTestCase {
         store.stopWatching()
     }
 
+    func testIgnoringRemoteUpdatesBaselineSoLocalSettingsReplaceCloud() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        let localID = UUID().uuidString
+        let baseDate = Date(timeIntervalSince1970: 1_700_000_000)
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: baseDate,
+            writeDebounceInterval: 0.02
+        )
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local Settings"
+        try local.writeNow(localState, modifiedAt: baseDate)
+
+        let remote = SyncStore(folderURL: folder, deviceID: UUID().uuidString, defaults: remoteDefaults)
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Cloud Settings"
+        try remote.writeNow(remoteState, modifiedAt: baseDate.addingTimeInterval(60))
+        let downloadedRemote = try XCTUnwrap(local.readRemoteState())
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+
+        local.ignoreRemote(downloadedRemote)
+        XCTAssertEqual(
+            localDefaults.string(forKey: SyncStore.lastSyncedFingerprintKey),
+            remoteDefaults.string(forKey: SyncStore.lastSyncedFingerprintKey)
+        )
+        XCTAssertTrue(local.scheduleWrite(localState))
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Local Settings")
+        local.stopWatching()
+    }
+
+    func testSyncedSetEncodingIsSortedAndDeterministic() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaults = testDefaults()
+        defer { removeDefaults(defaults) }
+        let deviceID = UUID().uuidString
+        let store = SyncStore(folderURL: folder, deviceID: deviceID, defaults: defaults)
+        let appIDs = ["com.zeta", "com.alpha", "com.mu", "com.beta"]
+        let mailIDs = ["mail.zeta", "mail.alpha", "mail.mu", "mail.beta"]
+        let weekdays = [7, 1, 5, 2, 6, 3, 4]
+        var first = sampleState()
+        first.settings.appLinksDisabled = Set(appIDs)
+        first.settings.mail.disabled = Set(mailIDs)
+        first.rules[0].conditions.append(Condition(
+            id: UUID(),
+            kind: .schedule,
+            urlMatcher: .contains,
+            pattern: "",
+            countComparator: .greaterThan,
+            count: 0,
+            linkKind: .website,
+            weekdays: Set(weekdays)
+        ))
+        var second = first
+        second.settings.appLinksDisabled = Set(appIDs.reversed())
+        second.settings.mail.disabled = Set(mailIDs.reversed())
+        second.rules[0].conditions[second.rules[0].conditions.count - 1].weekdays = Set(weekdays.reversed())
+        let modifiedAt = Date(timeIntervalSince1970: 1_700_000_000)
+
+        try store.writeNow(first, modifiedAt: modifiedAt)
+        let firstData = try Data(contentsOf: store.syncURL)
+        try store.writeNow(second, modifiedAt: modifiedAt)
+        let secondData = try Data(contentsOf: store.syncURL)
+
+        XCTAssertEqual(firstData, secondData)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: firstData) as? [String: Any])
+        let settings = try XCTUnwrap(object["settings"] as? [String: Any])
+        XCTAssertEqual(settings["appLinksDisabled"] as? [String], appIDs.sorted())
+        let mail = try XCTUnwrap(settings["mail"] as? [String: Any])
+        XCTAssertEqual(mail["disabled"] as? [String], mailIDs.sorted())
+        let rules = try XCTUnwrap(object["rules"] as? [[String: Any]])
+        let conditions = try XCTUnwrap(rules[0]["conditions"] as? [[String: Any]])
+        XCTAssertEqual(conditions.last?["weekdays"] as? [Int], weekdays.sorted())
+
+        let decoded = try Persistence.importState(from: firstData)
+        XCTAssertEqual(decoded.settings.appLinksDisabled, Set(appIDs))
+        XCTAssertEqual(decoded.settings.mail.disabled, Set(mailIDs))
+        XCTAssertEqual(decoded.rules[0].conditions.last?.weekdays, Set(weekdays))
+    }
+
     func testWriteNowDoesNotCreateFolderWhenCloudDocsIsUnavailable() throws {
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -331,6 +423,10 @@ final class ContextSyncTests: XCTestCase {
         XCTAssertTrue(local.scheduleWrite(localState))
 
         XCTAssertFalse(local.receiveRemoteIfNewer())
+        XCTAssertEqual(
+            localDefaults.string(forKey: SyncStore.lastSyncedFingerprintKey),
+            remoteDefaults.string(forKey: SyncStore.lastSyncedFingerprintKey)
+        )
         XCTAssertGreaterThanOrEqual(
             localDefaults.object(forKey: SyncStore.lastAppliedKey) as? Date ?? .distantPast,
             remoteModifiedAt

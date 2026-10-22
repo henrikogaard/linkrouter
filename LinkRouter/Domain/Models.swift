@@ -101,6 +101,11 @@ struct Condition: Codable, Equatable, Identifiable {
     var weekdays: Set<Int> = [2, 3, 4, 5, 6]
     var vpnConnected = true
 
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, urlMatcher, pattern, countComparator, count, linkKind
+        case startMinute, endMinute, weekdays, vpnConnected
+    }
+
     static func url(matcher: URLMatcher = .contains, pattern: String = "") -> Condition {
         Condition(
             id: UUID(),
@@ -177,6 +182,21 @@ extension Condition {
         endMinute = try container.decodeIfPresent(Int.self, forKey: .endMinute) ?? 1020
         weekdays = try container.decodeIfPresent(Set<Int>.self, forKey: .weekdays) ?? [2, 3, 4, 5, 6]
         vpnConnected = try container.decodeIfPresent(Bool.self, forKey: .vpnConnected) ?? true
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(kind, forKey: .kind)
+        try container.encode(urlMatcher, forKey: .urlMatcher)
+        try container.encode(pattern, forKey: .pattern)
+        try container.encode(countComparator, forKey: .countComparator)
+        try container.encode(count, forKey: .count)
+        try container.encode(linkKind, forKey: .linkKind)
+        try container.encode(startMinute, forKey: .startMinute)
+        try container.encode(endMinute, forKey: .endMinute)
+        try container.encode(weekdays.sorted(), forKey: .weekdays)
+        try container.encode(vpnConnected, forKey: .vpnConnected)
     }
 }
 
@@ -445,7 +465,7 @@ struct AppSettings: Codable, Equatable {
         try container.encode(unwrapRedirects, forKey: .unwrapRedirects)
         try container.encode(stripTrackingParams, forKey: .stripTrackingParams)
         try container.encode(promptTimeout, forKey: .promptTimeout)
-        try container.encode(appLinksDisabled, forKey: .appLinksDisabled)
+        try container.encode(appLinksDisabled.sorted(), forKey: .appLinksDisabled)
         try container.encode(expandShortLinks, forKey: .expandShortLinks)
         try container.encode(mail, forKey: .mail)
 
@@ -471,6 +491,18 @@ struct MailSettings: Codable, Equatable {
     var favouriteBundleID: String?
     var order: [String] = []
     var disabled: Set<String> = []
+
+    private enum CodingKeys: String, CodingKey {
+        case mode, favouriteBundleID, order, disabled
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(mode, forKey: .mode)
+        try container.encodeIfPresent(favouriteBundleID, forKey: .favouriteBundleID)
+        try container.encode(order, forKey: .order)
+        try container.encode(disabled.sorted(), forKey: .disabled)
+    }
 }
 
 struct RoutedEntry: Codable, Equatable, Identifiable {
