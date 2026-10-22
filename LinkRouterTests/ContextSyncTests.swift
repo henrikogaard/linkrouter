@@ -89,6 +89,19 @@ final class ContextSyncTests: XCTestCase {
         XCTAssertEqual(roundTrip.modifiedAt, modifiedAt)
     }
 
+    func testWriteNowDoesNotCreateFolderWhenCloudDocsIsUnavailable() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let store = SyncStore(
+            folderURL: folder,
+            deviceID: UUID().uuidString,
+            cloudDocsAvailable: { false }
+        )
+
+        XCTAssertThrowsError(try store.writeNow(sampleState()))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.path))
+    }
+
     func testNewerRemoteFromAnotherDeviceIsApplied() throws {
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -200,6 +213,54 @@ final class ContextSyncTests: XCTestCase {
             localDefaults.object(forKey: SyncStore.lastAppliedKey) as? Date ?? .distantPast,
             remoteModifiedAt
         )
+        local.stopWatching()
+    }
+
+    func testFailedOlderRemoteFlushRetriesPendingLocalSnapshot() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let remoteDefaults = testDefaults()
+        let localDefaults = testDefaults()
+        defer {
+            removeDefaults(remoteDefaults)
+            removeDefaults(localDefaults)
+        }
+        let remoteID = UUID().uuidString
+        let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+        let remoteModifiedAt = Date().addingTimeInterval(-60)
+        try remote.writeNow(sampleState(), modifiedAt: remoteModifiedAt)
+
+        let localID = UUID().uuidString
+        var writeAttempts = 0
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast,
+            writeFile: { data, url in
+                writeAttempts += 1
+                guard writeAttempts > 1 else {
+                    throw CocoaError(.fileWriteUnknown)
+                }
+                try data.write(to: url, options: .atomic)
+            }
+        )
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local Edit"
+        XCTAssertTrue(local.scheduleWrite(localState))
+
+        XCTAssertFalse(local.receiveRemoteIfNewer())
+        XCTAssertGreaterThanOrEqual(
+            localDefaults.object(forKey: SyncStore.lastAppliedKey) as? Date ?? .distantPast,
+            remoteModifiedAt
+        )
+
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+
+        XCTAssertEqual(writeAttempts, 2)
+        XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Local Edit")
         local.stopWatching()
     }
 

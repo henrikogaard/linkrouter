@@ -40,7 +40,7 @@ final class AppState: ObservableObject {
 
     let prompt = PromptController()
     let networkContext = NetworkContext.shared
-    let syncStore = SyncStore()
+    let syncStore: SyncStore
     let launchStart = Date()
     private var firstPromptLogged = false
     var dispatcher: Dispatching
@@ -57,8 +57,9 @@ final class AppState: ObservableObject {
     private var saveWork: DispatchWorkItem?
     private var syncReconcileTimer: Timer?
 
-    init(dispatcher: Dispatching = SystemDispatcher()) {
+    init(dispatcher: Dispatching = SystemDispatcher(), syncStore: SyncStore? = nil) {
         self.dispatcher = dispatcher
+        self.syncStore = syncStore ?? SyncStore()
         let initialBrowsers: [BrowserRecord]
         let initialRows: [CatalogRow]
         let initialRules: [Rule]
@@ -173,12 +174,13 @@ final class AppState: ObservableObject {
     }
 
     func reconcileSync() {
-        if settings.syncEnabled && syncStore.isICloudDriveAvailable && !syncStore.isRunning {
+        let isICloudDriveAvailable = syncStore.isICloudDriveAvailable
+        if syncStore.isRunning && (!settings.syncEnabled || !isICloudDriveAvailable) {
+            syncStore.stopWatching()
+        } else if settings.syncEnabled && isICloudDriveAvailable && !syncStore.isRunning {
             syncStore.startWatching { [weak self] incoming in
                 self?.applySyncedState(incoming)
             }
-        } else if !settings.syncEnabled && syncStore.isRunning {
-            syncStore.stopWatching()
         }
 
         if settings.syncEnabled && !syncStore.isRunning {

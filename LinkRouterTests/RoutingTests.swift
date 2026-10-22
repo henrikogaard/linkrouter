@@ -83,6 +83,27 @@ final class RoutingTests: XCTestCase {
         XCTAssertTrue(state.settings.openInBackground)
     }
 
+    func testReconcileSyncStopsWatcherWhenICloudDriveBecomesUnavailable() {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("LinkRouter-SyncAvailability-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        var isAvailable = true
+        let syncStore = SyncStore(folderURL: folder, cloudDocsAvailable: { isAvailable })
+        let syncState = AppState(dispatcher: recorder, syncStore: syncStore)
+        syncState.skipsPersistence = true
+        syncState.settings.syncEnabled = true
+
+        syncState.reconcileSync()
+        XCTAssertTrue(syncStore.isRunning)
+
+        isAvailable = false
+        syncState.reconcileSync()
+        XCTAssertFalse(syncStore.isRunning)
+
+        syncState.settings.syncEnabled = false
+        syncState.reconcileSync()
+    }
+
     private func link(_ string: String) -> URL { URL(string: string)! }
 
     func testProfileMatchDispatchesToProfileRow() {

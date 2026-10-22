@@ -2,6 +2,10 @@ import Combine
 import Darwin
 import Foundation
 
+private enum SyncStoreError: Error {
+    case cloudDocsUnavailable
+}
+
 @MainActor
 final class SyncStore: ObservableObject {
     static let deviceIDKey = "LinkRouterDeviceID"
@@ -25,6 +29,8 @@ final class SyncStore: ObservableObject {
     private let defaults: UserDefaults
     private let fileManager: FileManager
     private let downloadPlaceholder: (URL) throws -> Void
+    private let cloudDocsAvailability: () -> Bool
+    private let writeFile: (Data, URL) throws -> Void
     private var lastApplied: Date
     private var isEnabled = false
     private var suppressNextWrite = false
@@ -43,13 +49,27 @@ final class SyncStore: ObservableObject {
         initialLastApplied: Date? = nil,
         downloadPlaceholder: @escaping (URL) throws -> Void = {
             try FileManager.default.startDownloadingUbiquitousItem(at: $0)
-        }
+        },
+        cloudDocsAvailable: (() -> Bool)? = nil,
+        writeFile: ((Data, URL) throws -> Void)? = nil
     ) {
         self.folderURL = folderURL ?? Self.defaultFolderURL
         self.defaults = defaults
         self.fileManager = fileManager
         self.deviceID = deviceID ?? Self.deviceIdentifier(defaults: defaults)
         self.downloadPlaceholder = downloadPlaceholder
+        if let cloudDocsAvailable {
+            cloudDocsAvailability = cloudDocsAvailable
+        } else if folderURL != nil {
+            cloudDocsAvailability = { true }
+        } else {
+            cloudDocsAvailability = {
+                fileManager.fileExists(atPath: Self.cloudDocsURL.path)
+            }
+        }
+        self.writeFile = writeFile ?? { data, url in
+            try data.write(to: url, options: .atomic)
+        }
         lastSyncedAt = defaults.object(forKey: Self.lastSyncedKey) as? Date
         lastApplied = initialLastApplied
             ?? defaults.object(forKey: Self.lastAppliedKey) as? Date
@@ -64,7 +84,7 @@ final class SyncStore: ObservableObject {
     var isRunning: Bool { isEnabled }
 
     var isICloudDriveAvailable: Bool {
-        fileManager.fileExists(atPath: Self.cloudDocsURL.path)
+        cloudDocsAvailability()
     }
 
     static func deviceIdentifier(defaults: UserDefaults = .standard) -> String {
@@ -131,10 +151,15 @@ final class SyncStore: ObservableObject {
             return false
         }
 
-        pendingWrite?.cancel()
         let snapshot = state
         latestSnapshot = snapshot
         localDirtyAt = Date()
+        schedulePendingWrite(snapshot)
+        return true
+    }
+
+    private func schedulePendingWrite(_ snapshot: PersistedState) {
+        pendingWrite?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.isEnabled else { return }
             do {
@@ -145,10 +170,12 @@ final class SyncStore: ObservableObject {
         }
         pendingWrite = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: work)
-        return true
     }
 
     func writeNow(_ state: PersistedState, modifiedAt: Date = Date()) throws {
+        guard isICloudDriveAvailable else {
+            throw SyncStoreError.cloudDocsUnavailable
+        }
         try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
         var payload = state
         payload.modifiedAt = modifiedAt
@@ -156,7 +183,7 @@ final class SyncStore: ObservableObject {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.userInfo[.linkRouterSyncPayload] = true
-        try encoder.encode(payload).write(to: syncURL, options: .atomic)
+        try writeFile(encoder.encode(payload), syncURL)
         updateLastSynced(modifiedAt)
         pendingWrite = nil
         latestSnapshot = nil
@@ -214,6 +241,7 @@ final class SyncStore: ObservableObject {
                     try writeNow(latestSnapshot)
                 } catch {
                     Log.app.error("Could not sync settings: \(error.localizedDescription)")
+                    schedulePendingWrite(latestSnapshot)
                 }
             }
             lastApplied = max(lastApplied, modifiedAt)
