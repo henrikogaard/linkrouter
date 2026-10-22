@@ -15,6 +15,7 @@ struct PromptView: View {
     var onAlways: (UUID) -> Void
     var onCopy: () -> Void
     var onCancel: () -> Void
+    var allowsAlways = true
     @ObservedObject var countdown: PromptCountdown
 
     @State private var selected: UUID?
@@ -33,7 +34,7 @@ struct PromptView: View {
         VStack(spacing: 0) {
             VStack(spacing: 2) {
                 HStack(spacing: 5) {
-                    Image(systemName: link.isSecure ? "lock.fill" : "globe")
+                    Image(systemName: link.url.scheme?.lowercased() == "mailto" ? "envelope" : (link.isSecure ? "lock.fill" : "globe"))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.secondary)
                     HStack(spacing: 0) {
@@ -78,8 +79,10 @@ struct PromptView: View {
                     .onTapGesture { pick(item.id) }
                     .help(item.title)
                     .contextMenu {
-                        Button("Always open \(link.host) in \(item.title)") {
-                            onAlways(item.id)
+                        if allowsAlways {
+                            Button("Always open \(link.host) in \(item.title)") {
+                                onAlways(item.id)
+                            }
                         }
                     }
                 }
@@ -103,7 +106,7 @@ struct PromptView: View {
                     HStack(spacing: 10) {
                         KeyHint(key: "↩", label: "Open")
                         KeyHint(key: "⇧↩", label: "Keep open")
-                        KeyHint(key: "⌥", label: "Always")
+                        if allowsAlways { KeyHint(key: "⌥", label: "Always") }
                         KeyHint(key: "esc", label: "Cancel")
                     }
                 }
@@ -198,7 +201,7 @@ struct PromptView: View {
     private func pick(_ id: UUID?, keepOpen: Bool = false) {
         guard let id else { return }
         let modifiers = NSEvent.modifierFlags
-        if modifiers.contains(.option) {
+        if allowsAlways && modifiers.contains(.option) {
             onAlways(id)
         } else {
             onPick(id, keepOpen || modifiers.contains(.shift))

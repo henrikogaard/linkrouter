@@ -20,6 +20,16 @@
           }
         }
       }
+    },
+    "Open ${applicationName} current page in another browser": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne gjeldende side i en annen nettleser med ${applicationName}"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

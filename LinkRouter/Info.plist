@@ -70,7 +70,17 @@
 				<string>https</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>app.linkrouter.mailto</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mailto</string>
+			</array>
+		</dict>
 	</array>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>LinkRouter reads the front browser's current page when you ask it to open that page in another browser.</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

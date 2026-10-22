@@ -90,6 +90,16 @@ struct GeneralPane: View {
                 Text("Picker")
             }
 
+            Section("Keyboard Shortcuts") {
+                ForEach(ShortcutAction.allCases) { action in
+                    LabeledContent(action.title) {
+                        ShortcutRecorder(combo: state.settings.shortcuts[action]) { combo in
+                            state.setShortcut(combo, for: action)
+                        }
+                    }
+                }
+            }
+
             Section("Link Cleaning") {
                 Toggle(isOn: $state.settings.unwrapRedirects) {
                     settingLabel(

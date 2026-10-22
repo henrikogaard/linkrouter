@@ -1,13 +1,13 @@
 import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var lastForeignApp: NSRunningApplication?
     private var suppressReopenSettingsUntil = Date.distantPast
     private var reopenSettingsWork: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if NSClassFromString("XCTestCase") != nil { return }
         NSApp.setActivationPolicy(.accessory)
+        AppState.shared.configureHotKeys()
         AppState.shared.settings.appearance.apply()
         AppState.shared.refreshDefaultStatus()
         NSApp.servicesProvider = self
@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if AppState.shared.isFirstLaunch {
             SettingsPresenter.present()
         }
-        lastForeignApp = NSWorkspace.shared.frontmostApplication
+        AppState.lastForeignApp = NSWorkspace.shared.frontmostApplication
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                   app.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
             MainActor.assumeIsolated {
-                self?.lastForeignApp = app
+                AppState.lastForeignApp = app
             }
         }
         NotificationCenter.default.addObserver(
@@ -123,7 +123,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let source = attributed(NSWorkspace.shared.frontmostApplication) {
             return source
         }
-        return attributed(lastForeignApp)
+        return MainActor.assumeIsolated {
+            attributed(AppState.lastForeignApp)
+        }
     }
 
     private func fourCC(_ code: OSType) -> String {

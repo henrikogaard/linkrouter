@@ -3210,7 +3210,24 @@
           }
         }
       }
-    }
+    },
+    "Open Clipboard Link": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne lenke fra utklippstavlen" } } } },
+    "Open Current Page in Another Browser": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne gjeldende side i en annen nettleser" } } } },
+    "Open Current Page in Another Browser…": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne gjeldende side i en annen nettleser…" } } } },
+    "Record Shortcut": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Ta opp snarvei" } } } },
+    "Type shortcut…": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Skriv inn snarvei…" } } } },
+    "Keyboard Shortcuts": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Tastatursnarveier" } } } },
+    "Email": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "E-post" } } } },
+    "LinkRouter isn't your default email app": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "LinkRouter er ikke standardappen for e-post" } } } },
+    "When you click an email link": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Når du klikker på en e-postlenke" } } } },
+    "Ask Every Time": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Spør hver gang" } } } },
+    "Always Use %@": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Bruk alltid %@" } } } },
+    "Hold a modifier key while opening a link to show the chooser.": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Hold inne en modifikatortast når du åpner en lenke for å vise velgeren." } } } },
+    "Make Default": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Velg som standard" } } } },
+    "More": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Mer" } } } },
+    "%@ doesn't let other apps read its current page.": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "%@ lar ikke andre apper lese gjeldende side." } } } },
+    "LinkRouter needs permission to read the current page.": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "LinkRouter trenger tillatelse til å lese gjeldende side." } } } },
+    "Open Privacy Settings": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne personverninnstillinger" } } } }
   },
   "version": "1.0"
 }

@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSAppleEventsUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LinkRouter reads the front browser's current page when you ask it to open that page in another browser."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LinkRouter leser den gjeldende siden i nettleseren når du ber appen åpne siden i en annen nettleser."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

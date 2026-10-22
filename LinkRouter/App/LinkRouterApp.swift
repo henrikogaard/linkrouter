@@ -69,6 +69,7 @@ struct LinkRouterApp: App {
 
 private struct MenuBarMenu: View {
     @ObservedObject private var state = AppState.shared
+    @State private var canOpenCurrentPage = false
 
     var body: some View {
         Group {
@@ -92,11 +93,19 @@ private struct MenuBarMenu: View {
                 }
             }
             if state.clipboardURL != nil {
-                Button("Open Link from Clipboard") {
-                    state.refreshClipboard()
-                    if let url = ClipboardLink.firstURL(in: NSPasteboard.general.string(forType: .string)) {
-                        state.handleIncoming(url)
-                    }
+                if let shortcut = state.settings.shortcuts[.openClipboardLink]?.keyboardShortcut {
+                    Button("Open Link from Clipboard") { state.openClipboardLink() }
+                        .keyboardShortcut(shortcut)
+                } else {
+                    Button("Open Link from Clipboard") { state.openClipboardLink() }
+                }
+            }
+            if canOpenCurrentPage {
+                if let shortcut = state.settings.shortcuts[.sendCurrentPage]?.keyboardShortcut {
+                    Button("Open Current Page in Another Browser…") { state.openCurrentPage() }
+                        .keyboardShortcut(shortcut)
+                } else {
+                    Button("Open Current Page in Another Browser…") { state.openCurrentPage() }
                 }
             }
             Divider()
@@ -135,7 +144,13 @@ private struct MenuBarMenu: View {
             }
             .keyboardShortcut("q")
         }
-        .onAppear { state.refreshDefaultStatus() }
+        .onAppear {
+            state.refreshDefaultStatus()
+            let frontmost = NSWorkspace.shared.frontmostApplication
+            let source = frontmost?.bundleIdentifier == Bundle.main.bundleIdentifier
+                ? AppState.lastForeignApp : frontmost
+            canOpenCurrentPage = FrontmostPage.isSupported(source?.bundleIdentifier)
+        }
     }
 
     private var pausedLabel: String {

@@ -66,6 +66,17 @@ struct OpenLinkInBrowserIntent: AppIntent {
     }
 }
 
+struct OpenCurrentPageIntent: AppIntent {
+    static var title: LocalizedStringResource = "Open Current Page in Another Browser"
+    static var openAppWhenRun = true
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        AppState.shared.openCurrentPage()
+        return .result()
+    }
+}
+
 struct LinkRouterShortcuts: AppShortcutsProvider {
     @AppShortcutsBuilder
     static var appShortcuts: [AppShortcut] {
@@ -80,6 +91,12 @@ struct LinkRouterShortcuts: AppShortcutsProvider {
             phrases: ["Open \(.applicationName) link in browser"],
             shortTitle: "Open Link in Browser",
             systemImageName: "safari"
+        )
+        AppShortcut(
+            intent: OpenCurrentPageIntent(),
+            phrases: ["Open \(.applicationName) current page in another browser"],
+            shortTitle: "Open Current Page",
+            systemImageName: "globe"
         )
     }
 }

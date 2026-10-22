@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import XCTest
 
 @MainActor
@@ -155,6 +156,64 @@ final class RoutingTests: XCTestCase {
 
         XCTAssertEqual(recorder.calls.map(\.url), [fileURL])
         XCTAssertEqual(recorder.calls.map(\.rowID), [safariRow.id])
+    }
+}
+
+final class PRBFeatureTests: XCTestCase {
+    func testKeyComboDisplayAndCodable() throws {
+        let combo = KeyCombo(keyCode: UInt32(kVK_ANSI_A),
+                             carbonModifiers: UInt32(controlKey | optionKey | shiftKey | cmdKey))
+        XCTAssertEqual(combo.displayString, "⌃⌥⇧⌘A")
+        XCTAssertEqual(KeyCombo(keyCode: UInt32(kVK_F12), carbonModifiers: 0).displayString, "F12")
+        XCTAssertNotNil(KeyCombo(keyCode: UInt32(kVK_F12), carbonModifiers: UInt32(cmdKey)).keyboardShortcut)
+        XCTAssertEqual(KeyCombo(keyCode: UInt32(kVK_LeftArrow), carbonModifiers: 0).displayString, "←")
+        XCTAssertEqual(KeyCombo(keyCode: UInt32(kVK_RightArrow), carbonModifiers: 0).displayString, "→")
+        XCTAssertEqual(KeyCombo(keyCode: UInt32(kVK_UpArrow), carbonModifiers: 0).displayString, "↑")
+        XCTAssertEqual(KeyCombo(keyCode: UInt32(kVK_DownArrow), carbonModifiers: 0).displayString, "↓")
+        let data = try JSONEncoder().encode(combo)
+        XCTAssertEqual(try JSONDecoder().decode(KeyCombo.self, from: data), combo)
+    }
+
+    func testOldSettingsUseShortcutAndMailDefaults() throws {
+        let settings = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
+        XCTAssertTrue(settings.shortcuts.isEmpty)
+        XCTAssertEqual(settings.mail, MailSettings())
+    }
+
+    func testFrontmostPageScriptsAndParsing() {
+        XCTAssertTrue(FrontmostPage.script(forBundleID: "com.apple.Safari")?.contains("front document") == true)
+        XCTAssertTrue(FrontmostPage.script(forBundleID: "com.apple.SafariTechnologyPreview")?.contains("front document") == true)
+        XCTAssertTrue(FrontmostPage.script(forBundleID: "com.google.Chrome")?.contains("active tab") == true)
+        XCTAssertTrue(FrontmostPage.script(forBundleID: "com.brave.Browser")?.contains("active tab") == true)
+        XCTAssertNil(FrontmostPage.script(forBundleID: "org.mozilla.firefox"))
+        XCTAssertEqual(FrontmostPage.parseResult("https://example.com"), URL(string: "https://example.com"))
+        XCTAssertNil(FrontmostPage.parseResult(""))
+        XCTAssertNil(FrontmostPage.parseResult("file:///tmp/page.html"))
+        XCTAssertNil(FrontmostPage.parseResult("https://"))
+    }
+
+    func testCurrentPagePickerPreservesVariantsAndFallsBack() {
+        let browserID = UUID()
+        let plain = CatalogRow(id: UUID(), browserID: browserID, kind: .app)
+        let profile = CatalogRow(id: UUID(), browserID: browserID, kind: .chromeProfile)
+        let privateRow = CatalogRow(id: UUID(), browserID: browserID, kind: .chromePrivate)
+        let rows = [plain, profile, privateRow]
+        let filtered = FrontmostPage.pickerRows(rows, sourceBundleID: "com.google.Chrome") { _ in "com.google.Chrome" }
+        XCTAssertEqual(filtered.map(\.id), [profile.id, privateRow.id])
+        XCTAssertEqual(FrontmostPage.pickerRows([plain], sourceBundleID: "com.google.Chrome") { _ in "com.google.Chrome" }, [plain])
+    }
+
+    func testMailRoutingDecisions() {
+        let ids: Set<String> = ["mail.a", "mail.b"]
+        XCTAssertEqual(MailRouting.decide(mode: .ask, favourite: nil, installed: ids,
+                                          enabled: ["mail.a", "mail.b"], forcePrompt: false), .prompt(["mail.a", "mail.b"]))
+        XCTAssertEqual(MailRouting.decide(mode: .always, favourite: "mail.a", installed: ids,
+                                          enabled: ["mail.a", "mail.b"], forcePrompt: false), .open("mail.a"))
+        XCTAssertEqual(MailRouting.decide(mode: .always, favourite: "mail.a", installed: ids,
+                                          enabled: ["mail.a", "mail.b"], forcePrompt: true), .prompt(["mail.a", "mail.b"]))
+        XCTAssertEqual(MailRouting.decide(mode: .always, favourite: "missing", installed: ids,
+                                          enabled: ["mail.a"], forcePrompt: false), .prompt(["mail.a"]))
+        XCTAssertEqual(MailRouting.decide(mode: .ask, favourite: nil, installed: [], enabled: [], forcePrompt: false), .none)
     }
 }
 
