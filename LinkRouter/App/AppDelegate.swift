@@ -53,6 +53,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        open(urls)
+    }
+
+    func application(_ application: NSApplication, openFiles filenames: [String]) {
+        open(filenames.map { URL(fileURLWithPath: $0) })
+        application.reply(toOpenOrPrint: .success)
+    }
+
+    func application(_ application: NSApplication, openFile filename: String) -> Bool {
+        open([URL(fileURLWithPath: filename)])
+        return true
+    }
+
+    @MainActor
+    private func open(_ urls: [URL]) {
         // A URL delivery cancels any pending reopen-driven Settings show and
         // suppresses a following one: some launchers send rapp alongside GURL.
         suppressReopenSettingsUntil = Date().addingTimeInterval(1.5)
@@ -60,7 +75,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         reopenSettingsWork = nil
         let source = sender()
         for url in urls {
-            AppState.shared.handleIncoming(url, source: source)
+            if url.isFileURL {
+                switch url.pathExtension.lowercased() {
+                case "webloc", "url":
+                    if let link = LinkFileParser.link(in: url) {
+                        AppState.shared.handleIncoming(link, source: source)
+                    }
+                case "html", "htm", "xhtml":
+                    AppState.shared.handleIncoming(url, source: source)
+                default:
+                    break
+                }
+            } else {
+                AppState.shared.handleIncoming(url, source: source)
+            }
         }
     }
 
