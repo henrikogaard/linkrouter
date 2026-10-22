@@ -30,6 +30,16 @@
           }
         }
       }
+    },
+    "Set ${applicationName} routing mode": {
+      "localizations": {
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angi rutingmodus for ${applicationName}"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

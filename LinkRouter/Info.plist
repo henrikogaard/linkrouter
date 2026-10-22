@@ -81,6 +81,10 @@
 	</array>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>LinkRouter reads the front browser's current page when you ask it to open that page in another browser.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>LinkRouter uses your Wi-Fi network name to match rules. Your location is never stored or sent anywhere.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>LinkRouter uses your Wi-Fi network name to match rules. Your location is never stored or sent anywhere.</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

@@ -37,6 +37,8 @@
 		A10040 /* MailCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10040; };
 		A10041 /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10041; };
 		A10042 /* MailPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10042; };
+		A10043 /* NetworkContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10043; };
+		A10044 /* SyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10044; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -76,7 +78,17 @@
 		A20026 /* FrontmostPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10038; };
 		A20027 /* MailRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10039; };
 		A20028 /* MailCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10040; };
+		A20029 /* ContextSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20008; };
+		A20033 /* NetworkContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10043; };
+		A20034 /* SyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10044; };
 		A90000 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = P90001 /* Sparkle */; };
+		A90005 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90005; };
+		A90006 /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90006; };
+		A90007 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90007; };
+		A90008 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90008; };
+		A20030 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90005; };
+		A20031 /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90006; };
+		A20032 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B90007; };
 		A90002 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90002; };
 		A90003 /* AppShortcuts.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90003; };
 		A90004 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90004; };
@@ -124,6 +136,8 @@
 		B10040 /* MailCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailCatalog.swift; sourceTree = "<group>"; };
 		B10041 /* ShortcutRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorder.swift; sourceTree = "<group>"; };
 		B10042 /* MailPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailPane.swift; sourceTree = "<group>"; };
+		B10043 /* NetworkContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkContext.swift; sourceTree = "<group>"; };
+		B10044 /* SyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStore.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -144,10 +158,15 @@
 		B20005 /* BrowserCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCatalogTests.swift; sourceTree = "<group>"; };
 		B20006 /* URLCleanerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCleanerTests.swift; sourceTree = "<group>"; };
 		B20007 /* RoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingTests.swift; sourceTree = "<group>"; };
+		B20008 /* ContextSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextSyncTests.swift; sourceTree = "<group>"; };
 		B90001 /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
 		B90002 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		B90003 /* AppShortcuts.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = AppShortcuts.xcstrings; sourceTree = "<group>"; };
 		B90004 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		B90005 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		B90006 /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
+		B90007 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		B90008 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 		R00001 /* LinkRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LinkRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		R00002 /* LinkRouterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LinkRouterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -158,6 +177,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A90000 /* Sparkle in Frameworks */,
+				A90005 /* CoreLocation.framework in Frameworks */,
+				A90006 /* CoreWLAN.framework in Frameworks */,
+				A90007 /* SystemConfiguration.framework in Frameworks */,
+				A90008 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -165,6 +188,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A20030 /* CoreLocation.framework in Frameworks */,
+				A20031 /* CoreWLAN.framework in Frameworks */,
+				A20032 /* SystemConfiguration.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -230,6 +256,8 @@
 				B10038 /* FrontmostPage.swift */,
 				B10039 /* MailRouting.swift */,
 				B10040 /* MailCatalog.swift */,
+				B10043 /* NetworkContext.swift */,
+				B10044 /* SyncStore.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -267,6 +295,7 @@
 				B20005 /* BrowserCatalogTests.swift */,
 				B20006 /* URLCleanerTests.swift */,
 				B20007 /* RoutingTests.swift */,
+				B20008 /* ContextSyncTests.swift */,
 			);
 			path = LinkRouterTests;
 			sourceTree = "<group>";
@@ -421,6 +450,8 @@
 				A10040 /* MailCatalog.swift in Sources */,
 				A10041 /* ShortcutRecorder.swift in Sources */,
 				A10042 /* MailPane.swift in Sources */,
+				A10043 /* NetworkContext.swift in Sources */,
+				A10044 /* SyncStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -456,6 +487,9 @@
 				A20026 /* FrontmostPage.swift in Sources */,
 				A20027 /* MailRouting.swift in Sources */,
 				A20028 /* MailCatalog.swift in Sources */,
+				A20033 /* NetworkContext.swift in Sources */,
+				A20034 /* SyncStore.swift in Sources */,
+				A20029 /* ContextSyncTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

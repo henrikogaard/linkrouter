@@ -16,6 +16,38 @@
           }
         }
       }
+    },
+    "NSLocationUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LinkRouter uses your Wi-Fi network name to match rules. Your location is never stored or sent anywhere."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LinkRouter bruker navnet på Wi-Fi-nettverket ditt til å matche regler. Posisjonen din lagres eller sendes aldri noe sted."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LinkRouter uses your Wi-Fi network name to match rules. Your location is never stored or sent anywhere."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LinkRouter bruker navnet på Wi-Fi-nettverket ditt til å matche regler. Posisjonen din lagres eller sendes aldri noe sted."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

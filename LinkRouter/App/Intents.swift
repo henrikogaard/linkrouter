@@ -77,6 +77,29 @@ struct OpenCurrentPageIntent: AppIntent {
     }
 }
 
+struct LinkRouterFocusFilter: SetFocusFilterIntent {
+    static var title: LocalizedStringResource = "Set Routing Mode"
+
+    @Parameter(title: "Mode", default: "") var mode: String
+
+    init() {}
+
+    init(mode: String) {
+        self.mode = mode
+    }
+
+    var displayRepresentation: DisplayRepresentation {
+        let name = mode.isEmpty ? String(localized: "No mode") : mode
+        return DisplayRepresentation(title: "\(name)")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        AppState.shared.setFocusMode(mode)
+        return .result()
+    }
+}
+
 struct LinkRouterShortcuts: AppShortcutsProvider {
     @AppShortcutsBuilder
     static var appShortcuts: [AppShortcut] {
@@ -97,6 +120,12 @@ struct LinkRouterShortcuts: AppShortcutsProvider {
             phrases: ["Open \(.applicationName) current page in another browser"],
             shortTitle: "Open Current Page",
             systemImageName: "globe"
+        )
+        AppShortcut(
+            intent: LinkRouterFocusFilter(),
+            phrases: ["Set \(.applicationName) routing mode"],
+            shortTitle: "Set Routing Mode",
+            systemImageName: "arrow.triangle.branch"
         )
     }
 }
