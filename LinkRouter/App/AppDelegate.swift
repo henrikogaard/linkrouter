@@ -6,6 +6,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if NSClassFromString("XCTestCase") != nil { return }
+        let frontmostApp = NSWorkspace.shared.frontmostApplication
+        let initialForeignApp = frontmostApp?.bundleIdentifier == Bundle.main.bundleIdentifier ? nil : frontmostApp
+        AppState.lastForeignApp = initialForeignApp
+        AppState.shared.frontmostForeignBundleID = initialForeignApp?.bundleIdentifier
         NSApp.setActivationPolicy(.accessory)
         AppState.shared.configureHotKeys()
         AppState.shared.settings.appearance.apply()
@@ -21,7 +25,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if AppState.shared.isFirstLaunch {
             SettingsPresenter.present()
         }
-        AppState.lastForeignApp = NSWorkspace.shared.frontmostApplication
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
@@ -31,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   app.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
             MainActor.assumeIsolated {
                 AppState.lastForeignApp = app
+                AppState.shared.frontmostForeignBundleID = app.bundleIdentifier
             }
         }
         NotificationCenter.default.addObserver(

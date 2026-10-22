@@ -69,7 +69,6 @@ struct LinkRouterApp: App {
 
 private struct MenuBarMenu: View {
     @ObservedObject private var state = AppState.shared
-    @State private var canOpenCurrentPage = false
 
     var body: some View {
         Group {
@@ -100,7 +99,7 @@ private struct MenuBarMenu: View {
                     Button("Open Link from Clipboard") { state.openClipboardLink() }
                 }
             }
-            if canOpenCurrentPage {
+            if FrontmostPage.isSupported(state.frontmostForeignBundleID) {
                 if let shortcut = state.settings.shortcuts[.sendCurrentPage]?.keyboardShortcut {
                     Button("Open Current Page in Another Browser…") { state.openCurrentPage() }
                         .keyboardShortcut(shortcut)
@@ -146,10 +145,6 @@ private struct MenuBarMenu: View {
         }
         .onAppear {
             state.refreshDefaultStatus()
-            let frontmost = NSWorkspace.shared.frontmostApplication
-            let source = frontmost?.bundleIdentifier == Bundle.main.bundleIdentifier
-                ? AppState.lastForeignApp : frontmost
-            canOpenCurrentPage = FrontmostPage.isSupported(source?.bundleIdentifier)
         }
     }
 

@@ -48,6 +48,29 @@ final class DispatcherTests: XCTestCase {
         XCTAssertNil(Dispatcher.argv(url: url, browser: browser, row: row(kind: .app), running: false))
     }
 
+    func testShouldRestoreFocusForDifferentFrontmostAppOnlyWhenBackgrounded() {
+        XCTAssertTrue(Dispatcher.shouldRestoreFocus(
+            activates: false,
+            frontmost: "com.apple.Safari",
+            target: "com.google.Chrome"
+        ))
+        XCTAssertFalse(Dispatcher.shouldRestoreFocus(
+            activates: true,
+            frontmost: "com.apple.Safari",
+            target: "com.google.Chrome"
+        ))
+        XCTAssertFalse(Dispatcher.shouldRestoreFocus(
+            activates: false,
+            frontmost: "com.google.Chrome",
+            target: "com.google.Chrome"
+        ))
+        XCTAssertFalse(Dispatcher.shouldRestoreFocus(
+            activates: false,
+            frontmost: nil,
+            target: "com.google.Chrome"
+        ))
+    }
+
     func testRunningChromeProfileStillYieldsArgs() {
         let args = Dispatcher.argv(url: url, browser: browser, row: row(kind: .chromeProfile, chromeDirectory: "Profile 1"), running: true)
         XCTAssertEqual(args, ["--profile-directory=Profile 1", "https://example.com/x"])

@@ -62,10 +62,20 @@ enum Dispatcher {
 
         if needsProfile && running && (row.kind == .chromeProfile || row.kind == .chromePrivate),
            let arguments = argv(url: url, browser: browser, row: row, running: running) {
+            let frontmostApplication = activates ? nil : NSWorkspace.shared.frontmostApplication
             do {
                 try exec(browser: browser, arguments: arguments)
                 if activates {
                     NSRunningApplication.runningApplications(withBundleIdentifier: browser.bundleIdentifier).first?.activate()
+                } else if shouldRestoreFocus(
+                    activates: activates,
+                    frontmost: frontmostApplication?.bundleIdentifier,
+                    target: browser.bundleIdentifier
+                ), let frontmostApplication {
+                    frontmostApplication.activate()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        frontmostApplication.activate()
+                    }
                 }
                 completion(nil)
             } catch {
@@ -96,6 +106,10 @@ enum Dispatcher {
             }
         }
         return .opened
+    }
+
+    static func shouldRestoreFocus(activates: Bool, frontmost: String?, target: String) -> Bool {
+        !activates && frontmost != nil && frontmost != target
     }
 
     static func executableURL(for browser: BrowserRecord) -> URL? {

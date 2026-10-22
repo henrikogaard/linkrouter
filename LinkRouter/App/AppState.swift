@@ -15,6 +15,7 @@ final class AppState: ObservableObject {
     @Published var profiles: [RouteProfile]
     @Published var settings: AppSettings
     @Published var focusMode: String?
+    @Published var frontmostForeignBundleID: String? = nil
     @Published var isDefaultBrowser: Bool
     @Published var runningIDs: Set<String>
     @Published var pendingQuit: (url: URL, row: CatalogRow, browser: BrowserRecord, options: RuleOptions)?
