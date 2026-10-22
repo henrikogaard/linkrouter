@@ -38,6 +38,7 @@ final class SyncStore: ObservableObject {
     private var pendingWrite: DispatchWorkItem?
     private var latestSnapshot: PersistedState?
     private var localDirtyAt: Date?
+    private var retainsEditsWhileStopped = false
     private var pollTimer: Timer?
     private var directoryWatcher: DispatchSourceFileSystemObject?
 
@@ -117,6 +118,7 @@ final class SyncStore: ObservableObject {
 
         self.onApply = onApply
         isEnabled = true
+        retainsEditsWhileStopped = false
         if watchChanges {
             startDirectoryWatcher()
             pollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
@@ -126,15 +128,23 @@ final class SyncStore: ObservableObject {
         if checkImmediately {
             checkForRemoteUpdate()
         }
+        if let latestSnapshot, pendingWrite == nil {
+            schedulePendingWrite(latestSnapshot)
+        }
         return true
     }
 
-    func stopWatching() {
+    func stopWatching(preservingPendingEdits: Bool = false) {
         isEnabled = false
         pendingWrite?.cancel()
         pendingWrite = nil
-        latestSnapshot = nil
-        localDirtyAt = nil
+        if preservingPendingEdits {
+            retainsEditsWhileStopped = true
+        } else {
+            latestSnapshot = nil
+            localDirtyAt = nil
+            retainsEditsWhileStopped = false
+        }
         pollTimer?.invalidate()
         pollTimer = nil
         directoryWatcher?.cancel()
@@ -145,15 +155,16 @@ final class SyncStore: ObservableObject {
 
     @discardableResult
     func scheduleWrite(_ state: PersistedState) -> Bool {
-        guard isEnabled else { return false }
         if suppressNextWrite {
             suppressNextWrite = false
             return false
         }
+        guard isEnabled || retainsEditsWhileStopped else { return false }
 
         let snapshot = state
         latestSnapshot = snapshot
         localDirtyAt = Date()
+        guard isEnabled else { return false }
         schedulePendingWrite(snapshot)
         return true
     }

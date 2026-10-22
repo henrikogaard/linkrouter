@@ -175,8 +175,8 @@ final class AppState: ObservableObject {
 
     func reconcileSync() {
         let isICloudDriveAvailable = syncStore.isICloudDriveAvailable
-        if syncStore.isRunning && (!settings.syncEnabled || !isICloudDriveAvailable) {
-            syncStore.stopWatching()
+        if !settings.syncEnabled || (syncStore.isRunning && !isICloudDriveAvailable) {
+            syncStore.stopWatching(preservingPendingEdits: settings.syncEnabled)
         } else if settings.syncEnabled && isICloudDriveAvailable && !syncStore.isRunning {
             syncStore.startWatching { [weak self] incoming in
                 self?.applySyncedState(incoming)

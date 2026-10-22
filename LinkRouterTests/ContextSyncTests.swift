@@ -264,6 +264,212 @@ final class ContextSyncTests: XCTestCase {
         local.stopWatching()
     }
 
+    func testPendingEditsArePreservedAndOfflineEditsSyncAfterReconnect() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaults = testDefaults()
+        defer { removeDefaults(defaults) }
+        var isAvailable = true
+        let store = SyncStore(
+            folderURL: folder,
+            deviceID: UUID().uuidString,
+            defaults: defaults,
+            initialLastApplied: .distantPast,
+            cloudDocsAvailable: { isAvailable }
+        )
+        let appState = makeSyncAppState(store)
+        defer {
+            appState.settings.syncEnabled = false
+            appState.reconcileSync()
+        }
+
+        appState.reconcileSync()
+        XCTAssertTrue(store.isRunning)
+        var pendingState = sampleState()
+        pendingState.browsers[0].displayName = "Pending Edit"
+        XCTAssertTrue(store.scheduleWrite(pendingState))
+
+        isAvailable = false
+        appState.reconcileSync()
+        XCTAssertFalse(store.isRunning)
+
+        var offlineState = sampleState()
+        offlineState.browsers[0].displayName = "Offline Edit"
+        XCTAssertFalse(store.scheduleWrite(offlineState))
+
+        isAvailable = true
+        appState.reconcileSync()
+        XCTAssertTrue(store.isRunning)
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+
+        XCTAssertEqual(store.readRemoteState()?.browsers.first?.displayName, "Offline Edit")
+    }
+
+    func testTurningSyncOffWhileUnavailableDiscardsPreservedEdits() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaults = testDefaults()
+        defer { removeDefaults(defaults) }
+        var isAvailable = true
+        let store = SyncStore(
+            folderURL: folder,
+            deviceID: UUID().uuidString,
+            defaults: defaults,
+            initialLastApplied: .distantPast,
+            cloudDocsAvailable: { isAvailable }
+        )
+        let appState = makeSyncAppState(store)
+        defer {
+            appState.settings.syncEnabled = false
+            appState.reconcileSync()
+        }
+
+        appState.reconcileSync()
+        XCTAssertTrue(store.scheduleWrite(sampleState()))
+        isAvailable = false
+        appState.reconcileSync()
+        XCTAssertFalse(store.isRunning)
+
+        appState.settings.syncEnabled = false
+        appState.reconcileSync()
+        XCTAssertFalse(store.scheduleWrite(sampleState()))
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+
+        isAvailable = true
+        appState.settings.syncEnabled = true
+        appState.reconcileSync()
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.syncURL.path))
+        appState.settings.syncEnabled = false
+        appState.reconcileSync()
+    }
+
+    func testLocalPendingEditWinsOverOlderRemoteOnReconnect() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        var isAvailable = true
+        let localID = UUID().uuidString
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast,
+            cloudDocsAvailable: { isAvailable }
+        )
+        let appState = makeSyncAppState(local)
+        defer {
+            appState.settings.syncEnabled = false
+            appState.reconcileSync()
+        }
+
+        appState.reconcileSync()
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Offline Local Edit"
+        XCTAssertTrue(local.scheduleWrite(localState))
+        isAvailable = false
+        appState.reconcileSync()
+
+        let remote = SyncStore(
+            folderURL: folder,
+            deviceID: UUID().uuidString,
+            defaults: remoteDefaults
+        )
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Older Remote"
+        try remote.writeNow(remoteState, modifiedAt: Date().addingTimeInterval(-60))
+
+        isAvailable = true
+        appState.reconcileSync()
+
+        XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Offline Local Edit")
+    }
+
+    func testNewerRemoteWinsOverPreservedLocalEditOnReconnect() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        var isAvailable = true
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: UUID().uuidString,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast,
+            cloudDocsAvailable: { isAvailable }
+        )
+        let appState = makeSyncAppState(local)
+        defer {
+            appState.settings.syncEnabled = false
+            appState.reconcileSync()
+        }
+
+        appState.reconcileSync()
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Offline Local Edit"
+        XCTAssertTrue(local.scheduleWrite(localState))
+        isAvailable = false
+        appState.reconcileSync()
+
+        let remoteID = UUID().uuidString
+        let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Newer Remote"
+        try remote.writeNow(remoteState, modifiedAt: Date().addingTimeInterval(60))
+
+        isAvailable = true
+        appState.reconcileSync()
+        XCTAssertTrue(local.isRunning)
+        XCTAssertEqual(appState.browsers.first?.displayName, "Newer Remote")
+
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+        XCTAssertEqual(local.readRemoteState()?.deviceID, remoteID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Newer Remote")
+    }
+
+    func testStoppingWithoutPreservingDiscardsPendingEditsAndOffWrites() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaults = testDefaults()
+        defer { removeDefaults(defaults) }
+        var writeCount = 0
+        let store = SyncStore(
+            folderURL: folder,
+            deviceID: UUID().uuidString,
+            defaults: defaults,
+            writeFile: { data, url in
+                writeCount += 1
+                try data.write(to: url, options: .atomic)
+            }
+        )
+        defer { store.stopWatching() }
+        XCTAssertTrue(store.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        XCTAssertTrue(store.scheduleWrite(sampleState()))
+
+        store.stopWatching()
+        var offlineState = sampleState()
+        offlineState.browsers[0].displayName = "Discarded Offline Edit"
+        XCTAssertFalse(store.scheduleWrite(offlineState))
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+        XCTAssertEqual(writeCount, 0)
+
+        XCTAssertTrue(store.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+        XCTAssertEqual(writeCount, 0)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.syncURL.path))
+    }
+
     func testOwnDeviceAndOlderRemoteFilesAreIgnored() throws {
         let ownFolder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: ownFolder) }
@@ -377,6 +583,13 @@ final class ContextSyncTests: XCTestCase {
             profiles: [],
             settings: AppSettings()
         )
+    }
+
+    private func makeSyncAppState(_ syncStore: SyncStore) -> AppState {
+        let appState = AppState(syncStore: syncStore)
+        appState.skipsPersistence = true
+        appState.settings.syncEnabled = true
+        return appState
     }
 
     private func temporaryFolder() -> URL {
