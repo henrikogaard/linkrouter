@@ -33,7 +33,12 @@ struct MailPane: View {
                     LabeledContent {
                         Button("Set as Default…") { MailCatalog.setDefault { _ in } }
                     } label: {
-                        Text("LinkRouter isn't your default email app")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("LinkRouter isn't your default email app")
+                            Text("Email links only route through LinkRouter once it's the default. macOS asks you to confirm.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -47,7 +52,6 @@ struct MailPane: View {
                 }
                 ForEach(orderedApps) { app in
                     mailRow(app)
-                        .onDrag { draggingID = app.id; return NSItemProvider(object: app.id as NSString) }
                         .onDrop(of: [UTType.text], delegate: MailRowDropDelegate(
                             targetID: app.id, draggingID: $draggingID, apps: orderedApps,
                             move: moveMailApp
@@ -64,12 +68,32 @@ struct MailPane: View {
     }
 
     private func mailRow(_ app: MailApp) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.tertiary)
+                .frame(width: 16)
+                .contentShape(Rectangle())
+                .help("Drag to reorder")
+                .onDrag { draggingID = app.id; return NSItemProvider(object: app.id as NSString) }
+
             Image(nsImage: NSWorkspace.shared.icon(forFile: app.url.path))
-                .resizable().frame(width: 22, height: 22)
-            Text(app.name)
-            Spacer()
-            Toggle(app.name, isOn: Binding(
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 24, height: 24)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(app.name)
+                    .font(.system(size: 13))
+                if state.settings.mail.favouriteBundleID == app.bundleIdentifier {
+                    Text("Default")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Toggle("In picker", isOn: Binding(
                 get: { !state.settings.mail.disabled.contains(app.bundleIdentifier) },
                 set: { enabled in
                     if enabled { state.settings.mail.disabled.remove(app.bundleIdentifier) }
@@ -77,8 +101,12 @@ struct MailPane: View {
                     state.save()
                 }
             ))
+            .toggleStyle(.switch)
+            .controlSize(.mini)
             .labelsHidden()
-            Menu("More") {
+            .accessibilityLabel("Show \(app.name) in the email chooser")
+
+            Menu {
                 Button("Make Default") {
                     state.settings.mail.favouriteBundleID = app.bundleIdentifier
                     state.settings.mail.mode = .always
@@ -88,9 +116,15 @@ struct MailPane: View {
                     .disabled(orderedApps.first?.id == app.id)
                 Button("Move Down") { move(app, by: 1) }
                     .disabled(orderedApps.last?.id == app.id)
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 24)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .accessibilityLabel("Email app actions")
         }
     }
 

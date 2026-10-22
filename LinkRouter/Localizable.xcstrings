@@ -3215,7 +3215,7 @@
     "Open Current Page in Another Browser": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne gjeldende side i en annen nettleser" } } } },
     "Open Current Page in Another Browser…": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne gjeldende side i en annen nettleser…" } } } },
     "Record Shortcut": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Ta opp snarvei" } } } },
-    "Type shortcut…": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Skriv inn snarvei…" } } } },
+    "Type Shortcut…": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Skriv inn snarvei…" } } } },
     "Keyboard Shortcuts": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Tastatursnarveier" } } } },
     "Email": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "E-post" } } } },
     "LinkRouter isn't your default email app": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "LinkRouter er ikke standardappen for e-post" } } } },
@@ -3227,7 +3227,13 @@
     "More": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Mer" } } } },
     "%@ doesn't let other apps read its current page.": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "%@ lar ikke andre apper lese gjeldende side." } } } },
     "LinkRouter needs permission to read the current page.": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "LinkRouter trenger tillatelse til å lese gjeldende side." } } } },
-    "Open Privacy Settings": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne personverninnstillinger" } } } }
+    "Open Privacy Settings": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Åpne personverninnstillinger" } } } },
+    "Clear Shortcut": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Fjern snarvei" } } } },
+    "Default": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Standard" } } } },
+    "Email app actions": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Handlinger for e-postapper" } } } },
+    "Email links only route through LinkRouter once it's the default. macOS asks you to confirm.": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "E-postlenker rutes gjennom LinkRouter først når den er standardappen. macOS ber deg bekrefte dette." } } } },
+    "New Email": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Ny e-post" } } } },
+    "Show %@ in the email chooser": { "localizations": { "nb": { "stringUnit": { "state": "translated", "value": "Vis %@ i e-postvelgeren" } } } }
   },
   "version": "1.0"
 }

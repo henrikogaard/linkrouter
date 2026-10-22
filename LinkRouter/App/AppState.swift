@@ -480,6 +480,7 @@ final class AppState: ObservableObject {
         let alert = NSAlert()
         alert.messageText = String(localized: "\(browser) doesn't let other apps read its current page.")
         alert.addButton(withTitle: String(localized: "OK"))
+        NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
     }
 
@@ -488,6 +489,7 @@ final class AppState: ObservableObject {
         alert.messageText = String(localized: "LinkRouter needs permission to read the current page.")
         alert.addButton(withTitle: String(localized: "Open Privacy Settings"))
         alert.addButton(withTitle: String(localized: "Cancel"))
+        NSApp.activate(ignoringOtherApps: true)
         if alert.runModal() == .alertFirstButtonReturn,
            let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
             NSWorkspace.shared.open(url)

@@ -34,18 +34,26 @@ struct PromptView: View {
         VStack(spacing: 0) {
             VStack(spacing: 2) {
                 HStack(spacing: 5) {
-                    Image(systemName: link.url.scheme?.lowercased() == "mailto" ? "envelope" : (link.isSecure ? "lock.fill" : "globe"))
+                    let isMailto = link.url.scheme?.lowercased() == "mailto"
+                    Image(systemName: isMailto ? "envelope" : (link.isSecure ? "lock.fill" : "globe"))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.secondary)
-                    HStack(spacing: 0) {
-                        Text(link.host)
+                    if isMailto {
+                        Text(mailtoTitle)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.primary)
-                        Text(pathSuffix)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    } else {
+                        HStack(spacing: 0) {
+                            Text(link.host)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.primary)
+                            Text(pathSuffix)
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                        }
+                        .lineLimit(1)
                     }
-                    .lineLimit(1)
                 }
                 if let sourceName = link.sourceName {
                     Text("from \(sourceName)")
@@ -186,6 +194,13 @@ struct PromptView: View {
     }
 
     private let copyID = UUID()
+
+    private var mailtoTitle: String {
+        let encodedPath = URLComponents(url: link.url, resolvingAgainstBaseURL: false)?.percentEncodedPath
+            ?? link.url.path
+        let address = encodedPath.removingPercentEncoding ?? encodedPath
+        return address.isEmpty ? String(localized: "New Email") : address
+    }
 
     private var pathSuffix: String {
         var path = link.url.path

@@ -2,11 +2,54 @@ import AppKit
 import Carbon.HIToolbox
 import SwiftUI
 
-struct ShortcutRecorder: NSViewRepresentable {
+struct ShortcutRecorder: View {
     var combo: KeyCombo?
     var onChange: (KeyCombo?) -> Bool
 
-    func makeCoordinator() -> Coordinator { Coordinator(onChange: onChange) }
+    var body: some View {
+        HStack(spacing: 4) {
+            ShortcutRecorderInput(combo: combo, onChange: onChange)
+                .frame(maxWidth: .infinity)
+            if combo != nil {
+                Button {
+                    _ = onChange(nil)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .frame(width: 14, height: 16)
+                .focusEffectDisabled()
+                .accessibilityLabel("Clear Shortcut")
+            }
+        }
+        .padding(.horizontal, 8)
+        .frame(width: 130, height: 26)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+        }
+        .focusEffectDisabled()
+    }
+
+    final class Coordinator {
+        var onChange: (KeyCombo?) -> Bool
+        init(onChange: @escaping (KeyCombo?) -> Bool) { self.onChange = onChange }
+    }
+}
+
+private struct ShortcutRecorderInput: NSViewRepresentable {
+    var combo: KeyCombo?
+    var onChange: (KeyCombo?) -> Bool
+
+    func makeCoordinator() -> ShortcutRecorder.Coordinator {
+        ShortcutRecorder.Coordinator(onChange: onChange)
+    }
 
     func makeNSView(context: Context) -> ShortcutRecorderButton {
         let button = ShortcutRecorderButton()
@@ -22,11 +65,6 @@ struct ShortcutRecorder: NSViewRepresentable {
         button.combo = combo
         button.refreshTitle()
     }
-
-    final class Coordinator {
-        var onChange: (KeyCombo?) -> Bool
-        init(onChange: @escaping (KeyCombo?) -> Bool) { self.onChange = onChange }
-    }
 }
 
 final class ShortcutRecorderButton: NSButton {
@@ -36,9 +74,12 @@ final class ShortcutRecorderButton: NSButton {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        bezelStyle = .rounded
+        bezelStyle = .regularSquare
+        isBordered = false
         setButtonType(.momentaryPushIn)
-        focusRingType = .default
+        alignment = .center
+        focusRingType = .none
+        font = .systemFont(ofSize: 11)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -77,10 +118,13 @@ final class ShortcutRecorderButton: NSButton {
     }
 
     func refreshTitle() {
-        guard !recording else {
-            title = String(localized: "Type shortcut…")
-            return
-        }
-        title = combo?.displayString ?? String(localized: "Record Shortcut")
+        let text = recording
+            ? String(localized: "Type Shortcut…")
+            : (combo?.displayString ?? String(localized: "Record Shortcut"))
+        let color = (recording || combo == nil) ? NSColor.secondaryLabelColor : .labelColor
+        attributedTitle = NSAttributedString(
+            string: text,
+            attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: color]
+        )
     }
 }
