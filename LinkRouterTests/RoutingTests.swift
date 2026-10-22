@@ -59,6 +59,30 @@ final class RoutingTests: XCTestCase {
         state.resume()
     }
 
+    func testImportSettingsKeepsSyncEnabledFromThisMac() throws {
+        state.settings.syncEnabled = true
+        var importedSettings = state.settings
+        importedSettings.syncEnabled = false
+        importedSettings.openInBackground = true
+        let imported = PersistedState(
+            browsers: state.browsers,
+            rows: state.rows,
+            rules: state.rules,
+            profiles: state.profiles,
+            settings: importedSettings,
+            recent: state.recent
+        )
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("LinkRouter-import-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try Persistence.exportData(imported).write(to: url)
+
+        try state.importSettings(from: url)
+
+        XCTAssertTrue(state.settings.syncEnabled)
+        XCTAssertTrue(state.settings.openInBackground)
+    }
+
     private func link(_ string: String) -> URL { URL(string: string)! }
 
     func testProfileMatchDispatchesToProfileRow() {

@@ -120,6 +120,89 @@ final class ContextSyncTests: XCTestCase {
         local.stopWatching()
     }
 
+    func testNewerRemoteWinsOverPendingLocalEdit() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let remoteDefaults = testDefaults()
+        let localDefaults = testDefaults()
+        defer {
+            removeDefaults(remoteDefaults)
+            removeDefaults(localDefaults)
+        }
+        let remoteID = UUID().uuidString
+        let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Remote Browser"
+        let remoteModifiedAt = Date().addingTimeInterval(60)
+        try remote.writeNow(remoteState, modifiedAt: remoteModifiedAt)
+
+        let localID = UUID().uuidString
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast
+        )
+        var applied: PersistedState?
+        XCTAssertTrue(local.startWatching(
+            onApply: { applied = $0 },
+            watchChanges: false,
+            checkImmediately: false
+        ))
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local Edit"
+        XCTAssertTrue(local.scheduleWrite(localState))
+
+        XCTAssertTrue(local.receiveRemoteIfNewer())
+        XCTAssertEqual(applied?.browsers.first?.displayName, "Remote Browser")
+        XCTAssertEqual(local.readRemoteState()?.deviceID, remoteID)
+        local.stopWatching()
+    }
+
+    func testPendingLocalEditWinsOverOlderRemoteAndFlushesImmediately() throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let remoteDefaults = testDefaults()
+        let localDefaults = testDefaults()
+        defer {
+            removeDefaults(remoteDefaults)
+            removeDefaults(localDefaults)
+        }
+        let remoteID = UUID().uuidString
+        let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Older Remote"
+        let remoteModifiedAt = Date().addingTimeInterval(-60)
+        try remote.writeNow(remoteState, modifiedAt: remoteModifiedAt)
+
+        let localID = UUID().uuidString
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast
+        )
+        var applied: PersistedState?
+        XCTAssertTrue(local.startWatching(
+            onApply: { applied = $0 },
+            watchChanges: false,
+            checkImmediately: false
+        ))
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local Edit"
+        XCTAssertTrue(local.scheduleWrite(localState))
+
+        XCTAssertFalse(local.receiveRemoteIfNewer())
+        XCTAssertNil(applied)
+        XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Local Edit")
+        XCTAssertGreaterThanOrEqual(
+            localDefaults.object(forKey: SyncStore.lastAppliedKey) as? Date ?? .distantPast,
+            remoteModifiedAt
+        )
+        local.stopWatching()
+    }
+
     func testOwnDeviceAndOlderRemoteFilesAreIgnored() throws {
         let ownFolder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: ownFolder) }

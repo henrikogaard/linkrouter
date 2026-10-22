@@ -24,7 +24,14 @@ final class NetworkContext: NSObject, ObservableObject, @preconcurrency CLLocati
     }
 
     var locationAuthorized: Bool {
-        authorizationStatus == .authorizedAlways
+        if authorizationStatus == .authorizedAlways || authorizationStatus == .authorized {
+            return true
+        }
+        #if !os(macOS)
+        return authorizationStatus == .authorizedWhenInUse
+        #else
+        return false
+        #endif
     }
 
     func refresh() {

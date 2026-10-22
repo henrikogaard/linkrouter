@@ -5,6 +5,21 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 @MainActor
+extension AppearanceMode {
+    func apply() {
+        guard NSApp != nil else { return }
+        switch self {
+        case .system:
+            NSApp.appearance = nil
+        case .light:
+            NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark:
+            NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
+    }
+}
+
+@MainActor
 final class AppState: ObservableObject {
     static let shared = AppState()
     static var lastForeignApp: NSRunningApplication?
@@ -40,6 +55,7 @@ final class AppState: ObservableObject {
     private var promptQueue: [(link: IncomingLink, rows: [CatalogRow], options: RuleOptions)] = []
     private var runningObservation: NSKeyValueObservation?
     private var saveWork: DispatchWorkItem?
+    private var syncReconcileTimer: Timer?
 
     init(dispatcher: Dispatching = SystemDispatcher()) {
         self.dispatcher = dispatcher
@@ -128,11 +144,6 @@ final class AppState: ObservableObject {
                 )
             )
         }
-        if settings.syncEnabled && syncStore.isICloudDriveAvailable {
-            syncStore.startWatching { [weak self] incoming in
-                self?.applySyncedState(incoming)
-            }
-        }
     }
 
     var enabledRows: [CatalogRow] { rows.filter(\.enabled) }
@@ -161,11 +172,37 @@ final class AppState: ObservableObject {
         focusMode = FocusModeStore.current()
     }
 
+    func reconcileSync() {
+        if settings.syncEnabled && syncStore.isICloudDriveAvailable && !syncStore.isRunning {
+            syncStore.startWatching { [weak self] incoming in
+                self?.applySyncedState(incoming)
+            }
+        } else if !settings.syncEnabled && syncStore.isRunning {
+            syncStore.stopWatching()
+        }
+
+        if settings.syncEnabled && !syncStore.isRunning {
+            if syncReconcileTimer == nil {
+                syncReconcileTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+                    MainActor.assumeIsolated {
+                        self?.reconcileSync()
+                    }
+                }
+            }
+        } else {
+            syncReconcileTimer?.invalidate()
+            syncReconcileTimer = nil
+        }
+    }
+
     func setSyncEnabled(_ enabled: Bool) {
-        guard enabled != settings.syncEnabled else { return }
+        guard enabled != settings.syncEnabled else {
+            reconcileSync()
+            return
+        }
         guard enabled else {
             settings.syncEnabled = false
-            syncStore.stopWatching()
+            reconcileSync()
             save()
             return
         }
@@ -210,6 +247,7 @@ final class AppState: ObservableObject {
     }
 
     private func applySyncedState(_ incoming: PersistedState) {
+        let appearanceChanged = settings.appearance != incoming.settings.appearance
         browsers = incoming.browsers
         rows = incoming.rows
         rules = incoming.rules
@@ -220,6 +258,9 @@ final class AppState: ObservableObject {
         syncedSettings.syncEnabled = settings.syncEnabled
         syncedSettings.shortcuts = settings.shortcuts
         settings = syncedSettings
+        if appearanceChanged {
+            settings.appearance.apply()
+        }
         for index in browsers.indices {
             guard !FileManager.default.fileExists(atPath: browsers[index].path),
                   let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browsers[index].bundleIdentifier)
@@ -1249,7 +1290,9 @@ final class AppState: ObservableObject {
         rows = imported.rows
         rules = imported.rules
         profiles = imported.profiles
-        settings = imported.settings
+        var importedSettings = imported.settings
+        importedSettings.syncEnabled = settings.syncEnabled
+        settings = importedSettings
         for index in browsers.indices {
             guard !FileManager.default.fileExists(atPath: browsers[index].path),
                   let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browsers[index].bundleIdentifier)

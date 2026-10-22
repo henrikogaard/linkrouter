@@ -220,6 +220,7 @@ struct GeneralPane: View {
         .onAppear {
             loginOn = state.loginItemOn
             state.refreshDefaultStatus()
+            state.reconcileSync()
             refreshHTMLDefault()
         }
     }

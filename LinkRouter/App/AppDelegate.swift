@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppState.shared.configureHotKeys()
         AppState.shared.settings.appearance.apply()
         AppState.shared.refreshDefaultStatus()
+        AppState.shared.reconcileSync()
         NSApp.servicesProvider = self
         if let loadIssue = AppState.shared.loadIssue {
             let alert = NSAlert()
@@ -35,6 +36,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated {
                 AppState.lastForeignApp = app
                 AppState.shared.frontmostForeignBundleID = app.bundleIdentifier
+            }
+        }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            MainActor.assumeIsolated {
+                AppState.shared.reconcileSync()
             }
         }
         NotificationCenter.default.addObserver(

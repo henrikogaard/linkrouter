@@ -30,6 +30,8 @@ final class SyncStore: ObservableObject {
     private var suppressNextWrite = false
     private var onApply: ((PersistedState) -> Void)?
     private var pendingWrite: DispatchWorkItem?
+    private var latestSnapshot: PersistedState?
+    private var localDirtyAt: Date?
     private var pollTimer: Timer?
     private var directoryWatcher: DispatchSourceFileSystemObject?
 
@@ -58,6 +60,8 @@ final class SyncStore: ObservableObject {
     var syncURL: URL {
         folderURL.appendingPathComponent("sync.json")
     }
+
+    var isRunning: Bool { isEnabled }
 
     var isICloudDriveAvailable: Bool {
         fileManager.fileExists(atPath: Self.cloudDocsURL.path)
@@ -109,6 +113,8 @@ final class SyncStore: ObservableObject {
         isEnabled = false
         pendingWrite?.cancel()
         pendingWrite = nil
+        latestSnapshot = nil
+        localDirtyAt = nil
         pollTimer?.invalidate()
         pollTimer = nil
         directoryWatcher?.cancel()
@@ -127,6 +133,8 @@ final class SyncStore: ObservableObject {
 
         pendingWrite?.cancel()
         let snapshot = state
+        latestSnapshot = snapshot
+        localDirtyAt = Date()
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.isEnabled else { return }
             do {
@@ -150,6 +158,9 @@ final class SyncStore: ObservableObject {
         encoder.userInfo[.linkRouterSyncPayload] = true
         try encoder.encode(payload).write(to: syncURL, options: .atomic)
         updateLastSynced(modifiedAt)
+        pendingWrite = nil
+        latestSnapshot = nil
+        localDirtyAt = nil
     }
 
     func readRemoteState() -> PersistedState? {
@@ -185,6 +196,31 @@ final class SyncStore: ObservableObject {
               modifiedAt > lastApplied else {
             return false
         }
+
+        if let localDirtyAt {
+            if modifiedAt > localDirtyAt {
+                pendingWrite?.cancel()
+                pendingWrite = nil
+                latestSnapshot = nil
+                self.localDirtyAt = nil
+                applyRemote(remote, modifiedAt: modifiedAt, onApply: onApply)
+                return true
+            }
+
+            pendingWrite?.cancel()
+            pendingWrite = nil
+            if let latestSnapshot {
+                do {
+                    try writeNow(latestSnapshot)
+                } catch {
+                    Log.app.error("Could not sync settings: \(error.localizedDescription)")
+                }
+            }
+            lastApplied = max(lastApplied, modifiedAt)
+            defaults.set(lastApplied, forKey: Self.lastAppliedKey)
+            return false
+        }
+
         applyRemote(remote, modifiedAt: modifiedAt, onApply: onApply)
         return true
     }
