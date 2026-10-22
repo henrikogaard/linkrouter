@@ -115,4 +115,205 @@ final class RoutingTests: XCTestCase {
         XCTAssertEqual(recorder.calls.count, 0)
         XCTAssertEqual(promptCount, 1)
     }
+
+    func testHTMLFileURLReachesLocalHTMLRule() {
+        let fileURL = URL(fileURLWithPath: "/tmp/document.html")
+        state.rules = [
+            Rule(
+                id: UUID(),
+                title: "HTML",
+                enabled: true,
+                combinator: .all,
+                conditions: [
+                    Condition(
+                        id: UUID(),
+                        kind: .linkType,
+                        urlMatcher: .contains,
+                        pattern: "",
+                        countComparator: .greaterThan,
+                        count: 0,
+                        linkKind: .localHTML
+                    )
+                ],
+                behaviour: Behaviour(kind: .openBrowser, rowIDs: [safariRow.id]),
+                isFallback: false
+            )
+        ]
+
+        state.handleIncoming(fileURL)
+
+        XCTAssertEqual(recorder.calls.map(\.url), [fileURL])
+        XCTAssertEqual(recorder.calls.map(\.rowID), [safariRow.id])
+    }
+}
+
+final class AppLinksTests: XCTestCase {
+    private let installed = Set(AppLinks.all.flatMap(\.bundleIDs))
+
+    private func match(_ input: String) -> (AppLinkHandler, URL)? {
+        AppLinks.match(URL(string: input)!, installed: installed, disabled: [])
+    }
+
+    func testBuiltInHandlersMatchAndTransformRepresentativeURLs() {
+        let cases: [(String, String, String)] = [
+            ("zoom", "https://zoom.us/j/123456?pwd=secret", "zoommtg://zoom.us/join?action=join&confno=123456&pwd=secret"),
+            ("zoom", "https://us02web.zoom.us/j/123456", "zoommtg://zoom.us/join?action=join&confno=123456"),
+            ("teams", "https://teams.microsoft.com/l/meetup-join/123?tenant=abc", "msteams:/l/meetup-join/123?tenant=abc"),
+            ("slack", "https://acme.slack.com/archives/C123/p456", "https://acme.slack.com/archives/C123/p456"),
+            ("figma", "https://www.figma.com/design/abc/File", "https://www.figma.com/design/abc/File"),
+            ("spotify", "https://open.spotify.com/track/abc?si=123", "spotify:track:abc"),
+            ("spotify", "https://open.spotify.com/intl-de/track/abc", "spotify:track:abc"),
+            ("notion", "https://www.notion.so/workspace/page?v=123", "notion://www.notion.so/workspace/page?v=123"),
+            ("linear", "https://linear.app/acme/issue/ABC-1?view=detail", "linear://acme/issue/ABC-1?view=detail"),
+            ("discord", "https://discord.com/channels/123/456", "discord://-/channels/123/456"),
+            ("music", "https://music.apple.com/us/album/x/1?i=2", "music://music.apple.com/us/album/x/1?i=2")
+        ]
+
+        for (id, input, expected) in cases {
+            let result = match(input)
+            XCTAssertEqual(result?.0.id, id, input)
+            XCTAssertEqual(result?.1.absoluteString, expected, input)
+        }
+    }
+
+    func testNonMatchingURLsDoNotSelectHandlers() {
+        let cases: [(String, String)] = [
+            ("zoom", "https://example.com/j/123"),
+            ("teams", "https://teams.microsoft.com/meeting/123"),
+            ("slack", "https://slack.com/archives/C123"),
+            ("figma", "https://figma.com/community/file/123"),
+            ("spotify", "https://open.spotify.com/podcast/123"),
+            ("notion", "https://example.com/page"),
+            ("linear", "https://linear.app/issue/ABC-1"),
+            ("discord", "https://discord.com/guilds/123"),
+            ("music", "https://music.apple.com.evil.example/us/album/x/1")
+        ]
+
+        for (id, input) in cases {
+            let result = AppLinks.match(URL(string: input)!, installed: installed, disabled: [])
+            XCTAssertNotEqual(result?.0.id, id, input)
+        }
+    }
+
+    func testUnavailableAndDisabledHandlersAreSkipped() {
+        let zoom = URL(string: "https://zoom.us/j/123")!
+        XCTAssertNil(AppLinks.match(zoom, installed: [], disabled: []))
+        XCTAssertNil(AppLinks.match(zoom, installed: ["us.zoom.xos"], disabled: ["zoom"]))
+        XCTAssertEqual(
+            AppLinks.match(zoom, installed: ["us.zoom.xos"], disabled: [])?.0.id,
+            "zoom"
+        )
+    }
+}
+
+final class RuleOptionsTests: XCTestCase {
+    func testOlderRuleDecodesWithDefaultOptions() throws {
+        let rule = Rule(
+            id: UUID(),
+            title: "Legacy",
+            enabled: true,
+            combinator: .all,
+            conditions: [],
+            behaviour: .useFavourite,
+            isFallback: true,
+            options: RuleOptions(background: .always, privateWindow: true)
+        )
+        var object = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(rule)) as? [String: Any]
+        )
+        object.removeValue(forKey: "options")
+        let data = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(Rule.self, from: data)
+
+        XCTAssertEqual(decoded.options, RuleOptions())
+    }
+
+    func testBackgroundOverridesResolveAgainstGlobalSetting() {
+        let cases: [(BackgroundOverride, Bool, Bool)] = [
+            (.inherit, false, true),
+            (.inherit, true, false),
+            (.always, false, false),
+            (.always, true, false),
+            (.never, false, true),
+            (.never, true, true)
+        ]
+
+        for (override, global, expectedActivates) in cases {
+            XCTAssertEqual(override.activates(openInBackground: global), expectedActivates)
+        }
+    }
+
+    @MainActor
+    func testPrivateVariantReusesSameBrowserAndProfileRow() async throws {
+        let state = AppState(dispatcher: RoutingTests.RecordingDispatcher())
+        state.skipsPersistence = true
+        let chrome = BrowserRecord(
+            id: UUID(),
+            path: "/Applications/Google Chrome.app",
+            bundleIdentifier: "com.google.Chrome",
+            displayName: "Chrome"
+        )
+        let safari = BrowserRecord(
+            id: UUID(),
+            path: "/Applications/Safari.app",
+            bundleIdentifier: "com.apple.Safari",
+            displayName: "Safari"
+        )
+        let profile = CatalogRow(
+            id: UUID(),
+            browserID: chrome.id,
+            kind: .chromeProfile,
+            chromeDirectory: "Profile 1",
+            chromeName: "Work"
+        )
+        let matchingPrivate = CatalogRow(
+            id: UUID(),
+            browserID: chrome.id,
+            kind: .chromePrivate,
+            chromeDirectory: "Profile 1",
+            chromeName: "Work"
+        )
+        let otherProfile = CatalogRow(
+            id: UUID(),
+            browserID: chrome.id,
+            kind: .chromePrivate,
+            chromeDirectory: "Profile 2"
+        )
+        let otherBrowser = CatalogRow(
+            id: UUID(),
+            browserID: safari.id,
+            kind: .chromePrivate,
+            chromeDirectory: "Profile 1"
+        )
+        state.browsers = [chrome, safari]
+        state.rows = [profile, otherProfile, otherBrowser, matchingPrivate]
+
+        let mapped = state.privateVariant(for: profile)
+
+        XCTAssertEqual(mapped, matchingPrivate)
+    }
+
+    @MainActor
+    func testPrivateVariantSynthesizesTransientRows() async throws {
+        let state = AppState(dispatcher: RoutingTests.RecordingDispatcher())
+        state.skipsPersistence = true
+        let chrome = BrowserRecord(
+            id: UUID(),
+            path: "/Applications/Google Chrome.app",
+            bundleIdentifier: "com.google.Chrome",
+            displayName: "Chrome"
+        )
+        let row = CatalogRow(id: UUID(), browserID: chrome.id, kind: .app)
+        state.browsers = [chrome]
+        state.rows = [row]
+
+        let mapped = state.privateVariant(for: row)
+
+        XCTAssertEqual(mapped.kind, .chromePrivate)
+        XCTAssertEqual(mapped.browserID, chrome.id)
+        XCTAssertNil(mapped.chromeDirectory)
+        XCTAssertNotEqual(mapped.id, row.id)
+        XCTAssertEqual(state.rows, [row])
+    }
 }

@@ -1,13 +1,14 @@
 import SwiftUI
 
 enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
-    case browsers, profiles, rules, history, general, about
+    case browsers, apps, profiles, rules, history, general, about
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .browsers: String(localized: "Browsers")
+        case .apps: String(localized: "Apps")
         case .profiles: String(localized: "Profiles")
         case .rules: String(localized: "Rules")
         case .history: String(localized: "History")
@@ -19,6 +20,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     var symbol: String {
         switch self {
         case .browsers: "safari"
+        case .apps: "macwindow.on.rectangle"
         case .profiles: "square.grid.2x2"
         case .rules: "list.bullet.rectangle"
         case .history: "clock"
@@ -45,6 +47,7 @@ struct SettingsRootView: View {
             Group {
                 switch pane {
                 case .browsers: BrowsersPane()
+                case .apps: AppsPane()
                 case .profiles: ProfilesPane()
                 case .rules: RulesPane()
                 case .history: HistoryPane()

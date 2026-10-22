@@ -119,19 +119,20 @@ enum Dispatcher {
     }
 
     static func argv(url: URL, browser: BrowserRecord, row: CatalogRow, running: Bool) -> [String]? {
+        let target = url.isFileURL ? url.path : url.absoluteString
         switch row.kind {
         case .app:
             return nil
         case .chromeProfile:
             guard let directory = row.chromeDirectory else { return nil }
-            return ["--profile-directory=\(directory)", url.absoluteString]
+            return ["--profile-directory=\(directory)", target]
         case .chromePrivate:
             var args: [String] = []
             if let directory = row.chromeDirectory {
                 args.append("--profile-directory=\(directory)")
             }
             args.append(ProfileReader.family(for: browser.bundleIdentifier)?.privateFlag ?? "--incognito")
-            args.append(url.absoluteString)
+            args.append(target)
             return args
         case .firefoxProfile:
             guard let path = row.firefoxAbsPath else { return nil }
@@ -139,7 +140,7 @@ enum Dispatcher {
             if running {
                 args.append("--new-instance")
             }
-            args.append(contentsOf: ["--profile", path, url.absoluteString])
+            args.append(contentsOf: ["--profile", path, target])
             return args
         case .firefoxPrivate:
             var args: [String] = []
@@ -149,7 +150,7 @@ enum Dispatcher {
                 }
                 args.append(contentsOf: ["--profile", path])
             }
-            args.append(contentsOf: ["--private-window", url.absoluteString])
+            args.append(contentsOf: ["--private-window", target])
             return args
         }
     }

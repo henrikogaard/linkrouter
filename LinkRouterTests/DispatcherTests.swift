@@ -86,4 +86,17 @@ final class DispatcherTests: XCTestCase {
     func testRunningAppReturnsNil() {
         XCTAssertNil(Dispatcher.argv(url: url, browser: browser, row: row(kind: .app), running: true))
     }
+
+    func testProfileArgumentsUseFilePathForHTMLFiles() {
+        let fileURL = URL(fileURLWithPath: "/tmp/sample.html")
+        XCTAssertEqual(
+            Dispatcher.argv(url: fileURL, browser: browser, row: row(kind: .chromeProfile, chromeDirectory: "Profile 1"), running: false),
+            ["--profile-directory=Profile 1", "/tmp/sample.html"]
+        )
+        XCTAssertEqual(
+            Dispatcher.argv(url: fileURL, browser: browser, row: row(kind: .firefoxPrivate, firefoxAbsPath: "/x/Profiles/abc"), running: false),
+            ["--profile", "/x/Profiles/abc", "--private-window", "/tmp/sample.html"]
+        )
+        XCTAssertNil(Dispatcher.argv(url: fileURL, browser: browser, row: row(kind: .app), running: false))
+    }
 }

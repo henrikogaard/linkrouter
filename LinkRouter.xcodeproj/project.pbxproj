@@ -27,6 +27,10 @@
 		A10030 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030; };
 		A10031 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10031; };
 		A10032 /* AboutPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10032; };
+		A10033 /* AppLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10033; };
+		A10034 /* AppsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10034; };
+		A10035 /* ShortLinkExpander.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10035; };
+		A10036 /* LinkFileParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10036; };
 		A10011 /* PromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011; };
 		A10012 /* PromptController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012; };
 		A10013 /* Mark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013; };
@@ -59,6 +63,9 @@
 		A20019 /* SettingsPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
 		A20020 /* ProfileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10027; };
 		A20021 /* RoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20007; };
+		A20022 /* ShortLinkExpander.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10035; };
+		A20023 /* LinkFileParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10036; };
+		A20024 /* AppLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10033; };
 		A90000 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = P90001 /* Sparkle */; };
 		A90002 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90002; };
 		A90003 /* AppShortcuts.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B90003; };
@@ -96,6 +103,10 @@
 		B10030 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
 		B10031 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		B10032 /* AboutPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPane.swift; sourceTree = "<group>"; };
+		B10033 /* AppLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLinks.swift; sourceTree = "<group>"; };
+		B10034 /* AppsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppsPane.swift; sourceTree = "<group>"; };
+		B10035 /* ShortLinkExpander.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortLinkExpander.swift; sourceTree = "<group>"; };
+		B10036 /* LinkFileParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkFileParser.swift; sourceTree = "<group>"; };
 		B10011 /* PromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptView.swift; sourceTree = "<group>"; };
 		B10012 /* PromptController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptController.swift; sourceTree = "<group>"; };
 		B10013 /* Mark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mark.swift; sourceTree = "<group>"; };
@@ -193,6 +204,9 @@
 				B10026 /* Log.swift */,
 				B10027 /* ProfileWatcher.swift */,
 				B10028 /* URLCleaner.swift */,
+				B10033 /* AppLinks.swift */,
+				B10035 /* ShortLinkExpander.swift */,
+				B10036 /* LinkFileParser.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -206,6 +220,7 @@
 				B10022 /* Theme.swift */,
 				B10014 /* SettingsRootView.swift */,
 				B10015 /* BrowsersPane.swift */,
+				B10034 /* AppsPane.swift */,
 				B10023 /* BrowserPicker.swift */,
 				B10024 /* ProfilesPane.swift */,
 				B10016 /* RulesPane.swift */,
@@ -368,6 +383,10 @@
 				A10029 /* HistoryPane.swift in Sources */,
 				A10031 /* WelcomeView.swift in Sources */,
 				A10032 /* AboutPane.swift in Sources */,
+				A10033 /* AppLinks.swift in Sources */,
+				A10034 /* AppsPane.swift in Sources */,
+				A10035 /* ShortLinkExpander.swift in Sources */,
+				A10036 /* LinkFileParser.swift in Sources */,
 				A90001 /* Updater.swift in Sources */,
 				A10030 /* Intents.swift in Sources */,
 			);
@@ -398,6 +417,9 @@
 				A20019 /* SettingsPresenter.swift in Sources */,
 				A20020 /* ProfileWatcher.swift in Sources */,
 				A20021 /* RoutingTests.swift in Sources */,
+				A20022 /* ShortLinkExpander.swift in Sources */,
+				A20023 /* LinkFileParser.swift in Sources */,
+				A20024 /* AppLinks.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

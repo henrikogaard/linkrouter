@@ -15,7 +15,7 @@ final class AppState: ObservableObject {
     @Published var settings: AppSettings
     @Published var isDefaultBrowser: Bool
     @Published var runningIDs: Set<String>
-    @Published var pendingQuit: (url: URL, row: CatalogRow, browser: BrowserRecord)?
+    @Published var pendingQuit: (url: URL, row: CatalogRow, browser: BrowserRecord, options: RuleOptions)?
     @Published var recent: [RoutedEntry]
     @Published var profileSnapshot: [String: [ChromeProfile]] = [:]
     private var profileWatcher: ProfileWatcher?
@@ -24,13 +24,14 @@ final class AppState: ObservableObject {
     let launchStart = Date()
     private var firstPromptLogged = false
     var dispatcher: Dispatching
+    private let shortLinkExpander = ShortLinkExpander()
     var onPromptShown: (() -> Void)?
     var skipsPersistence = false
     @Published var clipboardURL: URL?
     var loadIssue: String?
     private(set) var isFirstLaunch = false
     private var pasteboardChangeCount = -1
-    private var promptQueue: [(link: IncomingLink, rows: [CatalogRow])] = []
+    private var promptQueue: [(link: IncomingLink, rows: [CatalogRow], options: RuleOptions)] = []
     private var runningObservation: NSKeyValueObservation?
     private var saveWork: DispatchWorkItem?
 
@@ -135,6 +136,71 @@ final class AppState: ObservableObject {
 
     func browser(for row: CatalogRow) -> BrowserRecord? {
         browsers.first { $0.id == row.browserID }
+    }
+
+    func privateVariant(for row: CatalogRow) -> CatalogRow {
+        guard let sourceBrowser = browser(for: row) else { return row }
+
+        let kind: RowKind
+        let chromeDirectory: String?
+        let chromeName: String?
+        let firefoxAbsPath: String?
+        let firefoxName: String?
+        switch row.kind {
+        case .app:
+            if ProfileReader.family(for: sourceBrowser.bundleIdentifier) != nil {
+                kind = .chromePrivate
+                chromeDirectory = nil
+                chromeName = nil
+                firefoxAbsPath = nil
+                firefoxName = nil
+            } else if ProfileReader.isFirefoxApp(sourceBrowser.bundleURL) {
+                kind = .firefoxPrivate
+                chromeDirectory = nil
+                chromeName = nil
+                firefoxAbsPath = nil
+                firefoxName = nil
+            } else {
+                return row
+            }
+        case .chromeProfile:
+            kind = .chromePrivate
+            chromeDirectory = row.chromeDirectory
+            chromeName = row.chromeName
+            firefoxAbsPath = nil
+            firefoxName = nil
+        case .firefoxProfile:
+            kind = .firefoxPrivate
+            chromeDirectory = nil
+            chromeName = nil
+            firefoxAbsPath = row.firefoxAbsPath
+            firefoxName = row.firefoxName
+        case .chromePrivate, .firefoxPrivate:
+            return row
+        }
+
+        if let existing = rows.first(where: { candidate in
+            guard candidate.kind == kind,
+                  browser(for: candidate)?.bundleIdentifier == sourceBrowser.bundleIdentifier
+            else { return false }
+            if kind == .chromePrivate {
+                return candidate.chromeDirectory == chromeDirectory
+            }
+            return candidate.firefoxAbsPath == firefoxAbsPath
+        }) {
+            return existing
+        }
+
+        return CatalogRow(
+            id: UUID(),
+            browserID: sourceBrowser.id,
+            kind: kind,
+            chromeDirectory: chromeDirectory,
+            chromeName: chromeName,
+            firefoxName: firefoxName,
+            firefoxAbsPath: firefoxAbsPath,
+            enabled: true
+        )
     }
 
     func resolvedBrowser(for row: CatalogRow) -> BrowserRecord? {
@@ -266,57 +332,156 @@ final class AppState: ObservableObject {
     }
 
     func handleIncoming(_ url: URL, source: (bundleID: String, name: String)? = nil) {
-        guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else { return }
+        let isHTMLFile = url.isFileURL && ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
+        let isWebLink = ["http", "https"].contains(url.scheme?.lowercased() ?? "")
+        guard isHTMLFile || isWebLink else { return }
         pendingQuit = nil
-        let cleaned = URLCleaner.clean(
-            url,
-            unwrap: settings.unwrapRedirects,
-            strip: settings.stripTrackingParams
-        )
+        let cleaned = isHTMLFile
+            ? url
+            : URLCleaner.clean(url, unwrap: settings.unwrapRedirects, strip: settings.stripTrackingParams)
         if cleaned != url {
             Log.routing.info("Cleaned \(url.absoluteString) -> \(cleaned.absoluteString)")
         }
         let link = IncomingLink(url: cleaned, sourceBundleID: source?.bundleID, sourceName: source?.name)
-        if isPaused, let row = favourite ?? bestRunning() {
-            dispatch(link, row: row)
+        if isPaused {
+            if let row = favourite ?? bestRunning() {
+                dispatch(link, row: row)
+            }
             return
         }
         let flags = NSEvent.modifierFlags
         let force = settings.forcePromptOnModifier && !flags.intersection([.shift, .control, .option, .command]).isEmpty
-        let result = RuleEngine.evaluate(
+        if settings.expandShortLinks && ShortLinkExpander.isShortLink(cleaned) {
+            let sourceBundleID = source?.bundleID
+            let sourceName = source?.name
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let expanded = await self.shortLinkExpander.expand(cleaned)
+                let cleanedExpanded = URLCleaner.clean(
+                    expanded,
+                    unwrap: self.settings.unwrapRedirects,
+                    strip: self.settings.stripTrackingParams
+                )
+                if cleanedExpanded != expanded {
+                    Log.routing.info("Cleaned \(expanded.absoluteString) -> \(cleanedExpanded.absoluteString)")
+                }
+                self.route(
+                    IncomingLink(url: cleanedExpanded, sourceBundleID: sourceBundleID, sourceName: sourceName),
+                    modifierForcePrompt: force
+                )
+            }
+            return
+        }
+        route(link, modifierForcePrompt: force)
+    }
+
+    private func route(
+        _ link: IncomingLink,
+        modifierForcePrompt: Bool,
+        allowAppLinks: Bool = true
+    ) {
+        if allowAppLinks, !modifierForcePrompt,
+           let (handler, transformedURL) = AppLinks.match(
+            link.url,
+            installed: AppLinks.installedBundleIDs(),
+            disabled: settings.appLinksDisabled
+           ),
+           openAppLink(handler, transformedURL: transformedURL, link: link, modifierForcePrompt: modifierForcePrompt) {
+            return
+        }
+        let explanation = RuleEngine.explain(
             link: link,
             profiles: profiles,
             rules: rules,
             runningCount: runningCount,
-            modifierForcePrompt: force
+            modifierForcePrompt: modifierForcePrompt
         )
-        apply(result, link: link)
+        let options: RuleOptions
+        switch explanation.source {
+        case .rule(let id), .fallback(let id):
+            options = rules.first(where: { $0.id == id })?.options ?? .init()
+        case .modifier, .profile, .none:
+            options = .init()
+        }
+        apply(explanation.result, link: link, options: options)
     }
 
-    func apply(_ result: EngineResult, link: IncomingLink) {
+    private func openAppLink(
+        _ handler: AppLinkHandler,
+        transformedURL: URL,
+        link: IncomingLink,
+        modifierForcePrompt: Bool
+    ) -> Bool {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = !settings.openInBackground
+        switch handler.strategy {
+        case .scheme:
+            NSWorkspace.shared.open(transformedURL, configuration: configuration) { [weak self] _, error in
+                guard let self else { return }
+                Task { @MainActor in
+                    if let error {
+                        Log.routing.error("Could not open app link for \(handler.name): \(error.localizedDescription)")
+                        self.route(link, modifierForcePrompt: modifierForcePrompt, allowAppLinks: false)
+                    } else {
+                        self.recordAppLink(link, handler: handler)
+                    }
+                }
+            }
+            return true
+        case .openWithApp:
+            guard let appURL = AppLinks.applicationURL(for: handler) else {
+                Log.routing.error("No application found for app link handler \(handler.id)")
+                return false
+            }
+            NSWorkspace.shared.open([link.url], withApplicationAt: appURL, configuration: configuration) { [weak self] _, error in
+                guard let self else { return }
+                Task { @MainActor in
+                    if let error {
+                        Log.routing.error("Could not open app link for \(handler.name): \(error.localizedDescription)")
+                        self.route(link, modifierForcePrompt: modifierForcePrompt, allowAppLinks: false)
+                    } else {
+                        self.recordAppLink(link, handler: handler)
+                    }
+                }
+            }
+            return true
+        }
+    }
+
+    private func recordAppLink(_ link: IncomingLink, handler: AppLinkHandler) {
+        let entry = RoutedEntry(id: UUID(), url: link.url, rowID: UUID(), title: handler.name, date: .now)
+        recent.removeAll { $0.url == entry.url && $0.title == entry.title }
+        recent.insert(entry, at: 0)
+        if recent.count > 200 {
+            recent.removeLast(recent.count - 200)
+        }
+        save()
+    }
+
+    func apply(_ result: EngineResult, link: IncomingLink, options: RuleOptions = .init()) {
         switch result {
         case .favourite:
-            if let row = favourite { dispatch(link, row: row) }
-            else { showPrompt(link: link, rows: availableRows) }
+            if let row = favourite { dispatch(link, row: row, options: options) }
+            else { showPrompt(link: link, rows: availableRows, options: options) }
         case .bestRunning:
-            if let row = bestRunning() { dispatch(link, row: row) }
-            else if let row = favourite { dispatch(link, row: row) }
-            else { showPrompt(link: link, rows: availableRows) }
+            if let row = bestRunning() { dispatch(link, row: row, options: options) }
+            else if let row = favourite { dispatch(link, row: row, options: options) }
+            else { showPrompt(link: link, rows: availableRows, options: options) }
         case .open(let ids):
             let targets = ids.compactMap { id in rows.first { $0.id == id } }.filter { isAvailable($0) }
             if targets.isEmpty {
-                showPrompt(link: link, rows: availableRows)
+                showPrompt(link: link, rows: availableRows, options: options)
             } else {
-                for row in targets { dispatch(link, row: row) }
+                for row in targets { dispatch(link, row: row, options: options) }
             }
         case .promptAll:
-            showPrompt(link: link, rows: availableRows)
+            showPrompt(link: link, rows: availableRows, options: options)
         case .promptRunning:
             let running = availableRows.filter { isRunning($0) }
-            showPrompt(link: link, rows: running.isEmpty ? availableRows : running)
+            showPrompt(link: link, rows: running.isEmpty ? availableRows : running, options: options)
         case .prompt(let ids):
             let subset = ids.compactMap { id in rows.first { $0.id == id } }.filter { isAvailable($0) }
-            showPrompt(link: link, rows: subset.isEmpty ? availableRows : subset)
+            showPrompt(link: link, rows: subset.isEmpty ? availableRows : subset, options: options)
         }
     }
 
@@ -324,10 +489,10 @@ final class AppState: ObservableObject {
         availableRows.first { isRunning($0) }
     }
 
-    func showPrompt(link: IncomingLink, rows: [CatalogRow]) {
+    func showPrompt(link: IncomingLink, rows: [CatalogRow], options: RuleOptions = .init()) {
         if prompt.isVisible {
             if !promptQueue.contains(where: { $0.link.url == link.url }) {
-                promptQueue.append((link, rows))
+                promptQueue.append((link, rows, options))
             }
             return
         }
@@ -350,7 +515,7 @@ final class AppState: ObservableObject {
             onPick: { [weak self] picked, keepOpen in
                 guard let self else { return }
                 if let picked, let row = self.rows.first(where: { $0.id == picked }) {
-                    self.dispatch(link, row: row, isRetry: true)
+                    self.dispatch(link, row: row, isRetry: true, options: options)
                 }
                 if !keepOpen {
                     self.showNextQueuedPrompt()
@@ -360,14 +525,14 @@ final class AppState: ObservableObject {
                 guard let self else { return }
                 self.alwaysOpen(host: link.host, in: rowID)
                 if let row = self.rows.first(where: { $0.id == rowID }) {
-                    self.dispatch(link, row: row, isRetry: true)
+                    self.dispatch(link, row: row, isRetry: true, options: options)
                 }
                 self.showNextQueuedPrompt()
             },
             onTimeout: { [weak self] in
                 guard let self else { return }
                 if let row = self.favourite {
-                    self.dispatch(link, row: row, isRetry: true)
+                    self.dispatch(link, row: row, isRetry: true, options: options)
                 }
                 self.showNextQueuedPrompt()
             }
@@ -389,27 +554,33 @@ final class AppState: ObservableObject {
         while !promptQueue.isEmpty {
             let next = promptQueue.removeFirst()
             guard !next.rows.isEmpty else { continue }
-            showPrompt(link: next.link, rows: next.rows)
+            showPrompt(link: next.link, rows: next.rows, options: next.options)
             return
         }
     }
 
-    func dispatch(_ link: IncomingLink, row: CatalogRow, isRetry: Bool = false) {
-        guard let browser = resolvedBrowser(for: row) else {
-            Log.routing.error("No browser available for \(self.title(for: row))")
+    func dispatch(
+        _ link: IncomingLink,
+        row: CatalogRow,
+        isRetry: Bool = false,
+        options: RuleOptions = .init()
+    ) {
+        let targetRow = options.privateWindow ? privateVariant(for: row) : row
+        guard let browser = resolvedBrowser(for: targetRow) else {
+            Log.routing.error("No browser available for \(self.title(for: targetRow))")
             let candidates = availableRows
             if candidates.isEmpty {
                 presentNoBrowserAlert()
             } else {
-                showPrompt(link: link, rows: candidates)
+                showPrompt(link: link, rows: candidates, options: options)
             }
             return
         }
         let outcome = dispatcher.open(
             url: link.url,
             browser: browser,
-            row: row,
-            activates: !settings.openInBackground,
+            row: targetRow,
+            activates: options.background.activates(openInBackground: settings.openInBackground),
             forceNewInstance: false
         ) { [weak self] error in
             guard let self, let error else { return }
@@ -418,7 +589,7 @@ final class AppState: ObservableObject {
         switch outcome {
         case .opened:
             pendingQuit = nil
-            let entry = RoutedEntry(id: UUID(), url: link.url, rowID: row.id, title: title(for: row), date: .now)
+            let entry = RoutedEntry(id: UUID(), url: link.url, rowID: targetRow.id, title: title(for: targetRow), date: .now)
             recent.removeAll { $0.url == entry.url && $0.rowID == entry.rowID }
             recent.insert(entry, at: 0)
             if recent.count > 200 {
@@ -426,9 +597,9 @@ final class AppState: ObservableObject {
             }
             save()
         case .needsHostQuit(_, let name):
-            pendingQuit = (link.url, row, browser)
+            pendingQuit = (link.url, targetRow, browser, options)
             prompt.dismiss()
-            presentQuitAlert(browserName: name, url: link.url, row: row, browser: browser)
+            presentQuitAlert(browserName: name, url: link.url, row: targetRow, browser: browser)
         case .failed(let message):
             Log.routing.error("Dispatch failed: \(message)")
         }
@@ -488,7 +659,7 @@ final class AppState: ObservableObject {
             url: pending.url,
             browser: pending.browser,
             row: plain,
-            activates: !settings.openInBackground,
+            activates: pending.options.background.activates(openInBackground: settings.openInBackground),
             forceNewInstance: false
         ) { error in
             if let error {
@@ -522,7 +693,7 @@ final class AppState: ObservableObject {
             url: pending.url,
             browser: pending.browser,
             row: pending.row,
-            activates: !settings.openInBackground,
+            activates: pending.options.background.activates(openInBackground: settings.openInBackground),
             forceNewInstance: true
         ) { error in
             if let error {
