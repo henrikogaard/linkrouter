@@ -197,8 +197,8 @@ final class SyncStore: ObservableObject {
         guard isEnabled || retainsEditsWhileStopped else { return false }
 
         let snapshot = state
-        if let fingerprint = Self.payloadFingerprint(snapshot),
-           fingerprint == defaults.string(forKey: Self.lastSyncedFingerprintKey) {
+        let fingerprint = Self.payloadFingerprint(snapshot)
+        if let fingerprint, fingerprint == defaults.string(forKey: Self.lastSyncedFingerprintKey) {
             if latestSnapshot != nil || localDirtyAt != nil {
                 pendingWrite?.cancel()
                 pendingWrite = nil
@@ -206,6 +206,12 @@ final class SyncStore: ObservableObject {
                 localDirtyAt = nil
             }
             return false
+        }
+        if let latestSnapshot,
+           let fingerprint,
+           Self.payloadFingerprint(latestSnapshot) == fingerprint {
+            self.latestSnapshot = snapshot
+            return isEnabled
         }
         latestSnapshot = snapshot
         localDirtyAt = Date()

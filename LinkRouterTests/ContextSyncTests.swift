@@ -169,6 +169,109 @@ final class ContextSyncTests: XCTestCase {
         store.stopWatching()
     }
 
+    func testHistoryOnlySavePreservesPendingEditTimestampSoIntermediateRemoteWins() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        var isAvailable = true
+        let localID = UUID().uuidString
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast,
+            cloudDocsAvailable: { isAvailable },
+            writeDebounceInterval: 10
+        )
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        var localState = sampleState()
+        localState.browsers[0].displayName = "Local Settings Edit"
+        XCTAssertTrue(local.scheduleWrite(localState))
+
+        isAvailable = false
+        local.stopWatching(preservingPendingEdits: true)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        let remoteModifiedAt = Date()
+        try await Task.sleep(nanoseconds: 100_000_000)
+        var historyOnlyState = localState
+        historyOnlyState.recent.append(RoutedEntry(
+            id: UUID(),
+            url: URL(string: "https://history.example")!,
+            rowID: localState.rows[0].id,
+            title: "History",
+            date: Date()
+        ))
+        XCTAssertFalse(local.scheduleWrite(historyOnlyState))
+
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Remote Settings Edit"
+        let remoteID = UUID().uuidString
+        let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+        try remote.writeNow(remoteState, modifiedAt: remoteModifiedAt)
+        isAvailable = true
+        var applied: PersistedState?
+        XCTAssertTrue(local.startWatching(onApply: { applied = $0 }, watchChanges: false, checkImmediately: false))
+
+        XCTAssertTrue(local.receiveRemoteIfNewer())
+        XCTAssertEqual(applied?.browsers.first?.displayName, "Remote Settings Edit")
+        XCTAssertEqual(local.readRemoteState()?.deviceID, remoteID)
+        local.stopWatching()
+    }
+
+    func testSecondRealEditAdvancesPendingEditTimestamp() async throws {
+        let folder = temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let localDefaults = testDefaults()
+        let remoteDefaults = testDefaults()
+        defer {
+            removeDefaults(localDefaults)
+            removeDefaults(remoteDefaults)
+        }
+        var isAvailable = true
+        let localID = UUID().uuidString
+        let local = SyncStore(
+            folderURL: folder,
+            deviceID: localID,
+            defaults: localDefaults,
+            initialLastApplied: .distantPast,
+            cloudDocsAvailable: { isAvailable },
+            writeDebounceInterval: 10
+        )
+        XCTAssertTrue(local.startWatching(onApply: { _ in }, watchChanges: false, checkImmediately: false))
+        var firstEdit = sampleState()
+        firstEdit.browsers[0].displayName = "First Edit"
+        XCTAssertTrue(local.scheduleWrite(firstEdit))
+
+        isAvailable = false
+        local.stopWatching(preservingPendingEdits: true)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        let remoteModifiedAt = Date()
+        try await Task.sleep(nanoseconds: 100_000_000)
+        var secondEdit = firstEdit
+        secondEdit.browsers[0].displayName = "Second Edit"
+        XCTAssertFalse(local.scheduleWrite(secondEdit))
+
+        var remoteState = sampleState()
+        remoteState.browsers[0].displayName = "Intermediate Remote Edit"
+        let remoteID = UUID().uuidString
+        let remote = SyncStore(folderURL: folder, deviceID: remoteID, defaults: remoteDefaults)
+        try remote.writeNow(remoteState, modifiedAt: remoteModifiedAt)
+        isAvailable = true
+        var applied: PersistedState?
+        XCTAssertTrue(local.startWatching(onApply: { applied = $0 }, watchChanges: false, checkImmediately: false))
+
+        XCTAssertFalse(local.receiveRemoteIfNewer())
+        XCTAssertNil(applied)
+        XCTAssertEqual(local.readRemoteState()?.deviceID, localID)
+        XCTAssertEqual(local.readRemoteState()?.browsers.first?.displayName, "Second Edit")
+        local.stopWatching()
+    }
+
     func testIgnoringRemoteUpdatesBaselineSoLocalSettingsReplaceCloud() async throws {
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
